@@ -70,6 +70,11 @@ bootstrapApplication(AppComponent, {
         canActivate: [AuthGuard]
       },
       {
+        path: 'admin-users',
+        loadComponent: () => import('./src/app/features/admin/users.component').then(m => m.AdminUsersComponent),
+        canActivate: [AuthGuard]
+      },
+      {
         path: 'finance',
         loadComponent: () => import('./src/app/features/admin/finance.component').then(m => m.FinanceComponent),
         canActivate: [AuthGuard]

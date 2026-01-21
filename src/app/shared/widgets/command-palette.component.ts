@@ -118,6 +118,7 @@ export class CommandPaletteComponent {
     { id: 'nav-reports', title: 'Go to Reports', icon: 'BarChart', group: 'Navigation', action: () => this.router.navigate(['/reports']) },
     { id: 'nav-strategy', title: 'Go to Strategy', icon: 'Map', group: 'Navigation', action: () => this.router.navigate(['/strategy']) },
     { id: 'nav-finance', title: 'Go to Finance', icon: 'Briefcase', group: 'Navigation', action: () => this.router.navigate(['/finance']) },
+    { id: 'nav-admin-users', title: 'Go to Admin Users', icon: 'Users', group: 'Navigation', action: () => this.router.navigate(['/admin-users']) },
 
     // Actions
     { id: 'act-dark', title: 'Toggle Dark Mode', description: 'Switch visual theme', icon: 'Settings', group: 'Action', action: () => { this.dataService.toggleDarkMode(); this.toastService.show('Theme toggled', 'success'); } },

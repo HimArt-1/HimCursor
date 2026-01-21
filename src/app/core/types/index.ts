@@ -15,6 +15,7 @@ export interface User {
   avatarUrl?: string;
   pin?: string; // Deprecated for email/password auth
   password?: string; // Used only for admin-create/reset
+  isActive?: boolean;
 }
 
 export interface AuditLogEntry {

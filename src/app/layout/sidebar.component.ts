@@ -103,6 +103,13 @@ import { ToastService } from '../core/services/state/toast.service';
            <span [innerHTML]="getIcon('Users')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
            <span class="font-medium text-sm">الفريق والترتيب</span>
         </a>
+        @if(isAdmin()) {
+          <a (click)="closeMobileMenu()" routerLink="/admin-users" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
+             class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
+             <span [innerHTML]="getIcon('Users')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
+             <span class="font-medium text-sm">مستخدمي النظام</span>
+          </a>
+        }
 
         <!-- Section Header -->
         <div class="pt-4 pb-2 px-2">
@@ -128,7 +135,7 @@ import { ToastService } from '../core/services/state/toast.service';
         </a>
 
         <!-- Admin Only -->
-        @if(user()?.role === 'System Admin') {
+        @if(isAdmin()) {
            <a (click)="closeMobileMenu()" routerLink="/support" routerLinkActive="bg-green-900/50 text-green-300 border border-green-800 dark:text-green-300 dark:border-green-800/50"
               class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group text-green-400 dark:text-green-300 font-bold mt-2">
               <span [innerHTML]="getIcon('LifeBuoy')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
@@ -209,8 +216,9 @@ export class SidebarComponent implements OnDestroy {
    timeLeft = signal(25 * 60); // 25 minutes
    timerActive = signal(false);
    intervalId: any;
-   unreadCount = computed(() => this.dataService.notifications().filter(n => !n.read).length);
-   user = this.dataService.currentUser;
+  unreadCount = computed(() => this.dataService.notifications().filter(n => !n.read).length);
+  user = this.dataService.currentUser;
+  isAdmin = computed(() => this.user()?.role === 'admin');
 
    constructor() {
       this.restoreTimer();

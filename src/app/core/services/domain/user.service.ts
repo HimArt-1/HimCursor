@@ -54,7 +54,8 @@ export class UserService {
                 email: p.email || '',
                 role: p.role,
                 avatarColor: p.avatar_color || '#4B5842',
-                avatarUrl: p.avatar_url || ''
+                avatarUrl: p.avatar_url || '',
+                isActive: p.is_active
             }));
             this.availableUsers.set(users);
         }
@@ -118,16 +119,26 @@ export class UserService {
             return;
         }
 
+        await this.setUserActive(userId, false);
+    }
+
+    async setUserActive(userId: string, isActive: boolean) {
+        if (!isSupabaseConfigured || !this.supabase) return;
+        if (!this.isAdminSession()) {
+            this.uiService.addNotification('غير مصرح', 'الإدارة فقط', 'Warning');
+            return;
+        }
+
         const { error } = await this.supabase.functions.invoke('admin_disable_user', {
-            body: { user_id: userId, is_active: false }
+            body: { user_id: userId, is_active: isActive }
         });
         if (error) {
             console.error('admin_disable_user error:', this.formatError(error));
-            this.uiService.addNotification('خطأ', 'فشل تعطيل العضو', 'Warning');
+            this.uiService.addNotification('خطأ', 'فشل تحديث حالة العضو', 'Warning');
             return;
         }
         await this.loadUsers();
-        this.uiService.addNotification('تم بنجاح', 'تم تعطيل العضو', 'Success');
+        this.uiService.addNotification('تم بنجاح', isActive ? 'تم تفعيل العضو' : 'تم تعطيل العضو', 'Success');
     }
 
     async resetPassword(userId: string, newPassword: string) {
@@ -152,7 +163,8 @@ export class UserService {
             email: profile.email || '',
             role: profile.role,
             avatarColor: profile.avatarColor || profile.avatar_color || '#4B5842',
-            avatarUrl: profile.avatarUrl || profile.avatar_url || ''
+            avatarUrl: profile.avatarUrl || profile.avatar_url || '',
+            isActive: profile.isActive ?? profile.is_active
         };
     }
 

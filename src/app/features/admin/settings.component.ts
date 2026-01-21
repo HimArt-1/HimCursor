@@ -1,9 +1,9 @@
 
 
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { DataService, User } from '../../core/services/state/data.service';
+import { DataService } from '../../core/services/state/data.service';
 import { Icons } from '../../shared/ui/icons';
 
 @Component({
@@ -31,12 +31,6 @@ import { Icons } from '../../shared/ui/icons';
                [ngClass]="activeTab() === 'General' ? 'text-wushai-dark dark:text-wushai-sand bg-white dark:bg-wushai-surface' : 'text-gray-500 hover:text-wushai-dark hover:bg-white/50 dark:hover:bg-wushai-surface/50'">
                عام
                @if(activeTab() === 'General') { <div class="absolute bottom-0 left-0 w-full h-0.5 bg-wushai-dark dark:bg-wushai-sand"></div> }
-            </button>
-            <button (click)="activeTab.set('Team')" 
-               class="px-8 py-4 text-sm font-bold transition-all relative overflow-hidden group whitespace-nowrap"
-               [ngClass]="activeTab() === 'Team' ? 'text-wushai-dark dark:text-wushai-sand bg-white dark:bg-wushai-surface' : 'text-gray-500 hover:text-wushai-dark hover:bg-white/50 dark:hover:bg-wushai-surface/50'">
-               الفريق
-               @if(activeTab() === 'Team') { <div class="absolute bottom-0 left-0 w-full h-0.5 bg-wushai-dark dark:bg-wushai-sand"></div> }
             </button>
             <button (click)="activeTab.set('Rules')" 
                class="px-8 py-4 text-sm font-bold transition-all relative overflow-hidden group whitespace-nowrap"
@@ -153,55 +147,6 @@ import { Icons } from '../../shared/ui/icons';
                   </div>
                }
 
-               @case ('Team') {
-                  <div class="space-y-6 animate-fade-in">
-                     <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-lg text-wushai-dark dark:text-wushai-sand">أعضاء الفريق</h3>
-                        
-                        @if(isSystemAdmin()) {
-                           <button (click)="openUserModal(null)" class="bg-wushai-dark hover:bg-wushai-black text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors">
-                              <span [innerHTML]="getIcon('Plus')" class="w-4 h-4"></span>
-                              إضافة عضو
-                           </button>
-                        } @else {
-                           <button disabled class="text-xs bg-gray-200 text-gray-500 px-4 py-2 rounded-lg font-bold cursor-not-allowed">
-                              إضافة عضو (للإدارة فقط)
-                           </button>
-                        }
-                     </div>
-                     
-                     <div class="space-y-3">
-                        @for (member of availableUsers(); track member.id) {
-                           <div class="flex items-center justify-between p-4 bg-white dark:bg-wushai-deep border border-gray-100 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
-                              <div class="flex items-center gap-4">
-                                 <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-lg shadow-sm"
-                                      [style.background-color]="member.avatarColor">
-                                    {{ member.name.charAt(0) }}
-                                 </div>
-                                 <div>
-                                    <p class="font-bold text-wushai-dark dark:text-white">{{ member.name }}</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ member.role }}</p>
-                                 </div>
-                              </div>
-                              <div class="flex items-center gap-4">
-                                 @if(member.id === currentUser()?.id) {
-                                    <span class="text-xs font-bold px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-100">You</span>
-                                 }
-                                 
-                                 @if(isSystemAdmin()) {
-                                    <button (click)="openUserModal(member)" class="text-gray-400 hover:text-blue-500 p-2 rounded-full hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100">
-                                       <span [innerHTML]="getIcon('Edit')" class="w-4 h-4"></span>
-                                    </button>
-                                    <button (click)="deleteUser(member.id)" class="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100" [disabled]="member.id === currentUser()?.id">
-                                       <span [innerHTML]="getIcon('Trash')" class="w-4 h-4"></span>
-                                    </button>
-                                 }
-                              </div>
-                           </div>
-                        }
-                     </div>
-                  </div>
-               }
 
                @case ('Rules') {
                   <div class="space-y-6 animate-fade-in">
@@ -240,57 +185,6 @@ import { Icons } from '../../shared/ui/icons';
          </div>
       </div>
 
-      <!-- Add/Edit User Modal -->
-      @if (showUserModal()) {
-         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-            <div class="bg-white dark:bg-wushai-surface rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-wushai-sand dark:border-wushai-olive">
-               <div class="p-5 border-b border-wushai-sand bg-wushai-light dark:bg-wushai-deep flex justify-between items-center">
-                  <h3 class="font-bold text-xl text-wushai-dark dark:text-wushai-sand">
-                     {{ editingUser() ? 'تعديل بيانات العضو' : 'إضافة عضو جديد' }}
-                  </h3>
-                  <button (click)="closeUserModal()" class="text-gray-400 hover:text-red-600 transition-colors">
-                     <span [innerHTML]="getIcon('X')"></span>
-                  </button>
-               </div>
-               <div class="p-6 space-y-4">
-                  <div>
-                     <label class="block text-sm font-bold text-wushai-olive mb-1">الاسم</label>
-                     <input #uName type="text" [value]="editingUser()?.name || ''" class="w-full border rounded-lg p-3 outline-none focus:border-wushai-olive bg-gray-50 dark:bg-wushai-deep dark:text-white dark:border-gray-600" placeholder="اسم الموظف">
-                  </div>
-                  <div>
-                     <label class="block text-sm font-bold text-wushai-olive mb-1">البريد الإلكتروني</label>
-                     <input #uEmail type="email" [value]="editingUser()?.email || ''" class="w-full border rounded-lg p-3 outline-none focus:border-wushai-olive bg-gray-50 dark:bg-wushai-deep dark:text-white dark:border-gray-600" placeholder="name@company.com">
-                  </div>
-                  <div>
-                     <label class="block text-sm font-bold text-wushai-olive mb-1">المسمى الوظيفي (Role)</label>
-                     <input #uRole type="text" [value]="editingUser()?.role || ''" class="w-full border rounded-lg p-3 outline-none focus:border-wushai-olive bg-gray-50 dark:bg-wushai-deep dark:text-white dark:border-gray-600" placeholder="مثال: Developer">
-                  </div>
-                  <div>
-                     <label class="block text-sm font-bold text-wushai-olive mb-1">كلمة المرور</label>
-                     <input #uPassword type="password" class="w-full border rounded-lg p-3 outline-none focus:border-wushai-olive bg-gray-50 dark:bg-wushai-deep dark:text-white dark:border-gray-600" placeholder="••••••••">
-                  </div>
-                  <div>
-                     <label class="block text-sm font-bold text-wushai-olive mb-1">لون الأفاتار</label>
-                     <div class="flex gap-2 flex-wrap">
-                        @for(color of colors; track color) {
-                           <button (click)="modalSelectedColor.set(color)"
-                                   class="w-8 h-8 rounded-full border-2 transition-all hover:scale-110"
-                                   [class.border-gray-800]="modalSelectedColor() === color"
-                                   [class.border-transparent]="modalSelectedColor() !== color"
-                                   [style.background-color]="color">
-                           </button>
-                        }
-                     </div>
-                  </div>
-
-                  <button (click)="saveUser(uName.value, uEmail.value, uRole.value, uPassword.value)" 
-                     class="w-full bg-wushai-dark text-white py-3 rounded-xl font-bold hover:bg-wushai-black transition-all mt-2 shadow-lg">
-                     حفظ البيانات
-                  </button>
-               </div>
-            </div>
-         </div>
-      }
     </div>
   `
 })
@@ -298,21 +192,12 @@ export class SettingsComponent {
    private sanitizer = inject(DomSanitizer);
    private dataService = inject(DataService);
 
-   activeTab = signal<'Profile' | 'General' | 'Team' | 'Rules'>('Profile');
+   activeTab = signal<'Profile' | 'General' | 'Rules'>('Profile');
    isDarkMode = this.dataService.darkMode;
    currentUser = this.dataService.currentUser;
-   availableUsers = this.dataService.availableUsers; // Now a signal
-
-   // User Management State
-   showUserModal = signal(false);
-   editingUser = signal<User | null>(null);
-   modalSelectedColor = signal('#4B5842');
-
    // Profile Edit
    colors = ['#4B5842', '#3B82F6', '#EC4899', '#F59E0B', '#DC2626', '#111827', '#7C3AED'];
    selectedColor = signal(this.currentUser()?.avatarColor || '#4B5842');
-
-   isSystemAdmin = computed(() => this.currentUser()?.role === 'System Admin');
 
    getIcon(name: keyof typeof Icons): SafeHtml {
       return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
@@ -325,56 +210,6 @@ export class SettingsComponent {
    saveProfile() {
       if (this.currentUser()) {
          this.dataService.updateUserProfile(this.currentUser()!.id, { avatarColor: this.selectedColor() });
-      }
-   }
-
-   // --- User Management Logic (Admin) ---
-
-   openUserModal(user: User | null) {
-      this.editingUser.set(user);
-      this.modalSelectedColor.set(user?.avatarColor || this.colors[0]);
-      this.showUserModal.set(true);
-   }
-
-   closeUserModal() {
-      this.showUserModal.set(false);
-      this.editingUser.set(null);
-   }
-
-   // FIX: Updated to use the refactored updateUserProfile method for edits and added missing avatarUrl for new users.
-   saveUser(name: string, email: string, role: string, password: string) {
-      if (!name || !email || !role) {
-         alert('الرجاء تعبئة جميع البيانات');
-         return;
-      }
-
-      if (this.editingUser()) {
-         this.dataService.updateUserProfile(this.editingUser()!.id, {
-            name: name,
-            role: role,
-            avatarColor: this.modalSelectedColor(),
-         });
-         if (password) {
-            this.dataService.user.resetPassword(this.editingUser()!.id, password);
-         }
-      } else {
-         const newUser: User = {
-            id: `u${Date.now()}`,
-            name,
-            role,
-            email: email,
-            password,
-            avatarColor: this.modalSelectedColor(),
-            avatarUrl: ''
-         };
-         this.dataService.addUser(newUser);
-      }
-      this.closeUserModal();
-   }
-
-   deleteUser(userId: string) {
-      if (confirm('هل أنت متأكد من حذف هذا العضو؟')) {
-         this.dataService.deleteUser(userId);
       }
    }
 
