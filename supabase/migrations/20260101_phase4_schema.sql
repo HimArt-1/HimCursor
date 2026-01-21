@@ -120,6 +120,31 @@ create policy "Auth users can manage assets"
   on public.assets for all
   using ( auth.role() = 'authenticated' );
 
+-- 5. Tasks (Kanban / Production)
+create table public.tasks (
+  id uuid default gen_random_uuid() primary key,
+  title text not null,
+  description text,
+  status text check (status in ('backlog', 'todo', 'in_progress', 'review', 'done')) default 'todo',
+  priority text check (priority in ('low', 'medium', 'high', 'urgent')) default 'medium',
+  assignee_id uuid references public.profiles(id),
+  due_date timestamp with time zone,
+  tags text[],
+  created_by uuid references public.profiles(id),
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
+);
+
+alter table public.tasks enable row level security;
+
+create policy "Tasks viewable by authenticated users"
+  on public.tasks for select
+  using ( auth.role() = 'authenticated' );
+
+create policy "Auth users can manage tasks"
+  on public.tasks for all
+  using ( auth.role() = 'authenticated' );
+
 -- Trigger to create profile on signup
 create or replace function public.handle_new_user()
 returns trigger as $$
