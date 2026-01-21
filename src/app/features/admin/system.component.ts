@@ -3,6 +3,8 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
+import { environment } from '../../../environments/environment';
+import { isSupabaseConfigured } from '../../core/supabase.client';
 
 @Component({
    selector: 'app-system',
@@ -41,8 +43,8 @@ import { Icons } from '../../shared/ui/icons';
             <div class="space-y-4">
                <h4 class="text-wushai-sand uppercase tracking-widest text-xs font-bold mb-2">Environment</h4>
                <div class="flex justify-between border-b border-gray-800 pb-2">
-                  <span>Node Version</span>
-                  <span class="text-white">v18.16.0</span>
+                  <span>App Mode</span>
+                  <span class="text-white">{{ appMode }}</span>
                </div>
                <div class="flex justify-between border-b border-gray-800 pb-2">
                   <span>Angular Version</span>
@@ -50,11 +52,11 @@ import { Icons } from '../../shared/ui/icons';
                </div>
                <div class="flex justify-between border-b border-gray-800 pb-2">
                   <span>Database</span>
-                  <span class="text-white">IndexedDB (Dexie)</span>
+                  <span class="text-white">{{ databaseLabel() }}</span>
                </div>
                <div class="flex justify-between border-b border-gray-800 pb-2">
-                  <span>Region</span>
-                  <span class="text-white">me-central (Riyadh)</span>
+                  <span>AI Engine</span>
+                  <span class="text-white">{{ isAiConfigured() ? 'Gemini (Configured)' : 'Offline (Mock)' }}</span>
                </div>
             </div>
 
@@ -62,19 +64,27 @@ import { Icons } from '../../shared/ui/icons';
                <h4 class="text-wushai-sand uppercase tracking-widest text-xs font-bold mb-2">Services</h4>
                <div class="flex justify-between items-center border-b border-gray-800 pb-2">
                   <span>Authentication</span>
-                  <span class="text-green-500 font-bold text-xs">OPERATIONAL</span>
+                  <span class="font-bold text-xs" [class.text-green-500]="isSupabaseConfigured()" [class.text-yellow-400]="!isSupabaseConfigured()">
+                    {{ isSupabaseConfigured() ? 'OPERATIONAL' : 'LOCAL ONLY' }}
+                  </span>
                </div>
                <div class="flex justify-between items-center border-b border-gray-800 pb-2">
-                  <span>API Gateway</span>
-                  <span class="text-green-500 font-bold text-xs">OPERATIONAL</span>
+                  <span>Realtime</span>
+                  <span class="font-bold text-xs" [class.text-green-500]="isSupabaseConfigured()" [class.text-red-500]="!isSupabaseConfigured()">
+                    {{ isSupabaseConfigured() ? 'CONNECTED' : 'DISABLED' }}
+                  </span>
                </div>
                <div class="flex justify-between items-center border-b border-gray-800 pb-2">
                   <span>Storage (Assets)</span>
-                  <span class="text-green-500 font-bold text-xs">OPERATIONAL</span>
+                  <span class="font-bold text-xs" [class.text-green-500]="isSupabaseConfigured()" [class.text-yellow-400]="!isSupabaseConfigured()">
+                    {{ isSupabaseConfigured() ? 'OPERATIONAL' : 'LOCAL' }}
+                  </span>
                </div>
                <div class="flex justify-between items-center border-b border-gray-800 pb-2">
-                  <span>Backups</span>
-                  <span class="text-green-500 font-bold text-xs">SYNCED</span>
+                  <span>AI Assistant</span>
+                  <span class="font-bold text-xs" [class.text-green-500]="isAiConfigured()" [class.text-yellow-400]="!isAiConfigured()">
+                    {{ isAiConfigured() ? 'ACTIVE' : 'MOCK MODE' }}
+                  </span>
                </div>
             </div>
          </div>
@@ -86,6 +96,10 @@ export class SystemComponent implements OnInit {
    private sanitizer = inject(DomSanitizer);
 
    usageInBytes = signal(0);
+   isSupabaseConfigured = computed(() => isSupabaseConfigured);
+   isAiConfigured = computed(() => !!environment.apiKey);
+   appMode = environment.production ? 'Production' : 'Development';
+  databaseLabel = computed(() => isSupabaseConfigured ? 'Supabase (Realtime)' : 'LocalStorage (Fallback)');
 
    usageInMB = computed(() => {
       return (this.usageInBytes() / (1024 * 1024)).toFixed(2);

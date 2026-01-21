@@ -1,10 +1,10 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { Transaction } from '../../types';
-import { SupabaseService } from '../infra/supabase.service';
+import { supabaseClient, isSupabaseConfigured } from '../../supabase.client';
 
 @Injectable({ providedIn: 'root' })
 export class FinancialService {
-    private supabase = inject(SupabaseService);
+    private supabase = supabaseClient;
 
     readonly transactions = signal<Transaction[]>([]);
 
@@ -13,7 +13,7 @@ export class FinancialService {
     }
 
     async loadTransactions() {
-        if (!this.supabase.isConfigured) {
+        if (!isSupabaseConfigured || !this.supabase) {
             const stored = localStorage.getItem('himcontrol_finance_transactions');
             if (stored) {
                 try {
@@ -25,10 +25,15 @@ export class FinancialService {
             return;
         }
 
-        const { data, error } = await this.supabase.client
+        const { data, error } = await this.supabase
             .from('transactions')
             .select('*')
             .order('date', { ascending: false });
+
+        if (error) {
+            console.error('Error loading transactions:', this.formatError(error));
+            return;
+        }
 
         if (data) {
             this.transactions.set(data.map(t => ({
@@ -44,7 +49,7 @@ export class FinancialService {
     }
 
     async addTransaction(tx: Transaction) {
-        if (!this.supabase.isConfigured) {
+        if (!isSupabaseConfigured || !this.supabase) {
             const newTx = {
                 ...tx,
                 id: `TX-LOCAL-${Date.now()}`
@@ -56,7 +61,7 @@ export class FinancialService {
             return;
         }
 
-        const { data, error } = await this.supabase.client
+        const { data, error } = await this.supabase
             .from('transactions')
             .insert([{
                 type: tx.type,
@@ -71,6 +76,11 @@ export class FinancialService {
             .select()
             .single();
 
+        if (error) {
+            console.error('Error adding transaction:', this.formatError(error));
+            return;
+        }
+
         if (data) {
             this.transactions.update(curr => [{
                 ...tx,
@@ -81,5 +91,17 @@ export class FinancialService {
 
     private saveLocal() {
         localStorage.setItem('himcontrol_finance_transactions', JSON.stringify(this.transactions()));
+    }
+
+    private formatError(error: any): string {
+        if (!error) return 'Unknown error';
+        const parts = [
+            error.message,
+            error.details,
+            error.hint,
+            error.code,
+            error.status
+        ].filter(Boolean);
+        return parts.join(' | ');
     }
 }

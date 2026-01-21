@@ -1,5 +1,5 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { SupabaseService } from '../infra/supabase.service';
+import { supabaseClient, isSupabaseConfigured } from '../../supabase.client';
 
 export interface Objective {
     id: string;
@@ -13,7 +13,7 @@ export interface Objective {
 
 @Injectable({ providedIn: 'root' })
 export class StrategyService {
-    private supabase = inject(SupabaseService);
+    private supabase = supabaseClient;
 
     readonly objectives = signal<Objective[]>([]);
 
@@ -23,7 +23,7 @@ export class StrategyService {
     }
 
     async loadObjectives() {
-        if (!this.supabase.isConfigured) {
+        if (!isSupabaseConfigured || !this.supabase) {
             const stored = localStorage.getItem('himcontrol_strategy_objectives');
             if (stored) {
                 try {
@@ -35,10 +35,15 @@ export class StrategyService {
             return;
         }
 
-        const { data, error } = await this.supabase.client
+        const { data, error } = await this.supabase
             .from('objectives')
             .select('*')
             .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Failed to load objectives:', this.formatError(error));
+            return;
+        }
 
         if (data) {
             this.objectives.set(data as Objective[]);
@@ -46,7 +51,7 @@ export class StrategyService {
     }
 
     async addObjective(obj: Omit<Objective, 'id'>) {
-        if (!this.supabase.isConfigured) {
+        if (!isSupabaseConfigured || !this.supabase) {
             const newObj: Objective = {
                 ...obj,
                 id: `OBJ-LOCAL-${Date.now()}`
@@ -56,7 +61,7 @@ export class StrategyService {
             return;
         }
 
-        const { data, error } = await this.supabase.client
+        const { data, error } = await this.supabase
             .from('objectives')
             .insert([{
                 title: obj.title,
@@ -69,6 +74,11 @@ export class StrategyService {
             .select()
             .single();
 
+        if (error) {
+            console.error('Failed to add objective:', this.formatError(error));
+            return;
+        }
+
         if (data) {
             this.objectives.update(curr => [data as Objective, ...curr]);
         }
@@ -79,19 +89,21 @@ export class StrategyService {
     }
 
     async updateObjective(id: string, updates: Partial<Objective>) {
-        if (!this.supabase.isConfigured) {
+        if (!isSupabaseConfigured || !this.supabase) {
             this.objectives.update(curr => curr.map(o => o.id === id ? { ...o, ...updates } : o));
             this.saveLocal();
             return;
         }
 
-        const { error } = await this.supabase.client
+        const { error } = await this.supabase
             .from('objectives')
             .update(updates)
             .eq('id', id);
 
         if (!error) {
             this.objectives.update(curr => curr.map(o => o.id === id ? { ...o, ...updates } : o));
+        } else {
+            console.error('Failed to update objective:', this.formatError(error));
         }
     }
 
@@ -99,7 +111,7 @@ export class StrategyService {
     readonly milestones = signal<Milestone[]>([]);
 
     async loadMilestones() {
-        if (!this.supabase.isConfigured) {
+        if (!isSupabaseConfigured || !this.supabase) {
             const stored = localStorage.getItem('himcontrol_strategy_milestones');
             if (stored) {
                 try {
@@ -111,10 +123,15 @@ export class StrategyService {
             return;
         }
 
-        const { data } = await this.supabase.client
+        const { data, error } = await this.supabase
             .from('milestones')
             .select('*')
             .order('date', { ascending: true });
+
+        if (error) {
+            console.error('Failed to load milestones:', this.formatError(error));
+            return;
+        }
 
         if (data) {
             this.milestones.set(data.map(m => ({
@@ -127,7 +144,7 @@ export class StrategyService {
     }
 
     async addMilestone(ms: { title: string, date: string, type: string }) {
-        if (!this.supabase.isConfigured) {
+        if (!isSupabaseConfigured || !this.supabase) {
             const newMs: Milestone = {
                 ...ms,
                 id: `MIL-LOCAL-${Date.now()}`
@@ -137,11 +154,16 @@ export class StrategyService {
             return;
         }
 
-        const { data } = await this.supabase.client
+        const { data, error } = await this.supabase
             .from('milestones')
             .insert([ms])
             .select()
             .single();
+
+        if (error) {
+            console.error('Failed to add milestone:', this.formatError(error));
+            return;
+        }
 
         if (data) {
             this.milestones.update(curr => [...curr, {
@@ -156,6 +178,18 @@ export class StrategyService {
     private saveLocal() {
         localStorage.setItem('himcontrol_strategy_objectives', JSON.stringify(this.objectives()));
         localStorage.setItem('himcontrol_strategy_milestones', JSON.stringify(this.milestones()));
+    }
+
+    private formatError(error: any): string {
+        if (!error) return 'Unknown error';
+        const parts = [
+            error.message,
+            error.details,
+            error.hint,
+            error.code,
+            error.status
+        ].filter(Boolean);
+        return parts.join(' | ');
     }
 }
 

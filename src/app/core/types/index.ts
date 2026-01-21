@@ -13,7 +13,8 @@ export interface User {
   role: string;
   avatarColor?: string;
   avatarUrl?: string;
-  pin: string; // Simulated PIN
+  pin?: string; // Deprecated for email/password auth
+  password?: string; // Used only for admin-create/reset
 }
 
 export interface AuditLogEntry {

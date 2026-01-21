@@ -1,5 +1,5 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { SupabaseService } from '../infra/supabase.service';
+import { supabaseClient, isSupabaseConfigured } from '../../supabase.client';
 
 export interface Asset {
     id: string;
@@ -12,7 +12,7 @@ export interface Asset {
 
 @Injectable({ providedIn: 'root' })
 export class AssetsService {
-    private supabase = inject(SupabaseService);
+    private supabase = supabaseClient;
 
     readonly assets = signal<Asset[]>([]);
 
@@ -21,12 +21,17 @@ export class AssetsService {
     }
 
     async loadAssets() {
-        if (!this.supabase.isConfigured) return;
+        if (!isSupabaseConfigured || !this.supabase) return;
 
-        const { data } = await this.supabase.client
+        const { data, error } = await this.supabase
             .from('assets')
             .select('*')
             .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Failed to load assets:', this.formatError(error));
+            return;
+        }
 
         if (data) {
             this.assets.set(data as Asset[]);
@@ -34,16 +39,33 @@ export class AssetsService {
     }
 
     async addAsset(asset: Omit<Asset, 'id'>) {
-        if (!this.supabase.isConfigured) return;
+        if (!isSupabaseConfigured || !this.supabase) return;
 
-        const { data } = await this.supabase.client
+        const { data, error } = await this.supabase
             .from('assets')
             .insert([asset])
             .select()
             .single();
 
+        if (error) {
+            console.error('Failed to add asset:', this.formatError(error));
+            return;
+        }
+
         if (data) {
             this.assets.update(curr => [data as Asset, ...curr]);
         }
+    }
+
+    private formatError(error: any): string {
+        if (!error) return 'Unknown error';
+        const parts = [
+            error.message,
+            error.details,
+            error.hint,
+            error.code,
+            error.status
+        ].filter(Boolean);
+        return parts.join(' | ');
     }
 }

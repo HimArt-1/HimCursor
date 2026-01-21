@@ -1,48 +1,53 @@
 import { Injectable, signal, inject, effect } from '@angular/core';
-import { SupabaseService } from '../infra/supabase.service';
+import { supabaseClient, isSupabaseConfigured } from '../../supabase.client';
 import { UserService } from './user.service';
 import { ChatMessage } from '../../types';
+import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class ChatService {
-    private supabase = inject(SupabaseService);
+    private supabase = supabaseClient;
     private userService = inject(UserService);
+    private authService = inject(AuthService);
+    private realtimeInitialized = false;
 
     readonly messages = signal<ChatMessage[]>([]);
     readonly isConnected = signal<boolean>(false);
 
     constructor() {
-        // Initialize Realtime directly
-        this.initRealtime();
+        effect(() => {
+            if (this.realtimeInitialized) return;
+            if (!this.authService.sessionReady()) return;
+            if (!this.authService.activeProfile()) return;
+            this.initRealtime();
+            this.realtimeInitialized = true;
+        });
     }
 
     sendMessage(content: string) {
         const user = this.userService.currentUser();
         if (!user || !content.trim()) return;
+        if (!isSupabaseConfigured || !this.supabase) {
+            console.warn('Supabase is not configured. Chat messages are local only.');
+            return;
+        }
 
-        const msgPayload = {
-            sender_id: user.id,
-            sender_name: user.name,
-            sender_avatar: user.avatarUrl,
-            content: content,
-            channel_id: 'global'
-        };
-
-        // Optimistic UI update (optional, but good for UX)
-        // We'll rely on the subscription to confirm it, 
-        // OR push locally and handle ID later. 
-        // For simplicity, let's just insert and wait for echo.
-
-        this.supabase.client
+        this.supabase
             .from('chat_messages')
-            .insert([msgPayload])
+            .insert([{
+                sender_id: user.id,
+                sender_name: user.name,
+                sender_avatar: user.avatarUrl,
+                content: content,
+                channel_id: 'global'
+            }])
             .then(({ error }) => {
-                if (error) console.error('Error sending message:', error);
+                if (error) console.error('Error sending message:', this.formatError(error));
             });
     }
 
     private initRealtime() {
-        if (!this.supabase.isConfigured) {
+        if (!isSupabaseConfigured || !this.supabase) {
             // Fallback to local storage loading if offline
             const saved = localStorage.getItem('himcontrol_chat_messages');
             if (saved) {
@@ -52,12 +57,16 @@ export class ChatService {
         }
 
         // Initial Fetch
-        this.supabase.client
+        this.supabase
             .from('chat_messages')
             .select('*')
             .order('created_at', { ascending: true })
             .limit(50)
-            .then(({ data }) => {
+            .then(({ data, error }) => {
+                if (error) {
+                    console.error('Error loading chat messages:', this.formatError(error));
+                    return;
+                }
                 if (data) {
                     this.messages.set(data.map(this.mapDbToMsg));
                     this.isConnected.set(true);
@@ -65,7 +74,7 @@ export class ChatService {
             });
 
         // Realtime Subscription
-        this.supabase.client.channel('public:chat_messages')
+        this.supabase.channel('public:chat_messages')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, payload => {
                 const newMsg = this.mapDbToMsg(payload.new);
                 this.messages.update(curr => [...curr, newMsg]);
@@ -84,5 +93,17 @@ export class ChatService {
             status: 'sent',
             channelId: db.channel_id
         };
+    }
+
+    private formatError(error: any): string {
+        if (!error) return 'Unknown error';
+        const parts = [
+            error.message,
+            error.details,
+            error.hint,
+            error.code,
+            error.status
+        ].filter(Boolean);
+        return parts.join(' | ');
     }
 }

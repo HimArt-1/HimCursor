@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { Icons } from '../shared/ui/icons';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { DataService } from '../core/services/state/data.service';
+import { ToastService } from '../core/services/state/toast.service';
 
 @Component({
    selector: 'app-sidebar',
@@ -201,12 +202,19 @@ import { DataService } from '../core/services/state/data.service';
 export class SidebarComponent implements OnDestroy {
    private sanitizer = inject(DomSanitizer);
    private dataService = inject(DataService);
+   private toastService = inject(ToastService);
+   private readonly timerStorageKey = 'himcontrol_focus_timer';
+   private timerEndsAt: number | null = null;
 
    timeLeft = signal(25 * 60); // 25 minutes
    timerActive = signal(false);
    intervalId: any;
    unreadCount = computed(() => this.dataService.notifications().filter(n => !n.read).length);
    user = this.dataService.currentUser;
+
+   constructor() {
+      this.restoreTimer();
+   }
 
    getIcon(name: keyof typeof Icons): SafeHtml {
       return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
@@ -237,21 +245,17 @@ export class SidebarComponent implements OnDestroy {
 
    startTimer() {
       if (this.timerActive()) return;
+      this.timerEndsAt = Date.now() + (this.timeLeft() * 1000);
       this.timerActive.set(true);
-      this.intervalId = setInterval(() => {
-         if (this.timeLeft() > 0) {
-            this.timeLeft.update(t => t - 1);
-         } else {
-            this.stopTimer();
-            // Play sound or notify
-            alert('Focus session complete!');
-         }
-      }, 1000);
+      this.persistTimer();
+      this.startInterval();
    }
 
    stopTimer() {
       this.timerActive.set(false);
       clearInterval(this.intervalId);
+      this.timerEndsAt = null;
+      this.clearTimerStorage();
    }
 
    resetTimer() {
@@ -261,5 +265,52 @@ export class SidebarComponent implements OnDestroy {
 
    ngOnDestroy() {
       this.stopTimer();
+   }
+
+   private startInterval() {
+      clearInterval(this.intervalId);
+      this.intervalId = setInterval(() => {
+         if (!this.timerEndsAt) return;
+         const remaining = Math.max(0, Math.ceil((this.timerEndsAt - Date.now()) / 1000));
+         this.timeLeft.set(remaining);
+         if (remaining <= 0) {
+            this.completeTimer();
+         }
+      }, 1000);
+   }
+
+   private completeTimer() {
+      this.stopTimer();
+      this.timeLeft.set(0);
+      this.toastService.show('انتهت جلسة التركيز', 'success', 4000);
+   }
+
+   private restoreTimer() {
+      const stored = localStorage.getItem(this.timerStorageKey);
+      if (!stored) return;
+      try {
+         const data = JSON.parse(stored);
+         if (typeof data.endsAt !== 'number') return;
+         const remaining = Math.ceil((data.endsAt - Date.now()) / 1000);
+         if (remaining > 0) {
+            this.timerEndsAt = data.endsAt;
+            this.timeLeft.set(remaining);
+            this.timerActive.set(true);
+            this.startInterval();
+         } else {
+            this.clearTimerStorage();
+         }
+      } catch {
+         this.clearTimerStorage();
+      }
+   }
+
+   private persistTimer() {
+      if (!this.timerEndsAt) return;
+      localStorage.setItem(this.timerStorageKey, JSON.stringify({ endsAt: this.timerEndsAt }));
+   }
+
+   private clearTimerStorage() {
+      localStorage.removeItem(this.timerStorageKey);
    }
 }

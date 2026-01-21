@@ -76,16 +76,8 @@ import { Icons } from '../../shared/ui/icons';
                         </div>
                      </div>
 
-                     <!-- PIN Update -->
-                     <div>
-                        <label class="block text-sm font-bold text-wushai-dark dark:text-wushai-sand mb-2">رمز الدخول (PIN)</label>
-                        <p class="text-xs text-gray-500 mb-2">استخدم هذا الرمز للدخول إلى النظام.</p>
-                        <input #pinInput type="text" maxlength="6" [value]="currentUser()?.pin" 
-                               class="w-full md:w-1/2 p-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-wushai-deep dark:text-white focus:border-wushai-olive focus:outline-none font-mono text-center tracking-[0.5em] text-xl">
-                     </div>
-
                      <div class="pt-4">
-                        <button (click)="saveProfile(pinInput.value)" 
+                        <button (click)="saveProfile()" 
                            class="bg-wushai-dark text-white px-8 py-3 rounded-xl font-bold hover:bg-black transition-all shadow-lg flex items-center gap-2">
                            <span [innerHTML]="getIcon('Check')"></span> حفظ التغييرات
                         </button>
@@ -266,12 +258,16 @@ import { Icons } from '../../shared/ui/icons';
                      <input #uName type="text" [value]="editingUser()?.name || ''" class="w-full border rounded-lg p-3 outline-none focus:border-wushai-olive bg-gray-50 dark:bg-wushai-deep dark:text-white dark:border-gray-600" placeholder="اسم الموظف">
                   </div>
                   <div>
+                     <label class="block text-sm font-bold text-wushai-olive mb-1">البريد الإلكتروني</label>
+                     <input #uEmail type="email" [value]="editingUser()?.email || ''" class="w-full border rounded-lg p-3 outline-none focus:border-wushai-olive bg-gray-50 dark:bg-wushai-deep dark:text-white dark:border-gray-600" placeholder="name@company.com">
+                  </div>
+                  <div>
                      <label class="block text-sm font-bold text-wushai-olive mb-1">المسمى الوظيفي (Role)</label>
                      <input #uRole type="text" [value]="editingUser()?.role || ''" class="w-full border rounded-lg p-3 outline-none focus:border-wushai-olive bg-gray-50 dark:bg-wushai-deep dark:text-white dark:border-gray-600" placeholder="مثال: Developer">
                   </div>
                   <div>
-                     <label class="block text-sm font-bold text-wushai-olive mb-1">PIN Code (6 digits)</label>
-                     <input #uPin type="text" maxlength="6" [value]="editingUser()?.pin || ''" class="w-full border rounded-lg p-3 outline-none focus:border-wushai-olive bg-gray-50 dark:bg-wushai-deep dark:text-white dark:border-gray-600 font-mono text-center tracking-widest">
+                     <label class="block text-sm font-bold text-wushai-olive mb-1">كلمة المرور</label>
+                     <input #uPassword type="password" class="w-full border rounded-lg p-3 outline-none focus:border-wushai-olive bg-gray-50 dark:bg-wushai-deep dark:text-white dark:border-gray-600" placeholder="••••••••">
                   </div>
                   <div>
                      <label class="block text-sm font-bold text-wushai-olive mb-1">لون الأفاتار</label>
@@ -287,7 +283,7 @@ import { Icons } from '../../shared/ui/icons';
                      </div>
                   </div>
 
-                  <button (click)="saveUser(uName.value, uRole.value, uPin.value)" 
+                  <button (click)="saveUser(uName.value, uEmail.value, uRole.value, uPassword.value)" 
                      class="w-full bg-wushai-dark text-white py-3 rounded-xl font-bold hover:bg-wushai-black transition-all mt-2 shadow-lg">
                      حفظ البيانات
                   </button>
@@ -326,14 +322,9 @@ export class SettingsComponent {
       this.dataService.toggleDarkMode();
    }
 
-   // FIX: Updated to pass a partial User object to the refactored dataService.updateUserProfile method.
-   saveProfile(newPin: string) {
-      if (!newPin || newPin.length !== 6) {
-         alert('الرجاء إدخال رمز مكون من 6 أرقام');
-         return;
-      }
+   saveProfile() {
       if (this.currentUser()) {
-         this.dataService.updateUserProfile(this.currentUser()!.id, { pin: newPin, avatarColor: this.selectedColor() });
+         this.dataService.updateUserProfile(this.currentUser()!.id, { avatarColor: this.selectedColor() });
       }
    }
 
@@ -351,9 +342,9 @@ export class SettingsComponent {
    }
 
    // FIX: Updated to use the refactored updateUserProfile method for edits and added missing avatarUrl for new users.
-   saveUser(name: string, role: string, pin: string) {
-      if (!name || !role || pin.length !== 6) {
-         alert('الرجاء تعبئة جميع البيانات والتأكد من أن الرمز 6 أرقام');
+   saveUser(name: string, email: string, role: string, password: string) {
+      if (!name || !email || !role) {
+         alert('الرجاء تعبئة جميع البيانات');
          return;
       }
 
@@ -361,16 +352,18 @@ export class SettingsComponent {
          this.dataService.updateUserProfile(this.editingUser()!.id, {
             name: name,
             role: role,
-            pin: pin,
             avatarColor: this.modalSelectedColor(),
          });
+         if (password) {
+            this.dataService.user.resetPassword(this.editingUser()!.id, password);
+         }
       } else {
          const newUser: User = {
             id: `u${Date.now()}`,
             name,
             role,
-            pin,
-            email: `user_${Date.now()}@himcontrol.local`, // Dummy email
+            email: email,
+            password,
             avatarColor: this.modalSelectedColor(),
             avatarUrl: ''
          };

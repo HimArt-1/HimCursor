@@ -1,9 +1,10 @@
-import { Injectable, signal, inject, computed } from '@angular/core';
+import { Injectable, signal, inject, computed, effect } from '@angular/core';
 import { Task } from '../../types';
 import { SupabaseService } from '../infra/supabase.service';
 import { AuditService } from '../infra/audit.service';
 import { UiService } from '../state/ui.service';
 import { UserService } from './user.service';
+import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -11,6 +12,10 @@ export class TaskService {
     private auditService = inject(AuditService);
     private uiService = inject(UiService);
     private userService = inject(UserService);
+    private authService = inject(AuthService);
+    private initialized = false;
+    private readonly dailyAlertKey = 'himcontrol_task_daily_alert';
+    private readonly dailyAlertUserKeyPrefix = 'himcontrol_task_daily_alert_user_';
 
     readonly tasks = signal<Task[]>([]);
 
@@ -23,6 +28,21 @@ export class TaskService {
             todoTasks: t.filter(x => x.status === 'Todo').length
         };
     });
+
+    constructor() {
+        this.setupDailyAlerts();
+        this.initAuthAwareLoading();
+    }
+
+    private initAuthAwareLoading() {
+        effect(() => {
+            if (!this.authService.sessionReady()) return;
+            if (!this.authService.activeProfile()) return;
+            if (this.initialized) return;
+            this.initialized = true;
+            this.initSupabase();
+        });
+    }
 
     async initSupabase() {
         if (!this.supabaseService.isConfigured) {
@@ -147,5 +167,69 @@ export class TaskService {
         this.tasks.set(seeds);
         this.saveLocal();
         localStorage.setItem('himcontrol_tasks_migrated', 'true');
+    }
+
+    private setupDailyAlerts() {
+        effect(() => {
+            const tasks = this.tasks();
+            if (tasks.length === 0) return;
+
+            const today = new Date().toISOString().slice(0, 10);
+            const overdue = tasks.filter(t => t.status !== 'Done' && this.isOverdue(t.dueDate));
+            const dueSoon = tasks.filter(t => t.status !== 'Done' && this.isDueWithin(t.dueDate, 7));
+            const high = tasks.filter(t => t.status !== 'Done' && t.priority === 'High');
+
+            if (!this.shouldNotify(this.dailyAlertKey, today)) return;
+            if (overdue.length === 0 && dueSoon.length === 0 && high.length === 0) return;
+
+            const summary = [
+                overdue.length > 0 ? `متأخرة: ${overdue.length}` : null,
+                dueSoon.length > 0 ? `خلال 7 أيام: ${dueSoon.length}` : null,
+                high.length > 0 ? `أولوية عالية: ${high.length}` : null
+            ].filter(Boolean).join(' • ');
+
+            this.uiService.addNotification('ملخص المخاطر اليومي', summary, 'Warning');
+            localStorage.setItem(this.dailyAlertKey, today);
+
+            const user = this.userService.currentUser();
+            if (!user) return;
+            const userKey = `${this.dailyAlertUserKeyPrefix}${user.id}`;
+            if (!this.shouldNotify(userKey, today)) return;
+
+            const mineOverdue = overdue.filter(t => t.owner === user.name);
+            const mineSoon = dueSoon.filter(t => t.owner === user.name);
+            if (mineOverdue.length === 0 && mineSoon.length === 0) return;
+
+            const userSummary = [
+                mineOverdue.length > 0 ? `متأخرة: ${mineOverdue.length}` : null,
+                mineSoon.length > 0 ? `قريبة: ${mineSoon.length}` : null
+            ].filter(Boolean).join(' • ');
+
+            this.uiService.addNotification('مهامك الحرجة اليوم', userSummary, 'Info');
+            localStorage.setItem(userKey, today);
+        });
+    }
+
+    private shouldNotify(storageKey: string, today: string): boolean {
+        return localStorage.getItem(storageKey) !== today;
+    }
+
+    private isOverdue(dateStr: string): boolean {
+        if (!dateStr) return false;
+        const due = new Date(dateStr);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return due < today;
+    }
+
+    private isDueWithin(dateStr: string, days: number): boolean {
+        if (!dateStr) return false;
+        const due = new Date(dateStr);
+        const now = new Date();
+        const end = new Date();
+        end.setDate(now.getDate() + days);
+        now.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        return due >= now && due <= end;
     }
 }

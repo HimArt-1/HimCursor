@@ -2,7 +2,7 @@
 import { Injectable, inject } from '@angular/core';
 import { GoogleGenAI } from '@google/genai';
 import { DataService } from '../state/data.service';
-import { environment } from '../../config/environment';
+import { environment } from '../../../../environments/environment';
 import { AI_PERSONA } from '../../config/ai-persona.config';
 
 @Injectable({ providedIn: 'root' })

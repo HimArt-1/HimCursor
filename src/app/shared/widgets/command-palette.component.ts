@@ -116,9 +116,31 @@ export class CommandPaletteComponent {
     { id: 'nav-assets', title: 'Go to Assets', icon: 'Image', group: 'Navigation', action: () => this.router.navigate(['/assets']) },
     { id: 'nav-trace', title: 'Go to Traceability Matrix', icon: 'Shield', group: 'Navigation', action: () => this.router.navigate(['/traceability']) },
     { id: 'nav-reports', title: 'Go to Reports', icon: 'BarChart', group: 'Navigation', action: () => this.router.navigate(['/reports']) },
+    { id: 'nav-strategy', title: 'Go to Strategy', icon: 'Map', group: 'Navigation', action: () => this.router.navigate(['/strategy']) },
+    { id: 'nav-finance', title: 'Go to Finance', icon: 'Briefcase', group: 'Navigation', action: () => this.router.navigate(['/finance']) },
 
     // Actions
     { id: 'act-dark', title: 'Toggle Dark Mode', description: 'Switch visual theme', icon: 'Settings', group: 'Action', action: () => { this.dataService.toggleDarkMode(); this.toastService.show('Theme toggled', 'success'); } },
+    { id: 'act-new-task', title: 'Create New Task', description: 'Open task editor', icon: 'Plus', group: 'Action', action: () => this.router.navigate(['/tasks'], { queryParams: { new: 1 } }) },
+    { id: 'act-overdue', title: 'Show Overdue Tasks', description: 'Filter overdue tasks', icon: 'Alert', group: 'Action', action: () => this.router.navigate(['/tasks'], { queryParams: { overdue: 1 } }) },
+    { id: 'act-due-soon', title: 'Show Due in 7 Days', description: 'Upcoming deadline window', icon: 'Clock', group: 'Action', action: () => this.router.navigate(['/tasks'], { queryParams: { due: 7 } }) },
+    {
+      id: 'act-my-tasks',
+      title: 'Show My Tasks',
+      description: 'Tasks assigned to me',
+      icon: 'User',
+      group: 'Action',
+      action: () => {
+        const user = this.dataService.currentUser();
+        if (!user) {
+          this.toastService.show('No active user', 'error');
+          return;
+        }
+        this.router.navigate(['/tasks'], { queryParams: { owner: 'me' } });
+      }
+    },
+    { id: 'act-ai', title: 'Toggle AI Assistant', description: 'Open Wushai assistant', icon: 'Bot', group: 'Action', action: () => this.dataService.toggleAiAssistant() },
+    { id: 'act-notif', title: 'Toggle Notifications', description: 'Open notifications panel', icon: 'Bell', group: 'Action', action: () => this.dataService.toggleNotifications() },
     {
       id: 'act-export', title: 'Backup Database', description: 'Download JSON backup', icon: 'Cpu', group: 'Action', action: () => {
         const data = this.dataService.exportDatabase();

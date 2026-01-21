@@ -1,8 +1,6 @@
-import { Component, inject, signal, computed, effect } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { DataService, User } from '../../core/services/state/data.service';
-import { UserService } from '../../core/services/domain/user.service';
+import { AuthService } from '../../core/services/domain/auth.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
 
@@ -31,86 +29,47 @@ type LoginState = 'idle' | 'authenticating' | 'success';
          
          @if (loginState() === 'idle') {
             <!-- Logo & Branding -->
-            <div (click)="handleTitleClick()" class="text-center mb-10 animate-fade-in-down cursor-pointer select-none">
+            <div class="text-center mb-10 animate-fade-in-down select-none">
                 <h1 class="text-5xl font-bold tracking-tighter mb-2 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">HimControl</h1>
-                <p class="text-wushai-sand/60 text-sm uppercase tracking-[0.3em] font-mono">System Access Portal</p>
+                <p class="text-wushai-sand/60 text-sm uppercase tracking-[0.3em] font-mono">User Access Portal</p>
             </div>
 
-            <!-- Step 1: User Selection -->
-            @if (!selectedUser()) {
-                <div class="grid grid-cols-2 gap-4 animate-scale-in">
-                @for (user of visibleUsers(); track user.id) {
-                    <button (click)="selectUser(user)" class="group bg-gray-800/40 backdrop-blur-md hover:bg-gray-700/60 border border-gray-700 hover:border-wushai-olive rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-wushai-olive/10">
-                        <div class="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-lg border-2 border-transparent group-hover:border-wushai-sand transition-all relative overflow-hidden"
-                            [style.background-color]="user.avatarColor">
-                            @if (user.avatarUrl) {
-                              <img [src]="user.avatarUrl" [alt]="user.name" class="w-full h-full object-cover rounded-full">
-                            } @else {
-                              <span class="relative z-10">{{ user.name.charAt(0) }}</span>
-                            }
-                            <!-- Shine effect -->
-                            <div class="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        </div>
-                        <div class="text-center">
-                            <p class="font-bold text-lg group-hover:text-wushai-sand transition-colors">{{ user.name }}</p>
-                            <p class="text-xs text-gray-500 uppercase font-mono tracking-wide">{{ user.role }}</p>
-                        </div>
+            <div class="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-3xl p-8 shadow-2xl animate-fade-in text-center relative overflow-hidden">
+                <!-- Glass reflection -->
+                <div class="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
+
+                <div class="flex flex-col items-center mb-8 relative z-10">
+                    <div class="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-2xl border-4 border-wushai-black mb-4 ring-2 ring-gray-700">
+                        <span [innerHTML]="getIcon('User')" class="w-10 h-10 text-wushai-olive"></span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white">تسجيل الدخول</h3>
+                    <p class="text-wushai-sand/70 text-xs uppercase tracking-widest mt-1 font-bold">Email / Password</p>
+                </div>
+
+                <div class="space-y-4 text-left">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Email</label>
+                        <input type="email" [value]="email()" (input)="email.set($any($event.target).value)"
+                               class="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Password</label>
+                        <input type="password" [value]="password()" (input)="password.set($any($event.target).value)"
+                               class="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white">
+                    </div>
+                    <button (click)="attemptLogin()" class="w-full bg-wushai-olive text-white rounded-lg py-2 text-sm font-bold">
+                        دخول
                     </button>
+                </div>
+
+                <button (click)="handleQuickAccess()" class="mt-4 text-xs text-wushai-sand/70 hover:text-wushai-sand transition-colors">
+                    دخول سريع إذا كانت الجلسة موجودة
+                </button>
+                
+                @if (error()) {
+                    <p class="absolute bottom-4 left-0 right-0 text-center text-red-500 text-xs font-bold animate-shake tracking-widest uppercase">بيانات الدخول غير صحيحة</p>
                 }
-                </div>
-            } 
-            <!-- Step 2: PIN Entry -->
-            @else {
-                <div class="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-3xl p-8 shadow-2xl animate-fade-in text-center relative overflow-hidden">
-                    <!-- Glass reflection -->
-                    <div class="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
-
-                    <button (click)="clearSelection()" class="absolute top-6 left-6 text-gray-500 hover:text-white transition-colors z-20">
-                        <span [innerHTML]="getIcon('X')" class="w-6 h-6"></span>
-                    </button>
-
-                    <div class="flex flex-col items-center mb-8 relative z-10">
-                        <div class="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-2xl border-4 border-wushai-black mb-4 ring-2 ring-gray-700"
-                            [style.background-color]="selectedUser()?.avatarColor">
-                            @if (selectedUser()?.avatarUrl) {
-                               <img [src]="selectedUser()?.avatarUrl" [alt]="selectedUser()?.name" class="w-full h-full object-cover rounded-full">
-                            } @else {
-                               {{ selectedUser()?.name?.charAt(0) }}
-                            }
-                        </div>
-                        <h3 class="text-2xl font-bold text-white">{{ selectedUser()?.name }}</h3>
-                        <p class="text-wushai-sand/70 text-xs uppercase tracking-widest mt-1 font-bold">Security Clearance Required</p>
-                    </div>
-
-                    <!-- PIN Dots -->
-                    <div class="flex justify-center gap-4 mb-8">
-                        @for (i of [0,1,2,3,4,5]; track i) {
-                            <div class="w-4 h-4 rounded-full border border-gray-500 transition-all duration-200"
-                                [ngClass]="pin().length > i ? 'bg-wushai-olive border-wushai-olive scale-125 shadow-[0_0_10px_rgba(75,88,66,0.8)]' : 'bg-transparent'"></div>
-                        }
-                    </div>
-
-                    <!-- Numpad -->
-                    <div class="grid grid-cols-3 gap-4 mb-2 max-w-[280px] mx-auto">
-                        @for (num of [1,2,3,4,5,6,7,8,9]; track num) {
-                            <button (click)="enterDigit(num)" class="w-full aspect-square rounded-full bg-gray-700/30 hover:bg-gray-600/80 border border-white/5 hover:border-white/20 text-2xl font-medium transition-all active:scale-95 shadow-lg backdrop-blur-sm">
-                                {{ num }}
-                            </button>
-                        }
-                        <button (click)="handleBiometric()" class="w-full aspect-square rounded-full flex items-center justify-center text-red-400/80 hover:text-red-300 hover:bg-red-900/20 transition-all active:scale-95" title="Biometric Bypass">
-                            <span [innerHTML]="getIcon('Fingerprint')" class="w-8 h-8"></span>
-                        </button>
-                        <button (click)="enterDigit(0)" class="w-full aspect-square rounded-full bg-gray-700/30 hover:bg-gray-600/80 border border-white/5 hover:border-white/20 text-2xl font-medium transition-all active:scale-95 shadow-lg backdrop-blur-sm">0</button>
-                        <button (click)="backspace()" class="w-full aspect-square rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all active:scale-95">
-                            ⌫
-                        </button>
-                    </div>
-                    
-                    @if (error()) {
-                        <p class="absolute bottom-4 left-0 right-0 text-center text-red-500 text-xs font-bold animate-shake tracking-widest uppercase">Invalid Access Code</p>
-                    }
-                </div>
-            }
+            </div>
          }
       </div>
 
@@ -183,42 +142,11 @@ type LoginState = 'idle' | 'authenticating' | 'success';
   `]
 })
 export class LoginComponent {
-   // Use UserService directly for Auth
-   private userService = inject(UserService);
+   private authService = inject(AuthService);
    private sanitizer = inject(DomSanitizer);
 
-   private allUsers = this.userService.availableUsers; // Use UserService
-   private titleClicks = signal(0);
-   private showAdmin = computed(() => this.titleClicks() >= 5);
-
-   visibleUsers = computed(() => {
-      if (this.showAdmin()) {
-         return this.allUsers();
-      }
-      return this.allUsers().filter(u => u.role !== 'System Admin');
-   });
-
-   selectedUser = signal<User | null>(null);
-
-   // Effect to auto-select admin if backdoor triggered and no user selected
-   constructor() {
-      effect(() => {
-         if (this.showAdmin() && !this.selectedUser()) {
-            // Find or create temp admin user for display
-            const adminUser: User = {
-               id: 'dev-admin',
-               name: 'System Admin',
-               email: 'admin@himcontrol.local',
-               role: 'System Admin',
-               avatarColor: '#4B5842',
-               pin: '0000'
-            };
-            this.selectedUser.set(adminUser);
-         }
-      });
-   }
-
-   pin = signal('');
+   email = signal('');
+   password = signal('');
    error = signal(false);
 
    // Motion States
@@ -230,69 +158,19 @@ export class LoginComponent {
       return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
    }
 
-   handleTitleClick() {
-      this.titleClicks.update(c => c + 1);
-   }
-
-   selectUser(user: User) {
-      this.selectedUser.set(user);
-      this.pin.set('');
-      this.error.set(false);
-   }
-
-   clearSelection() {
-      this.selectedUser.set(null);
-      this.titleClicks.set(0);
-   }
-
-   enterDigit(num: number) {
-      if (this.pin().length < 6) {
-         this.pin.update(p => p + num);
-         this.error.set(false);
-         if (this.pin().length === 6) {
-            this.attemptLogin();
-         }
-      }
-   }
-
-   backspace() {
-      this.pin.update(p => p.slice(0, -1));
-      this.error.set(false);
-   }
-
-   async attemptLogin() {
-      const user = this.selectedUser();
-      if (!user) return;
-
-      // Note: In real auth, we verify against the server. 
-      // We optimistically start the sequence.
-      this.startLoginSequence();
-   }
-
-   handleBiometric() {
-      // Check if this is the backdoor admin (title clicks >= 5)
-      // AND attempting to bypass.
-      if (this.showAdmin() && this.selectedUser()?.id === 'dev-admin') {
+   handleQuickAccess() {
+      if (this.authService.hasSession() && this.authService.hasActiveProfile()) {
          this.loginState.set('authenticating');
-         this.loadingText.set('OVERRIDING SECURITY PROTOCOLS...');
-         this.progress.set(30);
-
-         setTimeout(async () => {
-            this.loadingText.set('INJECTING ADMIN CREDENTIALS...');
-            this.progress.set(60);
-
-            // Call special backdoor login
-            await this.userService.loginAsBackdoorAdmin();
-
-            this.loadingText.set('ACCESS GRANTED - GOD MODE');
+         this.loadingText.set('RESTORING SECURE SESSION...');
+         this.progress.set(60);
+         setTimeout(() => {
             this.progress.set(100);
+            this.loadingText.set('ACCESS GRANTED');
             this.loginState.set('success');
-         }, 1500);
-         return;
+         }, 800);
+      } else {
+         this.error.set(true);
       }
-
-      this.pin.set(this.selectedUser()?.pin || '000000');
-      this.attemptLogin();
    }
 
    // --- The Magic Sequence ---
@@ -304,11 +182,7 @@ export class LoginComponent {
       this.progress.set(10);
 
       // Actual Login Attempt
-      const user = this.selectedUser();
-      if (!user) return;
-
-      // Attempt Real Login
-      const success = await this.userService.login(user.email, this.pin());
+      const success = await this.authService.loginWithEmailPassword(this.email(), this.password());
 
       if (!success) {
          // Login Failed
@@ -317,7 +191,7 @@ export class LoginComponent {
          setTimeout(() => {
             this.loginState.set('idle');
             this.error.set(true);
-            this.pin.set('');
+            this.password.set('');
          }, 1000);
          return;
       }
@@ -341,5 +215,9 @@ export class LoginComponent {
          this.loadingText.set('ACCESS GRANTED');
          this.loginState.set('success');
       }, 1800);
+   }
+   async attemptLogin() {
+      this.error.set(false);
+      await this.startLoginSequence();
    }
 }

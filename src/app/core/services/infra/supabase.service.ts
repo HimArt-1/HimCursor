@@ -1,33 +1,32 @@
 
 
 import { Injectable, inject } from '@angular/core';
-import { createClient, SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
+import { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import { Task } from '../../types';
 import { ToastService } from '../state/toast.service';
-import { environment } from '../../config/environment';
+import { supabaseClient, isSupabaseConfigured } from '../../supabase.client';
+import { AuthService } from '../domain/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class SupabaseService {
   private supabase: SupabaseClient;
   private toastService = inject(ToastService);
+  private authService = inject(AuthService);
   private taskChannel: RealtimeChannel | null = null;
   readonly isConfigured: boolean;
 
   constructor() {
-    const supabaseUrl = environment.supabaseUrl;
-    const supabaseKey = environment.supabaseKey;
-
-    if (!supabaseUrl || !supabaseKey) {
+    if (!isSupabaseConfigured || !supabaseClient) {
       this.isConfigured = false;
       const errorMessage = 'Supabase is not configured. Real-time and data persistence features are disabled. Please configure environment variables.';
       console.warn(errorMessage);
       // Mock the client to prevent crashing the app, ensuring methods exist.
       this.supabase = {
         from: () => ({
-          select: async () => ({ data: [], error: { message: errorMessage, details: '', hint: '', code: '' } }),
-          insert: async () => ({ data: null, error: { message: errorMessage, details: '', hint: '', code: '' } }),
-          update: async () => ({ data: null, error: { message: errorMessage, details: '', hint: '', code: '' } }),
-          delete: async () => ({ data: null, error: { message: errorMessage, details: '', hint: '', code: '' } }),
+          select: async () => ({ data: [], error: { message: errorMessage, details: '', hint: '', code: '', status: 400 } }),
+          insert: async () => ({ data: null, error: { message: errorMessage, details: '', hint: '', code: '', status: 400 } }),
+          update: async () => ({ data: null, error: { message: errorMessage, details: '', hint: '', code: '', status: 400 } }),
+          delete: async () => ({ data: null, error: { message: errorMessage, details: '', hint: '', code: '', status: 400 } }),
         }),
         channel: () => ({
           on: function () { return this; },
@@ -35,19 +34,31 @@ export class SupabaseService {
         }),
         auth: {
           getUser: async () => ({ data: { user: null }, error: null }),
-          signInWithPassword: async () => ({ data: { user: null }, error: { message: errorMessage } }),
+          signInWithPassword: async () => ({ data: { user: null }, error: { message: errorMessage, status: 400 } }),
           signOut: async () => ({ error: null }),
           onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } })
         }
       } as any;
     } else {
       this.isConfigured = true;
-      this.supabase = createClient(supabaseUrl, supabaseKey);
+      this.supabase = supabaseClient;
     }
   }
 
   get client() {
     return this.supabase;
+  }
+
+  private formatError(error: any): string {
+    if (!error) return 'Unknown error';
+    const parts = [
+      error.message,
+      error.details,
+      error.hint,
+      error.code,
+      error.status
+    ].filter(Boolean);
+    return parts.join(' | ');
   }
 
   listenToTasks(
@@ -95,13 +106,15 @@ export class SupabaseService {
   }
 
   async getTasks(): Promise<Task[]> {
+    await this.authService.ensureSession();
     const { data, error } = await this.supabase.from('tasks').select('*');
     if (error) {
       if (this.isConfigured) {
-        console.error('Error fetching tasks:', error.message);
-        this.toastService.show(`خطأ في جلب البيانات: ${error.message}`, 'error');
+        const detail = this.formatError(error);
+        console.error('Error fetching tasks:', detail);
+        this.toastService.show(`خطأ في جلب البيانات: ${detail}`, 'error');
       } else {
-        console.warn(error.message);
+        console.warn(this.formatError(error));
       }
       return [];
     }
@@ -112,6 +125,8 @@ export class SupabaseService {
   }
 
   async addTask(task: Omit<Task, 'id'>): Promise<Task | null> {
+    await this.authService.ensureSession();
+
     const taskForDb = {
       title: task.title,
       description: task.description,
@@ -130,9 +145,10 @@ export class SupabaseService {
       .single();
 
     if (error) {
-      console.error('Error adding task:', error.message);
+      const detail = this.formatError(error);
+      console.error('Error adding task:', detail);
       if (this.isConfigured) {
-        this.toastService.show(`خطأ في إضافة المهمة: ${error.message}`, 'error');
+        this.toastService.show(`خطأ في إضافة المهمة: ${detail}`, 'error');
       }
       return null;
     }
@@ -143,6 +159,8 @@ export class SupabaseService {
   }
 
   async updateTask(id: string, updates: Partial<Task>): Promise<any> {
+    await this.authService.ensureSession();
+
     const updatesForDb: any = {};
     if (updates.title !== undefined) updatesForDb.title = updates.title;
     if (updates.description !== undefined) updatesForDb.description = updates.description;
@@ -159,9 +177,10 @@ export class SupabaseService {
       .eq('id', id);
 
     if (error) {
-      console.error('Error updating task:', error.message);
+      const detail = this.formatError(error);
+      console.error('Error updating task:', detail);
       if (this.isConfigured) {
-        this.toastService.show(`خطأ في تحديث المهمة: ${error.message}`, 'error');
+        this.toastService.show(`خطأ في تحديث المهمة: ${detail}`, 'error');
       }
       return null;
     }
@@ -169,11 +188,14 @@ export class SupabaseService {
   }
 
   async deleteTask(id: string): Promise<any> {
+    await this.authService.ensureSession();
+
     const { error } = await this.supabase.from('tasks').delete().eq('id', id);
     if (error) {
-      console.error('Error deleting task:', error.message);
+      const detail = this.formatError(error);
+      console.error('Error deleting task:', detail);
       if (this.isConfigured) {
-        this.toastService.show(`خطأ في حذف المهمة: ${error.message}`, 'error');
+        this.toastService.show(`خطأ في حذف المهمة: ${detail}`, 'error');
       }
       return null;
     }

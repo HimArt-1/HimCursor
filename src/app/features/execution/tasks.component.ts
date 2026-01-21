@@ -1,6 +1,7 @@
 
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router, ParamMap } from '@angular/router';
 import { DataService, Task, Domain, Priority, User, Comment } from '../../core/services/state/data.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
@@ -30,12 +31,26 @@ import { ConfettiService } from '../../core/services/state/confetti.service';
 
            <!-- Owner Filter -->
            <div class="relative">
-             <select (change)="ownerFilter.set($any($event.target).value)" 
+             <select [value]="ownerFilter()" (change)="ownerFilter.set($any($event.target).value)" 
                      class="appearance-none bg-white dark:bg-wushai-surface dark:text-wushai-sand border border-wushai-sand dark:border-wushai-lilac/20 text-gray-700 py-2 pr-4 pl-8 rounded-xl leading-tight focus:outline-none focus:border-wushai-olive dark:focus:border-wushai-lilac text-sm font-medium shadow-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-wushai-surface/80 transition-colors">
                <option value="">كل الفريق</option>
                @for (owner of uniqueOwners(); track owner) {
                  <option [value]="owner">{{ owner }}</option>
                }
+             </select>
+             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
+               <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+             </div>
+           </div>
+
+           <!-- Status Filter -->
+           <div class="relative">
+             <select [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value)" 
+                     class="appearance-none bg-white dark:bg-wushai-surface dark:text-wushai-sand border border-wushai-sand dark:border-wushai-lilac/20 text-gray-700 py-2 pr-4 pl-8 rounded-xl leading-tight focus:outline-none focus:border-wushai-olive dark:focus:border-wushai-lilac text-sm font-medium shadow-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-wushai-surface/80 transition-colors">
+               <option value="All">كل الحالات</option>
+               <option value="Todo">للعمل</option>
+               <option value="Doing">جاري</option>
+               <option value="Done">مكتمل</option>
              </select>
              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
@@ -63,6 +78,76 @@ import { ConfettiService } from '../../core/services/state/confetti.service';
            </button>
         </div>
       </header>
+
+      <!-- Quick Add -->
+      <div class="bg-white dark:bg-wushai-surface border border-wushai-sand dark:border-wushai-lilac/10 rounded-2xl p-4 shadow-sm transition-all duration-500"
+           [class.opacity-0]="zenModeTask()" [class.pointer-events-none]="zenModeTask()">
+        <div class="flex flex-col md:flex-row md:items-center gap-3">
+          <div class="flex-1 relative">
+            <input type="text"
+                   [value]="quickTaskTitle()"
+                   (input)="quickTaskTitle.set($any($event.target).value)"
+                   (keyup.enter)="createQuickTask()"
+                   placeholder="أضف مهمة بسرعة... (اضغط Enter)"
+                   class="w-full pr-4 pl-4 py-2.5 rounded-xl border border-wushai-sand dark:border-wushai-lilac/20 focus:outline-none focus:border-wushai-olive dark:focus:border-wushai-lilac text-sm bg-white dark:bg-wushai-surface dark:text-white shadow-sm">
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select [value]="quickTaskDomain()" (change)="quickTaskDomain.set($any($event.target).value)"
+                    class="bg-white dark:bg-wushai-surface dark:text-wushai-sand border border-wushai-sand dark:border-wushai-lilac/20 text-gray-700 py-2 pr-4 pl-3 rounded-xl text-xs font-bold shadow-sm cursor-pointer">
+              <option value="Design">Design</option>
+              <option value="Development">Development</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Store">Store</option>
+              <option value="Operations">Operations</option>
+            </select>
+            <select [value]="quickTaskPriority()" (change)="quickTaskPriority.set($any($event.target).value)"
+                    class="bg-white dark:bg-wushai-surface dark:text-wushai-sand border border-wushai-sand dark:border-wushai-lilac/20 text-gray-700 py-2 pr-4 pl-3 rounded-xl text-xs font-bold shadow-sm cursor-pointer">
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+            <input type="date"
+                   [value]="quickTaskDue()"
+                   (change)="quickTaskDue.set($any($event.target).value)"
+                   class="bg-white dark:bg-wushai-surface dark:text-wushai-sand border border-wushai-sand dark:border-wushai-lilac/20 text-gray-700 py-2 px-3 rounded-xl text-xs font-bold shadow-sm">
+            <button (click)="createQuickTask()"
+                    class="bg-wushai-dark text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-wushai-black transition-colors shadow-sm">
+              إضافة
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Filters -->
+      <div class="flex flex-wrap items-center gap-2 transition-all duration-500" [class.opacity-0]="zenModeTask()" [class.pointer-events-none]="zenModeTask()">
+        <button (click)="toggleOverdue()"
+                class="px-3 py-1.5 rounded-full text-xs font-bold border transition-colors flex items-center gap-2"
+                [ngClass]="overdueOnly() ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800/50' : 'bg-white dark:bg-wushai-surface text-gray-500 border-wushai-sand dark:border-wushai-lilac/10 hover:text-red-600'">
+          متأخر
+          <span class="text-[10px] bg-white/70 dark:bg-black/20 px-1.5 py-0.5 rounded">{{ overdueCount() }}</span>
+        </button>
+        <button (click)="toggleDueSoon(7)"
+                class="px-3 py-1.5 rounded-full text-xs font-bold border transition-colors flex items-center gap-2"
+                [ngClass]="dueWithinDays() === 7 ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800/50' : 'bg-white dark:bg-wushai-surface text-gray-500 border-wushai-sand dark:border-wushai-lilac/10 hover:text-amber-600'">
+          خلال 7 أيام
+          <span class="text-[10px] bg-white/70 dark:bg-black/20 px-1.5 py-0.5 rounded">{{ dueSoonCount() }}</span>
+        </button>
+        <button (click)="toggleHighPriority()"
+                class="px-3 py-1.5 rounded-full text-xs font-bold border transition-colors flex items-center gap-2"
+                [ngClass]="highPriorityOnly() ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800/50' : 'bg-white dark:bg-wushai-surface text-gray-500 border-wushai-sand dark:border-wushai-lilac/10 hover:text-purple-600'">
+          أولوية عالية
+          <span class="text-[10px] bg-white/70 dark:bg-black/20 px-1.5 py-0.5 rounded">{{ highPriorityCount() }}</span>
+        </button>
+        <button (click)="toggleMineOnly()"
+                class="px-3 py-1.5 rounded-full text-xs font-bold border transition-colors flex items-center gap-2"
+                [ngClass]="mineOnly() ? 'bg-wushai-olive/20 text-wushai-olive border-wushai-olive/40 dark:bg-wushai-lilac/10 dark:text-wushai-lilac dark:border-wushai-lilac/30' : 'bg-white dark:bg-wushai-surface text-gray-500 border-wushai-sand dark:border-wushai-lilac/10 hover:text-wushai-olive'">
+          مهماتي
+          <span class="text-[10px] bg-white/70 dark:bg-black/20 px-1.5 py-0.5 rounded">{{ mineCount() }}</span>
+        </button>
+        <button (click)="resetFilters()" class="px-3 py-1.5 rounded-full text-xs font-bold border border-wushai-sand dark:border-wushai-lilac/10 text-gray-400 hover:text-wushai-dark dark:hover:text-wushai-sand transition-colors">
+          إعادة ضبط
+        </button>
+      </div>
 
       <!-- Zen Mode Overlay -->
       @if (zenModeTask()) {
@@ -460,6 +545,9 @@ export class TasksComponent {
   private dataService = inject(DataService);
   private sanitizer = inject(DomSanitizer);
   private confettiService = inject(ConfettiService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private readonly filterStorageKey = 'himcontrol_task_filters';
 
   tasks = this.dataService.tasks;
   viewMode = signal<'Kanban' | 'List'>('Kanban');
@@ -474,6 +562,17 @@ export class TasksComponent {
   // Search & Filter State
   searchText = signal('');
   ownerFilter = signal('');
+  statusFilter = signal<'All' | 'Todo' | 'Doing' | 'Done'>('All');
+  overdueOnly = signal(false);
+  dueWithinDays = signal<number | null>(null);
+  highPriorityOnly = signal(false);
+  mineOnly = signal(false);
+
+  // Quick Add State
+  quickTaskTitle = signal('');
+  quickTaskDomain = signal<Domain>('Development');
+  quickTaskPriority = signal<Priority>('Medium');
+  quickTaskDue = signal<string>('');
 
   // User map for comments
   private userMap = computed(() => {
@@ -489,11 +588,26 @@ export class TasksComponent {
     return Array.from(owners);
   });
 
+  overdueCount = computed(() => this.tasks().filter(t => t.status !== 'Done' && this.isOverdue(t.dueDate)).length);
+  dueSoonCount = computed(() => this.tasks().filter(t => t.status !== 'Done' && this.isDueWithin(t.dueDate, 7)).length);
+  highPriorityCount = computed(() => this.tasks().filter(t => t.status !== 'Done' && t.priority === 'High').length);
+  mineCount = computed(() => {
+    const name = this.dataService.currentUser()?.name;
+    if (!name) return 0;
+    return this.tasks().filter(t => t.status !== 'Done' && t.owner === name).length;
+  });
+
   // Computed: Filtered Tasks
   filteredTasks = computed(() => {
     const all = this.tasks();
     const search = this.searchText().toLowerCase().trim();
     const owner = this.ownerFilter();
+    const status = this.statusFilter();
+    const overdueOnly = this.overdueOnly();
+    const dueWithinDays = this.dueWithinDays();
+    const highPriorityOnly = this.highPriorityOnly();
+    const mineOnly = this.mineOnly();
+    const currentUser = this.dataService.currentUser()?.name || null;
     const comments = this.dataService.comments();
 
     return all
@@ -506,7 +620,12 @@ export class TasksComponent {
           task.title.toLowerCase().includes(search) ||
           (task.description || '').toLowerCase().includes(search);
         const matchesOwner = !owner || task.owner === owner;
-        return matchesSearch && matchesOwner;
+        const matchesMine = !mineOnly || (!!currentUser && task.owner === currentUser);
+        const matchesStatus = status === 'All' || task.status === status;
+        const matchesOverdue = !overdueOnly || (task.status !== 'Done' && this.isOverdue(task.dueDate));
+        const matchesDueSoon = dueWithinDays === null || (task.status !== 'Done' && this.isDueWithin(task.dueDate, dueWithinDays));
+        const matchesPriority = !highPriorityOnly || task.priority === 'High';
+        return matchesSearch && matchesOwner && matchesMine && matchesStatus && matchesOverdue && matchesDueSoon && matchesPriority;
       });
   });
 
@@ -517,6 +636,86 @@ export class TasksComponent {
       .filter(c => c.taskId === taskId)
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   });
+
+  constructor() {
+    this.restoreFilters();
+    this.applyQueryParams(this.route.snapshot.queryParamMap);
+    this.persistFilters();
+  }
+
+  private persistFilters() {
+    effect(() => {
+      const payload = {
+        viewMode: this.viewMode(),
+        searchText: this.searchText(),
+        ownerFilter: this.ownerFilter(),
+        statusFilter: this.statusFilter(),
+        overdueOnly: this.overdueOnly(),
+        dueWithinDays: this.dueWithinDays(),
+        highPriorityOnly: this.highPriorityOnly(),
+        mineOnly: this.mineOnly()
+      };
+      localStorage.setItem(this.filterStorageKey, JSON.stringify(payload));
+    });
+  }
+
+  private restoreFilters() {
+    const stored = localStorage.getItem(this.filterStorageKey);
+    if (!stored) return;
+    try {
+      const saved = JSON.parse(stored);
+      if (saved.viewMode) this.viewMode.set(saved.viewMode);
+      if (typeof saved.searchText === 'string') this.searchText.set(saved.searchText);
+      if (typeof saved.ownerFilter === 'string') this.ownerFilter.set(saved.ownerFilter);
+      if (saved.statusFilter) this.statusFilter.set(saved.statusFilter);
+      if (typeof saved.overdueOnly === 'boolean') this.overdueOnly.set(saved.overdueOnly);
+      if (typeof saved.dueWithinDays === 'number' || saved.dueWithinDays === null) this.dueWithinDays.set(saved.dueWithinDays);
+      if (typeof saved.highPriorityOnly === 'boolean') this.highPriorityOnly.set(saved.highPriorityOnly);
+      if (typeof saved.mineOnly === 'boolean') this.mineOnly.set(saved.mineOnly);
+    } catch {
+      // Ignore invalid cache
+    }
+  }
+
+  private applyQueryParams(params: ParamMap) {
+    const status = params.get('status');
+    if (status === 'Todo' || status === 'Doing' || status === 'Done' || status === 'All') {
+      this.statusFilter.set(status);
+    }
+    const overdue = params.get('overdue');
+    if (this.isTruthyParam(overdue)) this.overdueOnly.set(true);
+
+    const due = params.get('due');
+    if (due && !Number.isNaN(Number(due))) {
+      this.dueWithinDays.set(Number(due));
+    }
+
+    const priority = params.get('priority');
+    if (priority === 'High' || this.isTruthyParam(params.get('high'))) {
+      this.highPriorityOnly.set(true);
+    }
+
+    const owner = params.get('owner');
+    if (owner) {
+      if (owner === 'me') this.mineOnly.set(true);
+      else this.ownerFilter.set(owner);
+    }
+
+    const query = params.get('q');
+    if (query) this.searchText.set(query);
+
+    const view = params.get('view');
+    if (view === 'Kanban' || view === 'List') this.viewMode.set(view);
+
+    if (this.isTruthyParam(params.get('new'))) {
+      setTimeout(() => this.openModal(null), 0);
+    }
+  }
+
+  private isTruthyParam(value: string | null): boolean {
+    if (!value) return false;
+    return value === '1' || value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
+  }
 
   getTasksByStatus(status: string) {
     return this.filteredTasks().filter(t => t.status === status);
@@ -534,12 +733,77 @@ export class TasksComponent {
     }
   }
 
+  toggleOverdue() {
+    this.overdueOnly.update(v => !v);
+  }
+
+  toggleDueSoon(days = 7) {
+    this.dueWithinDays.set(this.dueWithinDays() === days ? null : days);
+  }
+
+  toggleHighPriority() {
+    this.highPriorityOnly.update(v => !v);
+  }
+
+  toggleMineOnly() {
+    const next = !this.mineOnly();
+    this.mineOnly.set(next);
+    if (next) this.ownerFilter.set('');
+  }
+
+  resetFilters() {
+    this.searchText.set('');
+    this.ownerFilter.set('');
+    this.statusFilter.set('All');
+    this.overdueOnly.set(false);
+    this.dueWithinDays.set(null);
+    this.highPriorityOnly.set(false);
+    this.mineOnly.set(false);
+  }
+
+  createQuickTask() {
+    const title = this.quickTaskTitle().trim();
+    if (!title) return;
+    const owner = this.dataService.currentUser()?.name || 'غير محدد';
+    const dueDate = this.quickTaskDue() || new Date().toISOString();
+    this.dataService.addTask({
+      id: `TSK-${Math.floor(Math.random() * 9999)}`,
+      title,
+      description: '',
+      domain: this.quickTaskDomain(),
+      owner,
+      priority: this.quickTaskPriority(),
+      status: 'Todo',
+      dueDate,
+      tags: []
+    });
+    this.resetQuickTask();
+  }
+
+  resetQuickTask() {
+    this.quickTaskTitle.set('');
+    this.quickTaskDomain.set('Development');
+    this.quickTaskPriority.set('Medium');
+    this.quickTaskDue.set('');
+  }
+
   isOverdue(dateStr: string): boolean {
     if (!dateStr) return false;
     const due = new Date(dateStr);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return due < today;
+  }
+
+  isDueWithin(dateStr: string, days: number): boolean {
+    if (!dateStr) return false;
+    const due = new Date(dateStr);
+    const now = new Date();
+    const end = new Date();
+    end.setDate(now.getDate() + days);
+    now.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    return due >= now && due <= end;
   }
 
   // --- Modal Logic ---

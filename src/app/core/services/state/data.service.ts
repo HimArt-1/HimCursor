@@ -8,6 +8,7 @@ import { ToastService } from './toast.service';
 // New Services
 import { UiService } from './ui.service';
 import { UserService } from '../domain/user.service';
+import { AuthService } from '../domain/auth.service';
 import { TaskService } from '../domain/task.service';
 import { FinancialService } from '../domain/finance.service';
 import { StrategyService, Objective } from '../domain/strategy.service';
@@ -39,6 +40,7 @@ export class DataService {
   // Inject new domain services
   public ui = inject(UiService);
   public user = inject(UserService);
+  public auth = inject(AuthService);
   public task = inject(TaskService);
   public finance = inject(FinancialService);
   public strategy = inject(StrategyService);
@@ -93,8 +95,8 @@ export class DataService {
   // --- Facade Methods ---
 
   // Auth
-  login(u: User) { this.user.login(u.email, u.pin); }
-  logout() { this.user.logout(); }
+  login(email: string, password: string) { this.auth.loginWithEmailPassword(email, password); }
+  logout() { this.auth.logout(); }
   updateUserProfile(id: string, upt: Partial<User>) { this.user.updateUserProfile(id, upt); }
   addUser(u: User) { this.user.addUser(u); }
   deleteUser(id: string) { this.user.deleteUser(id); }

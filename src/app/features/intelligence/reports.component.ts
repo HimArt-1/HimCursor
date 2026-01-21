@@ -1,9 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AnalyticsService } from '../../core/services/domain/analytics.service';
 import { ChartComponent } from '../../shared/ui/chart.component';
 import { Icons } from '../../shared/ui/icons';
 import { DomSanitizer } from '@angular/platform-browser';
+import { DataService } from '../../core/services/state/data.service';
 
 @Component({
   selector: 'app-reports',
@@ -21,6 +22,32 @@ import { DomSanitizer } from '@angular/platform-browser';
            <span [innerHTML]="getIcon('Activity')" class="text-wushai-olive"></span>
         </div>
       </header>
+
+      <!-- KPI Summary -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-wushai-black p-4 rounded-2xl border border-wushai-sand shadow-sm">
+          <p class="text-xs text-gray-400">Completion Rate</p>
+          <p class="text-3xl font-bold text-wushai-dark dark:text-wushai-sand mt-1">{{ completionRate() }}%</p>
+          <p class="text-[10px] text-gray-400 mt-1">{{ taskStats().doneTasks }} / {{ taskStats().totalTasks }} مكتملة</p>
+        </div>
+        <div class="bg-white dark:bg-wushai-black p-4 rounded-2xl border border-red-200/60 dark:border-red-900/30 shadow-sm">
+          <p class="text-xs text-gray-400">Overdue Tasks</p>
+          <p class="text-3xl font-bold text-red-600 dark:text-red-400 mt-1">{{ overdueCount() }}</p>
+          <p class="text-[10px] text-gray-400 mt-1">تحتاج معالجة</p>
+        </div>
+        <div class="bg-white dark:bg-wushai-black p-4 rounded-2xl border border-wushai-sand shadow-sm">
+          <p class="text-xs text-gray-400">Active Tasks</p>
+          <p class="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">{{ taskStats().doingTasks }}</p>
+          <p class="text-[10px] text-gray-400 mt-1">قيد التنفيذ</p>
+        </div>
+        <div class="bg-white dark:bg-wushai-black p-4 rounded-2xl border border-wushai-sand shadow-sm">
+          <p class="text-xs text-gray-400">Net Flow</p>
+          <p class="text-3xl font-bold mt-1" [class.text-green-600]="netFlow() >= 0" [class.text-red-600]="netFlow() < 0">
+            {{ netFlow() >= 0 ? '+' : '' }}{{ netFlow() }}
+          </p>
+          <p class="text-[10px] text-gray-400 mt-1">دخل - مصروف</p>
+        </div>
+      </div>
 
       <!-- Charts Grid -->
       <div class="flex-1 overflow-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
@@ -75,6 +102,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 })
 export class ReportsComponent {
   private analytics = inject(AnalyticsService);
+  private dataService = inject(DataService);
   private sanitizer = inject(DomSanitizer);
 
   statusData = this.analytics.taskStatusData;
@@ -82,7 +110,31 @@ export class ReportsComponent {
   financeData = this.analytics.financialFlowData;
   activityData = this.analytics.userActivityData;
 
+  taskStats = this.dataService.stats;
+  transactions = this.dataService.transactions;
+
+  overdueCount = computed(() => this.dataService.tasks().filter(t => t.status !== 'Done' && this.isOverdue(t.dueDate)).length);
+  completionRate = computed(() => {
+    const stats = this.taskStats();
+    if (!stats.totalTasks) return 0;
+    return Math.round((stats.doneTasks / stats.totalTasks) * 100);
+  });
+  netFlow = computed(() => {
+    const txs = this.transactions();
+    const income = txs.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
+    const expense = txs.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
+    return income - expense;
+  });
+
   getIcon(name: keyof typeof Icons) {
     return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
+  }
+
+  private isOverdue(dateStr: string): boolean {
+    if (!dateStr) return false;
+    const due = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return due < today;
   }
 }

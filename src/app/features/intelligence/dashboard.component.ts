@@ -1,5 +1,5 @@
 
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DataService } from '../../core/services/state/data.service';
@@ -71,6 +71,89 @@ import { Icons } from '../../shared/ui/icons';
              </div>
            }
         </a>
+      </div>
+
+      <!-- Smart Insights -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <a routerLink="/tasks" [queryParams]="{ overdue: 1 }" class="bg-white dark:bg-wushai-surface p-5 rounded-2xl shadow-sm border border-red-200/60 dark:border-red-900/30 hover:shadow-lg transition-all">
+          <p class="text-xs font-bold text-red-500 uppercase tracking-widest">متأخرة</p>
+          <p class="text-3xl font-extrabold text-red-600 dark:text-red-400 mt-2">{{ overdueCount() }}</p>
+          <p class="text-xs text-gray-500 mt-1">تحتاج تدخل عاجل</p>
+        </a>
+        <a routerLink="/tasks" [queryParams]="{ due: 7 }" class="bg-white dark:bg-wushai-surface p-5 rounded-2xl shadow-sm border border-amber-200/60 dark:border-amber-900/30 hover:shadow-lg transition-all">
+          <p class="text-xs font-bold text-amber-500 uppercase tracking-widest">قريبة</p>
+          <p class="text-3xl font-extrabold text-amber-600 dark:text-amber-400 mt-2">{{ dueSoonCount() }}</p>
+          <p class="text-xs text-gray-500 mt-1">خلال 7 أيام</p>
+        </a>
+        <a routerLink="/tasks" [queryParams]="{ priority: 'High' }" class="bg-white dark:bg-wushai-surface p-5 rounded-2xl shadow-sm border border-purple-200/60 dark:border-purple-900/30 hover:shadow-lg transition-all">
+          <p class="text-xs font-bold text-purple-500 uppercase tracking-widest">أولوية عالية</p>
+          <p class="text-3xl font-extrabold text-purple-600 dark:text-purple-400 mt-2">{{ highPriorityCount() }}</p>
+          <p class="text-xs text-gray-500 mt-1">تأثير مباشر على الهدف</p>
+        </a>
+        <a routerLink="/tasks" [queryParams]="{ owner: 'غير محدد' }" class="bg-white dark:bg-wushai-surface p-5 rounded-2xl shadow-sm border border-wushai-sand dark:border-wushai-lilac/10 hover:shadow-lg transition-all">
+          <p class="text-xs font-bold text-wushai-olive uppercase tracking-widest">غير مسندة</p>
+          <p class="text-3xl font-extrabold text-wushai-dark dark:text-wushai-sand mt-2">{{ unassignedCount() }}</p>
+          <p class="text-xs text-gray-500 mt-1">بحاجة لمالك</p>
+        </a>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="flex flex-wrap items-center gap-3">
+        <a routerLink="/tasks" [queryParams]="{ new: 1 }" class="px-4 py-2 rounded-xl bg-wushai-dark text-white text-sm font-bold shadow hover:bg-wushai-black transition-colors">
+          مهمة جديدة
+        </a>
+        <a routerLink="/tasks" [queryParams]="{ owner: 'me' }" class="px-4 py-2 rounded-xl bg-wushai-olive/20 text-wushai-olive text-sm font-bold border border-wushai-olive/30 hover:bg-wushai-olive/30 transition-colors">
+          مهامي
+        </a>
+        <a routerLink="/traceability" class="px-4 py-2 rounded-xl bg-red-50 text-red-600 text-sm font-bold border border-red-100 hover:bg-red-100 transition-colors">
+          إصلاح التتبع
+        </a>
+      </div>
+
+      <!-- Daily Brief -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white dark:bg-wushai-surface rounded-2xl shadow-sm border border-wushai-sand dark:border-wushai-lilac/10 p-6">
+          <h3 class="text-lg font-bold text-wushai-dark dark:text-wushai-sand mb-4">الملخص اليومي</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="p-4 rounded-xl bg-wushai-sand/40 dark:bg-wushai-black/20 border border-wushai-sand/50 dark:border-wushai-lilac/10">
+              <p class="text-xs text-gray-500">الأولوية القصوى</p>
+              <p class="text-sm font-bold text-wushai-dark dark:text-wushai-sand mt-1">عالج المتأخرات أولاً</p>
+              <p class="text-xs text-gray-400 mt-2">يوجد {{ overdueCount() }} مهام متأخرة</p>
+            </div>
+            <div class="p-4 rounded-xl bg-wushai-sand/40 dark:bg-wushai-black/20 border border-wushai-sand/50 dark:border-wushai-lilac/10">
+              <p class="text-xs text-gray-500">الأسبوع القادم</p>
+              <p class="text-sm font-bold text-wushai-dark dark:text-wushai-sand mt-1">أغلق المهم قبل الموعد</p>
+              <p class="text-xs text-gray-400 mt-2">{{ dueSoonCount() }} مهام خلال 7 أيام</p>
+            </div>
+            <div class="p-4 rounded-xl bg-wushai-sand/40 dark:bg-wushai-black/20 border border-wushai-sand/50 dark:border-wushai-lilac/10">
+              <p class="text-xs text-gray-500">توزيع العمل</p>
+              <p class="text-sm font-bold text-wushai-dark dark:text-wushai-sand mt-1">اسند غير المملوك</p>
+              <p class="text-xs text-gray-400 mt-2">{{ unassignedCount() }} مهام بلا مالك</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white dark:bg-wushai-surface rounded-2xl shadow-sm border border-wushai-sand dark:border-wushai-lilac/10 p-6">
+          <h3 class="text-lg font-bold text-wushai-dark dark:text-wushai-sand mb-4">المهام الحرجة</h3>
+          <div class="space-y-3">
+            @for (task of riskTasks(); track task.id) {
+              <a routerLink="/tasks" [queryParams]="{ q: task.title }"
+                 class="flex items-center justify-between gap-3 p-3 rounded-xl bg-wushai-light/60 dark:bg-wushai-black/30 border border-wushai-sand/40 dark:border-wushai-lilac/10 hover:bg-wushai-sand/60 transition-colors">
+                <div>
+                  <p class="text-sm font-bold text-wushai-dark dark:text-wushai-sand">{{ task.title }}</p>
+                  <p class="text-xs text-gray-400 mt-1">{{ task.owner }} • {{ task.dueDate | date:'shortDate' }}</p>
+                </div>
+                <span class="text-xs font-bold"
+                      [class.text-red-600]="isOverdue(task.dueDate)"
+                      [class.text-amber-600]="!isOverdue(task.dueDate) && isDueWithin(task.dueDate, 7)">
+                  {{ isOverdue(task.dueDate) ? 'متأخرة' : 'قريبة' }}
+                </span>
+              </a>
+            }
+            @if (riskTasks().length === 0) {
+              <p class="text-xs text-gray-400 text-center py-6">لا توجد مهام حرجة حالياً</p>
+            }
+          </div>
+        </div>
       </div>
 
       <!-- Integrity Alert Section -->
@@ -166,9 +249,31 @@ export class DashboardComponent {
 
   todayDate = new Date();
   stats = this.dataService.stats;
+  tasks = this.dataService.tasks;
   objectives = this.dataService.objectives;
   traceReport = this.dataService.preflightReport;
   auditLogs = this.dataService.auditLogs;
+
+  overdueCount = computed(() => this.tasks().filter(t => t.status !== 'Done' && this.isOverdue(t.dueDate)).length);
+  dueSoonCount = computed(() => this.tasks().filter(t => t.status !== 'Done' && this.isDueWithin(t.dueDate, 7)).length);
+  highPriorityCount = computed(() => this.tasks().filter(t => t.status !== 'Done' && t.priority === 'High').length);
+  unassignedCount = computed(() => this.tasks().filter(t => !t.owner || t.owner === 'غير محدد').length);
+
+  riskTasks = computed(() => {
+    const tasks = this.tasks().filter(t => t.status !== 'Done');
+    return tasks
+      .map(task => {
+        const overdue = this.isOverdue(task.dueDate);
+        const dueSoon = this.isDueWithin(task.dueDate, 7);
+        const high = task.priority === 'High';
+        const score = (overdue ? 3 : 0) + (dueSoon ? 2 : 0) + (high ? 1 : 0);
+        return { task, score };
+      })
+      .filter(item => item.score > 0)
+      .sort((a, b) => b.score - a.score || new Date(a.task.dueDate).getTime() - new Date(b.task.dueDate).getTime())
+      .slice(0, 5)
+      .map(item => item.task);
+  });
 
   getIcon(name: keyof typeof Icons): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
@@ -186,5 +291,24 @@ export class DashboardComponent {
     const report = this.traceReport();
     if (report.total === 0) return 0;
     return Math.round((report.verifiedCount / report.total) * 100);
+  }
+
+  private isOverdue(dateStr: string): boolean {
+    if (!dateStr) return false;
+    const due = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return due < today;
+  }
+
+  private isDueWithin(dateStr: string, days: number): boolean {
+    if (!dateStr) return false;
+    const due = new Date(dateStr);
+    const now = new Date();
+    const end = new Date();
+    end.setDate(now.getDate() + days);
+    now.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    return due >= now && due <= end;
   }
 }
