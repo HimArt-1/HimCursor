@@ -184,7 +184,7 @@ export class AssetsComponent {
    showModal = signal(false);
    isDragging = signal(false);
 
-   filterType = signal('All');
+   activeFilter = signal('All');
    searchQuery = signal('');
 
    selectedAsset = signal<Asset | null>(null);
@@ -200,8 +200,8 @@ export class AssetsComponent {
    // Computed Filtered Assets
    filteredAssets = computed(() => {
       let data = this.assets();
-      if (this.filterType() !== 'All') {
-         data = data.filter(a => a.type === this.filterType());
+      if (this.activeFilter() !== 'All') {
+         data = data.filter(a => a.type === this.activeFilter());
       }
       if (this.searchQuery()) {
          const q = this.searchQuery().toLowerCase();
