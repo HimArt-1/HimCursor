@@ -18,7 +18,8 @@ export class UserService {
     readonly availableUsers = signal<User[]>([]);
     readonly isAdminSession = computed(() => {
         const profile = this.authService.activeProfile();
-        return profile?.role === 'admin' || profile?.role === 'System Admin';
+        const role = (profile?.role || '').toLowerCase();
+        return role === 'admin' || role === 'system admin' || role === 'supervisor';
     });
 
     constructor() {
