@@ -3,11 +3,13 @@ import { User } from '../../types';
 import { UiService } from '../state/ui.service';
 import { AuthService } from './auth.service';
 import { supabaseClient, isSupabaseConfigured } from '../../supabase.client';
+import { PermissionsService } from './permissions.service';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
     private uiService = inject(UiService);
     private authService = inject(AuthService);
+    private permissions = inject(PermissionsService);
     private supabase = supabaseClient;
 
     readonly currentUser = computed(() => {
@@ -16,11 +18,11 @@ export class UserService {
         return this.mapProfileToUser(profile);
     });
     readonly availableUsers = signal<User[]>([]);
-    readonly isAdminSession = computed(() => {
-        const profile = this.authService.activeProfile();
-        const role = (profile?.role || '').toLowerCase();
-        return role === 'admin' || role === 'system admin' || role === 'supervisor';
-    });
+    
+    // Use permissions service for admin check
+    readonly isAdminSession = computed(() => this.permissions.isAdmin());
+    readonly isSystemAdmin = computed(() => this.permissions.isSystemAdmin());
+    readonly canManageUsers = computed(() => this.permissions.canManageUsers());
 
     constructor() {
         effect(() => {
@@ -52,9 +54,24 @@ export class UserService {
                 role: p.role,
                 avatarColor: p.avatar_color || '#4B5842',
                 avatarUrl: p.avatar_url || '',
-                isActive: p.is_active
+                isActive: p.is_active,
+                lastSeen: p.last_seen
             }));
             this.availableUsers.set(users);
+        }
+    }
+
+    async updateLastSeen(userId: string) {
+        if (!isSupabaseConfigured || !this.supabase) return;
+        
+        // Update last_seen directly in profiles table
+        const { error } = await this.supabase
+            .from('profiles')
+            .update({ last_seen: new Date().toISOString() })
+            .eq('id', userId);
+        
+        if (error) {
+            console.error('Error updating last_seen:', error.message);
         }
     }
 
@@ -109,14 +126,26 @@ export class UserService {
         return !!data?.id;
     }
 
-    async deleteUser(userId: string) {
-        if (!isSupabaseConfigured || !this.supabase) return;
+    async deleteUser(userId: string): Promise<boolean> {
+        if (!isSupabaseConfigured || !this.supabase) return false;
         if (!this.isAdminSession()) {
             this.uiService.addNotification('غير مصرح', 'الحذف متاح للإدارة فقط', 'Warning');
-            return;
+            return false;
         }
 
-        await this.setUserActive(userId, false);
+        const { data, error } = await this.supabase.functions.invoke('admin_delete_user', {
+            body: { user_id: userId }
+        });
+
+        if (error) {
+            console.error('admin_delete_user error:', this.formatError(error));
+            this.uiService.addNotification('خطأ', 'فشل حذف المستخدم', 'Warning');
+            return false;
+        }
+
+        await this.loadUsers();
+        this.uiService.addNotification('تم الحذف', 'تم حذف المستخدم نهائياً', 'Success');
+        return true;
     }
 
     async setUserActive(userId: string, isActive: boolean) {

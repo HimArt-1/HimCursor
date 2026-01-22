@@ -27,11 +27,17 @@ export class StrategyService {
             const stored = localStorage.getItem('himcontrol_strategy_objectives');
             if (stored) {
                 try {
-                    this.objectives.set(JSON.parse(stored));
+                    const parsed = JSON.parse(stored);
+                    if (parsed.length > 0) {
+                        this.objectives.set(parsed);
+                        return;
+                    }
                 } catch (e) {
                     console.error('Failed to parse local objectives', e);
                 }
             }
+            // Load seed data if empty
+            this.loadSeedObjectives();
             return;
         }
 
@@ -107,6 +113,25 @@ export class StrategyService {
         }
     }
 
+    async deleteObjective(id: string) {
+        if (!isSupabaseConfigured || !this.supabase) {
+            this.objectives.update(curr => curr.filter(o => o.id !== id));
+            this.saveLocal();
+            return;
+        }
+
+        const { error } = await this.supabase
+            .from('objectives')
+            .delete()
+            .eq('id', id);
+
+        if (!error) {
+            this.objectives.update(curr => curr.filter(o => o.id !== id));
+        } else {
+            console.error('Failed to delete objective:', this.formatError(error));
+        }
+    }
+
     // --- Milestones ---
     readonly milestones = signal<Milestone[]>([]);
 
@@ -115,11 +140,17 @@ export class StrategyService {
             const stored = localStorage.getItem('himcontrol_strategy_milestones');
             if (stored) {
                 try {
-                    this.milestones.set(JSON.parse(stored));
+                    const parsed = JSON.parse(stored);
+                    if (parsed.length > 0) {
+                        this.milestones.set(parsed);
+                        return;
+                    }
                 } catch (e) {
                     console.error('Failed to parse local milestones', e);
                 }
             }
+            // Load seed data if empty
+            this.loadSeedMilestones();
             return;
         }
 
@@ -178,6 +209,24 @@ export class StrategyService {
     private saveLocal() {
         localStorage.setItem('himcontrol_strategy_objectives', JSON.stringify(this.objectives()));
         localStorage.setItem('himcontrol_strategy_milestones', JSON.stringify(this.milestones()));
+    }
+
+    private loadSeedObjectives() {
+        this.objectives.set([
+            { id: 'OBJ-001', title: 'زيادة المبيعات بنسبة 50%', progress: 35, term: 'Medium', description: 'تحقيق نمو في إيرادات المبيعات خلال الربع الأول', owner: 'مدير المبيعات' },
+            { id: 'OBJ-002', title: 'الوصول إلى 100 ألف مستخدم', progress: 60, term: 'Long', description: 'زيادة قاعدة المستخدمين للتطبيق', owner: 'فريق التسويق' },
+            { id: 'OBJ-003', title: 'تحسين تجربة المستخدم', progress: 80, term: 'Short', description: 'تقليل وقت التحميل وتحسين الواجهة', owner: 'فريق التطوير' },
+            { id: 'OBJ-004', title: 'التوسع في دول الخليج', progress: 15, term: 'Long', description: 'إطلاق التطبيق في الإمارات والكويت', owner: 'المدير التنفيذي' }
+        ]);
+    }
+
+    private loadSeedMilestones() {
+        this.milestones.set([
+            { id: 'MIL-001', title: 'إطلاق النسخة التجريبية', date: '2026-02-01', type: 'Launch' },
+            { id: 'MIL-002', title: 'معرض الأزياء السعودي', date: '2026-03-15', type: 'Event' },
+            { id: 'MIL-003', title: 'تحديث V2.0', date: '2026-04-01', type: 'Update' },
+            { id: 'MIL-004', title: 'إطلاق الإمارات', date: '2026-05-15', type: 'Launch' }
+        ]);
     }
 
     private formatError(error: any): string {

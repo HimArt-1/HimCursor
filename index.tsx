@@ -90,6 +90,11 @@ bootstrapApplication(AppComponent, {
         canActivate: [AuthGuard]
       },
       {
+        path: 'monitoring',
+        loadComponent: () => import('./src/app/features/admin/monitoring.component').then(m => m.MonitoringComponent),
+        canActivate: [AuthGuard]
+      },
+      {
         path: 'knowledge-base',
         loadComponent: () => import('./src/app/features/intelligence/knowledge-base.component').then(m => m.KnowledgeBaseComponent),
         canActivate: [AuthGuard]

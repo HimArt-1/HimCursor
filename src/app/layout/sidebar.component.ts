@@ -6,6 +6,7 @@ import { Icons } from '../shared/ui/icons';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { DataService } from '../core/services/state/data.service';
 import { ToastService } from '../core/services/state/toast.service';
+import { PermissionsService } from '../core/services/domain/permissions.service';
 
 @Component({
    selector: 'app-sidebar',
@@ -103,11 +104,14 @@ import { ToastService } from '../core/services/state/toast.service';
            <span [innerHTML]="getIcon('Users')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
            <span class="font-medium text-sm">الفريق والترتيب</span>
         </a>
-        @if(isAdmin()) {
-          <a (click)="closeMobileMenu()" routerLink="/admin-users" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
-             class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
+        @if(canManageUsers()) {
+          <a (click)="closeMobileMenu()" routerLink="/admin-users" routerLinkActive="bg-red-900/50 text-red-100 border border-red-800 dark:bg-red-900/20 dark:border-red-800/50"
+             class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group text-red-200 dark:text-red-300">
              <span [innerHTML]="getIcon('Users')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
-             <span class="font-medium text-sm">مستخدمي النظام</span>
+             <span class="font-medium text-sm">إدارة المستخدمين</span>
+             @if(isSystemAdmin()) {
+               <span class="text-[8px] bg-red-500 text-white px-1.5 py-0.5 rounded-full">SYS</span>
+             }
           </a>
         }
 
@@ -134,10 +138,20 @@ import { ToastService } from '../core/services/state/toast.service';
            <span class="font-medium text-sm">النظام</span>
         </a>
 
+        <!-- System Admin Only -->
+        @if(isSystemAdmin()) {
+           <a (click)="closeMobileMenu()" routerLink="/monitoring" routerLinkActive="bg-indigo-900/50 text-indigo-100 border border-indigo-800 dark:bg-indigo-900/20 dark:border-indigo-800/50"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-indigo-900/30 dark:hover:bg-indigo-900/20 group text-indigo-300 font-bold mt-2">
+              <span [innerHTML]="getIcon('Activity')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
+              <span class="font-bold text-sm">رصد وتنفيذ</span>
+              <span class="text-[8px] bg-indigo-500 text-white px-1.5 py-0.5 rounded-full animate-pulse">LIVE</span>
+           </a>
+        }
+
         <!-- Admin Only -->
         @if(isAdmin()) {
            <a (click)="closeMobileMenu()" routerLink="/support" routerLinkActive="bg-green-900/50 text-green-300 border border-green-800 dark:text-green-300 dark:border-green-800/50"
-              class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group text-green-400 dark:text-green-300 font-bold mt-2">
+              class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group text-green-400 dark:text-green-300 font-bold">
               <span [innerHTML]="getIcon('LifeBuoy')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
               <span class="font-bold text-sm">الدعم الفني</span>
            </a>
@@ -210,6 +224,7 @@ export class SidebarComponent implements OnDestroy {
    private sanitizer = inject(DomSanitizer);
    private dataService = inject(DataService);
    private toastService = inject(ToastService);
+   private permissions = inject(PermissionsService);
    private readonly timerStorageKey = 'himcontrol_focus_timer';
    private timerEndsAt: number | null = null;
 
@@ -218,7 +233,11 @@ export class SidebarComponent implements OnDestroy {
    intervalId: any;
   unreadCount = computed(() => this.dataService.notifications().filter(n => !n.read).length);
   user = this.dataService.currentUser;
-  isAdmin = computed(() => this.user()?.role === 'admin');
+  
+  // Use permissions service
+  isAdmin = this.permissions.isAdmin;
+  isSystemAdmin = this.permissions.isSystemAdmin;
+  canManageUsers = this.permissions.canManageUsers;
 
    constructor() {
       this.restoreTimer();

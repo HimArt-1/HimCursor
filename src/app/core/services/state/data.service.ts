@@ -143,10 +143,13 @@ export class DataService {
       if (p.designs) this.designs.set(p.designs);
       if (p.testCases) this.testCases.set(p.testCases);
       if (p.assets) this.assets.set(p.assets);
-      if (p.campaigns) this.campaigns.set(p.campaigns);
-      if (p.ideas) this.ideas.set(p.ideas);
-      if (p.milestones) this.milestones.set(p.milestones);
+      if (p.campaigns?.length) this.campaigns.set(p.campaigns);
+      if (p.ideas?.length) this.ideas.set(p.ideas);
+      if (p.milestones?.length) this.milestones.set(p.milestones);
     }
+
+    // Load seed data if empty
+    this.loadSeedDataIfEmpty();
 
     // Auto-Save Effect for legacy data
     effect(() => {
@@ -219,6 +222,67 @@ export class DataService {
   });
 
   resetData() { localStorage.clear(); window.location.reload(); }
+
+  private loadSeedDataIfEmpty() {
+    // Seed campaigns if empty
+    if (this.campaigns().length === 0) {
+      this.campaigns.set([
+        { id: 'CAMP-001', title: 'حملة الإطلاق', date: '2026-02-01', platform: 'Instagram', status: 'Active', brief: 'حملة إطلاق المنتج الجديد' },
+        { id: 'CAMP-002', title: 'تخفيضات الشتاء', date: '2026-01-15', platform: 'Snapchat', status: 'Active', brief: 'عروض وخصومات الشتاء' },
+        { id: 'CAMP-003', title: 'يوم التأسيس', date: '2026-02-22', platform: 'TikTok', status: 'Scheduled', brief: 'احتفال باليوم الوطني' }
+      ]);
+    }
+
+    // Seed milestones if empty
+    if (this.milestones().length === 0) {
+      this.milestones.set([
+        { id: 'MIL-001', title: 'إطلاق النسخة التجريبية', date: '2026-02-01', type: 'Launch' },
+        { id: 'MIL-002', title: 'معرض الأزياء', date: '2026-03-15', type: 'Event' },
+        { id: 'MIL-003', title: 'تحديث V2.0', date: '2026-04-01', type: 'Update' }
+      ]);
+    }
+
+    // Seed requirements if empty
+    if (this.requirements().length === 0) {
+      this.requirements.set([
+        { id: 'REQ-001', title: 'نظام تسجيل الدخول', description: 'تسجيل دخول آمن للمستخدمين', priority: 'High', status: 'Done', objectiveIds: ['OBJ-001'], testCaseIds: ['TC-001'], designIds: [], acceptanceCriteria: 'يجب التحقق من الهوية', source: 'متطلبات الأمان', owner: 'فريق التطوير' },
+        { id: 'REQ-002', title: 'سلة التسوق', description: 'إضافة وإزالة المنتجات', priority: 'High', status: 'InProgress', objectiveIds: ['OBJ-001'], testCaseIds: [], designIds: [], acceptanceCriteria: 'يمكن للمستخدم إضافة/حذف منتجات', source: 'متطلبات العمل', owner: 'فريق التطوير' },
+        { id: 'REQ-003', title: 'نظام الدفع', description: 'دفع إلكتروني آمن', priority: 'Medium', status: 'Draft', objectiveIds: [], testCaseIds: [], designIds: [], acceptanceCriteria: '', source: 'متطلبات العمل', owner: 'فريق التطوير' }
+      ]);
+    }
+
+    // Seed test cases if empty
+    if (this.testCases().length === 0) {
+      this.testCases.set([
+        { id: 'TC-001', title: 'اختبار تسجيل الدخول', status: 'Pass' },
+        { id: 'TC-002', title: 'اختبار إضافة للسلة', status: 'NotRun' }
+      ]);
+    }
+
+    // Seed designs if empty
+    if (this.designs().length === 0) {
+      this.designs.set([
+        { id: 'DES-001', title: 'تصميم الصفحة الرئيسية', url: '', status: 'Done' },
+        { id: 'DES-002', title: 'تصميم صفحة المنتج', url: '', status: 'InProgress' }
+      ]);
+    }
+
+    // Seed ideas if empty
+    if (this.ideas().length === 0) {
+      this.ideas.set([
+        { id: 'IDEA-001', text: 'إضافة وضع ليلي للتطبيق', owner: 'هشام', votes: 5 },
+        { id: 'IDEA-002', text: 'دعم اللغة الإنجليزية', owner: 'أحمد', votes: 3 }
+      ]);
+    }
+
+    // Seed knowledge articles if empty
+    if (this.knowledgeArticles().length === 0) {
+      this.knowledgeArticles.set([
+        { id: 'KB-001', title: 'دليل البدء السريع', content: '# مرحباً بك\n\nهذا دليل سريع للبدء...', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), authorId: 'admin' },
+        { id: 'KB-002', title: 'سياسة الخصوصية', content: '# سياسة الخصوصية\n\nنحن نحترم خصوصيتك...', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), authorId: 'admin' }
+      ]);
+    }
+  }
 
   exportDatabase() {
     return JSON.stringify({

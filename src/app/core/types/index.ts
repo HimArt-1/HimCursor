@@ -16,6 +16,7 @@ export interface User {
   pin?: string; // Deprecated for email/password auth
   password?: string; // Used only for admin-create/reset
   isActive?: boolean;
+  lastSeen?: string; // ISO timestamp for online status
 }
 
 export interface AuditLogEntry {

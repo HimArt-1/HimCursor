@@ -4,6 +4,8 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
 import { DataService, User, AuditLogEntry } from '../../core/services/state/data.service';
+import { PermissionsService } from '../../core/services/domain/permissions.service';
+import { supabaseClient } from '../../core/supabase.client';
 
 interface SystemError {
    id: string;
@@ -146,6 +148,173 @@ interface SystemError {
          </div>
       </div>
 
+      <!-- ⚠️ DANGER ZONE: Data Clearing (System Admin Only) -->
+      @if(permissions.isSystemAdmin()) {
+        <div class="bg-gradient-to-br from-red-950/50 to-black border-2 border-red-900/50 rounded-xl overflow-hidden shadow-2xl">
+          <div class="bg-red-900/30 px-6 py-4 border-b border-red-900/50 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-full bg-red-900/50 flex items-center justify-center animate-pulse">
+              <span [innerHTML]="getIcon('Trash')" class="text-red-500 w-6 h-6"></span>
+            </div>
+            <div>
+              <h3 class="text-red-400 font-bold text-lg flex items-center gap-2">
+                ⚠️ منطقة الخطر - DANGER ZONE
+              </h3>
+              <p class="text-red-500/70 text-xs">System Admin Only - Irreversible Actions</p>
+            </div>
+          </div>
+          
+          <div class="p-6 space-y-6">
+            <!-- Warning Box -->
+            <div class="bg-red-900/20 border border-red-800/50 rounded-lg p-4 text-sm">
+              <div class="flex items-start gap-3">
+                <span class="text-red-500 text-xl">⚠️</span>
+                <div class="text-red-300/80">
+                  <p class="font-bold mb-1">تحذير: هذه العمليات لا يمكن التراجع عنها!</p>
+                  <p class="text-xs opacity-80">Warning: These operations are permanent and cannot be undone.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Clear Options -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Option 1: Clear Data Only -->
+              <div class="bg-black/50 border border-gray-800 rounded-xl p-5 hover:border-yellow-800/50 transition-all group">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-10 h-10 rounded-lg bg-yellow-900/30 flex items-center justify-center">
+                    <span [innerHTML]="getIcon('Trash')" class="text-yellow-500 w-5 h-5"></span>
+                  </div>
+                  <div>
+                    <h4 class="text-yellow-400 font-bold">مسح البيانات فقط</h4>
+                    <p class="text-xs text-gray-500">Clear Data Only</p>
+                  </div>
+                </div>
+                <ul class="text-xs text-gray-400 space-y-1 mb-4 font-mono">
+                  <li class="flex items-center gap-2"><span class="text-red-500">✗</span> المهام (Tasks)</li>
+                  <li class="flex items-center gap-2"><span class="text-red-500">✗</span> المحادثات (Messages)</li>
+                  <li class="flex items-center gap-2"><span class="text-red-500">✗</span> المستندات (Documents)</li>
+                  <li class="flex items-center gap-2"><span class="text-red-500">✗</span> المعاملات (Transactions)</li>
+                  <li class="flex items-center gap-2"><span class="text-red-500">✗</span> الأصول (Assets)</li>
+                  <li class="flex items-center gap-2"><span class="text-green-500">✓</span> المستخدمين (Users) - <span class="text-green-400">يبقى</span></li>
+                </ul>
+                <button (click)="openClearModal(false)" 
+                   class="w-full py-3 bg-yellow-900/30 hover:bg-yellow-900/50 text-yellow-400 border border-yellow-800/50 rounded-lg font-bold transition-all flex items-center justify-center gap-2 group-hover:border-yellow-700">
+                   <span [innerHTML]="getIcon('Trash')"></span> مسح البيانات
+                </button>
+              </div>
+
+              <!-- Option 2: Full Wipe -->
+              <div class="bg-black/50 border border-gray-800 rounded-xl p-5 hover:border-red-800/50 transition-all group">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-10 h-10 rounded-lg bg-red-900/30 flex items-center justify-center animate-pulse">
+                    <span [innerHTML]="getIcon('Trash')" class="text-red-500 w-5 h-5"></span>
+                  </div>
+                  <div>
+                    <h4 class="text-red-400 font-bold">مسح كامل للنظام</h4>
+                    <p class="text-xs text-gray-500">Full System Wipe</p>
+                  </div>
+                </div>
+                <ul class="text-xs text-gray-400 space-y-1 mb-4 font-mono">
+                  <li class="flex items-center gap-2"><span class="text-red-500">✗</span> المهام (Tasks)</li>
+                  <li class="flex items-center gap-2"><span class="text-red-500">✗</span> المحادثات (Messages)</li>
+                  <li class="flex items-center gap-2"><span class="text-red-500">✗</span> المستندات (Documents)</li>
+                  <li class="flex items-center gap-2"><span class="text-red-500">✗</span> المعاملات (Transactions)</li>
+                  <li class="flex items-center gap-2"><span class="text-red-500">✗</span> الأصول (Assets)</li>
+                  <li class="flex items-center gap-2"><span class="text-red-500">✗</span> المستخدمين (Users) - <span class="text-red-400">يُحذف</span></li>
+                </ul>
+                <button (click)="openClearModal(true)" 
+                   class="w-full py-3 bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-800/50 rounded-lg font-bold transition-all flex items-center justify-center gap-2 group-hover:border-red-700">
+                   <span [innerHTML]="getIcon('Trash')"></span> مسح كامل
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Clear Data Confirmation Modal -->
+      @if(showClearModal()) {
+        <div class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div class="bg-gray-900 border-2 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden"
+               [class.border-yellow-800]="!clearIncludeUsers()"
+               [class.border-red-800]="clearIncludeUsers()">
+            
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-gray-800 text-center"
+                 [class.bg-yellow-900/20]="!clearIncludeUsers()"
+                 [class.bg-red-900/20]="clearIncludeUsers()">
+              <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center animate-pulse"
+                   [class.bg-yellow-900/50]="!clearIncludeUsers()"
+                   [class.bg-red-900/50]="clearIncludeUsers()">
+                <span class="text-4xl">⚠️</span>
+              </div>
+              <h3 class="text-xl font-bold mb-2"
+                  [class.text-yellow-400]="!clearIncludeUsers()"
+                  [class.text-red-400]="clearIncludeUsers()">
+                {{ clearIncludeUsers() ? 'مسح كامل للنظام' : 'مسح البيانات' }}
+              </h3>
+              <p class="text-gray-400 text-sm">
+                {{ clearIncludeUsers() ? 'سيتم حذف جميع البيانات والمستخدمين!' : 'سيتم حذف جميع البيانات مع الاحتفاظ بالمستخدمين' }}
+              </p>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-4">
+              <!-- Countdown Timer -->
+              @if(clearCountdown() > 0) {
+                <div class="text-center">
+                  <div class="text-6xl font-bold font-mono mb-2"
+                       [class.text-yellow-500]="!clearIncludeUsers()"
+                       [class.text-red-500]="clearIncludeUsers()">
+                    {{ clearCountdown() }}
+                  </div>
+                  <p class="text-gray-500 text-sm">يمكنك الإلغاء الآن...</p>
+                </div>
+              } @else {
+                <!-- Confirmation Input -->
+                <div>
+                  <label class="block text-sm text-gray-400 mb-2">
+                    اكتب <span class="font-bold text-white font-mono">DELETE</span> للتأكيد:
+                  </label>
+                  <input #confirmInput type="text" 
+                         class="w-full bg-black border-2 rounded-lg p-4 text-center font-mono text-lg uppercase tracking-widest outline-none transition-all"
+                         [class.border-gray-700]="confirmInput.value !== 'DELETE'"
+                         [class.border-green-500]="confirmInput.value === 'DELETE'"
+                         [class.text-gray-400]="confirmInput.value !== 'DELETE'"
+                         [class.text-green-400]="confirmInput.value === 'DELETE'"
+                         placeholder="DELETE"
+                         (input)="confirmationCode.set(confirmInput.value)">
+                </div>
+              }
+
+              <!-- Action Buttons -->
+              <div class="flex gap-3 pt-4">
+                <button (click)="closeClearModal()" 
+                   class="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-bold transition-all">
+                   إلغاء
+                </button>
+                <button (click)="executeClear()" 
+                   [disabled]="clearCountdown() > 0 || confirmationCode() !== 'DELETE' || isClearing()"
+                   class="flex-1 py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed"
+                   [class.bg-yellow-900]="!clearIncludeUsers()"
+                   [class.hover:bg-yellow-800]="!clearIncludeUsers() && clearCountdown() === 0 && confirmationCode() === 'DELETE'"
+                   [class.text-yellow-100]="!clearIncludeUsers()"
+                   [class.bg-red-900]="clearIncludeUsers()"
+                   [class.hover:bg-red-800]="clearIncludeUsers() && clearCountdown() === 0 && confirmationCode() === 'DELETE'"
+                   [class.text-red-100]="clearIncludeUsers()">
+                   @if(isClearing()) {
+                     <div class="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"></div>
+                     جاري المسح...
+                   } @else {
+                     <span [innerHTML]="getIcon('Trash')"></span>
+                     تنفيذ المسح
+                   }
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
       <!-- Access & Activity Log (NEW) -->
       <div class="bg-gray-950 border border-gray-800 rounded-xl overflow-hidden font-mono text-xs shadow-2xl">
          <div class="bg-gray-900 px-4 py-3 border-b border-gray-800 flex justify-between items-center">
@@ -227,10 +396,19 @@ interface SystemError {
 export class SupportComponent implements OnInit {
    private sanitizer = inject(DomSanitizer);
    private dataService = inject(DataService);
+   permissions = inject(PermissionsService);
 
    sessionId = Math.random().toString(36).substring(7).toUpperCase();
    isChecking = signal(false);
    users = this.dataService.availableUsers;
+
+   // Data Clearing State
+   showClearModal = signal(false);
+   clearIncludeUsers = signal(false);
+   clearCountdown = signal(0);
+   confirmationCode = signal('');
+   isClearing = signal(false);
+   private countdownInterval: any;
 
    routeChecks = signal([
       { name: '/dashboard', status: 'OK' },
@@ -356,5 +534,80 @@ VALUES (
    clearCache() {
       alert('Cache purged. System optimized.');
       this.errorLogs.set([]);
+   }
+
+   // ========== Data Clearing Methods ==========
+   
+   openClearModal(includeUsers: boolean) {
+      this.clearIncludeUsers.set(includeUsers);
+      this.showClearModal.set(true);
+      this.confirmationCode.set('');
+      this.clearCountdown.set(5);
+      
+      // Start countdown
+      this.countdownInterval = setInterval(() => {
+         const current = this.clearCountdown();
+         if (current > 0) {
+            this.clearCountdown.set(current - 1);
+         } else {
+            clearInterval(this.countdownInterval);
+         }
+      }, 1000);
+   }
+
+   closeClearModal() {
+      this.showClearModal.set(false);
+      this.clearCountdown.set(0);
+      this.confirmationCode.set('');
+      if (this.countdownInterval) {
+         clearInterval(this.countdownInterval);
+      }
+   }
+
+   async executeClear() {
+      if (this.confirmationCode() !== 'DELETE') {
+         alert('يجب كتابة DELETE للتأكيد');
+         return;
+      }
+
+      this.isClearing.set(true);
+
+      try {
+         if (!supabaseClient) {
+            throw new Error('Supabase not configured');
+         }
+
+         const { data, error } = await supabaseClient.functions.invoke('admin_clear_data', {
+            body: {
+               include_users: this.clearIncludeUsers(),
+               confirmation: 'DELETE'
+            }
+         });
+
+         if (error) throw error;
+
+         // Show success
+         alert(this.clearIncludeUsers() 
+            ? '✅ تم مسح النظام بالكامل بنجاح!\nيرجى تسجيل الدخول مرة أخرى.' 
+            : '✅ تم مسح البيانات بنجاح!\nالمستخدمين محفوظين.');
+
+         // Close modal
+         this.closeClearModal();
+
+         // If users were deleted, logout
+         if (this.clearIncludeUsers()) {
+            await supabaseClient.auth.signOut();
+            window.location.href = '/';
+         } else {
+            // Refresh data
+            window.location.reload();
+         }
+
+      } catch (err: any) {
+         console.error('Clear data error:', err);
+         alert('❌ فشل في مسح البيانات: ' + (err.message || 'خطأ غير متوقع'));
+      } finally {
+         this.isClearing.set(false);
+      }
    }
 }

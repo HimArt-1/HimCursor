@@ -16,10 +16,36 @@ serve(async (req) => {
   }
 
   try {
-    const { data: authUsers, error: authError } = await adminClient.auth.admin.listUsers({
-      page: 1,
-      perPage: 1000
-    });
+    const { user_id } = await req.json();
+
+    if (!user_id) {
+      return new Response(JSON.stringify({ error: 'user_id is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Prevent deleting yourself
+    if (user_id === adminCheck.user?.id) {
+      return new Response(JSON.stringify({ error: 'Cannot delete your own account' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Delete from profiles table first (due to foreign key constraints)
+    const { error: profileError } = await adminClient
+      .from('profiles')
+      .delete()
+      .eq('id', user_id);
+
+    if (profileError) {
+      console.error('Error deleting profile:', profileError);
+      // Continue to try deleting auth user anyway
+    }
+
+    // Delete from auth.users
+    const { error: authError } = await adminClient.auth.admin.deleteUser(user_id);
 
     if (authError) {
       return new Response(JSON.stringify({ error: authError.message }), {
@@ -28,28 +54,7 @@ serve(async (req) => {
       });
     }
 
-    const authById = new Map<string, string>();
-    authUsers?.users?.forEach((u) => {
-      authById.set(u.id, u.email || '');
-    });
-
-    const { data: profiles, error: profileError } = await adminClient
-      .from('profiles')
-      .select('id,name,role,avatar_color,avatar_url,is_active,last_seen,updated_at');
-
-    if (profileError) {
-      return new Response(JSON.stringify({ error: profileError.message }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const users = (profiles || []).map((p: any) => ({
-      ...p,
-      email: authById.get(p.id) || ''
-    }));
-
-    return new Response(JSON.stringify({ users }), {
+    return new Response(JSON.stringify({ success: true, deleted_id: user_id }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (error) {
