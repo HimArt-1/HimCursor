@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { DataService, User } from '../../core/services/state/data.service';
@@ -161,13 +161,24 @@ import { Icons } from '../../shared/ui/icons';
     </div>
   `
 })
-export class AdminUsersComponent {
+export class AdminUsersComponent implements OnInit {
   private sanitizer = inject(DomSanitizer);
   private dataService = inject(DataService);
   private authService = inject(AuthService);
 
   searchText = signal('');
   statusFilter = signal<'All' | 'Active' | 'Disabled'>('All');
+  loading = signal(true);
+
+  ngOnInit() {
+    this.loadUsersData();
+  }
+
+  async loadUsersData() {
+    this.loading.set(true);
+    await this.dataService.loadAdminUsers();
+    this.loading.set(false);
+  }
 
   availableUsers = this.dataService.availableUsers;
 

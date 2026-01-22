@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/domain/auth.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
@@ -144,6 +145,7 @@ type LoginState = 'idle' | 'authenticating' | 'success';
 export class LoginComponent {
    private authService = inject(AuthService);
    private sanitizer = inject(DomSanitizer);
+   private router = inject(Router);
 
    email = signal('');
    password = signal('');
@@ -167,6 +169,7 @@ export class LoginComponent {
             this.progress.set(100);
             this.loadingText.set('ACCESS GRANTED');
             this.loginState.set('success');
+            setTimeout(() => this.router.navigate(['/']), 500);
          }, 800);
       } else {
          this.error.set(true);
@@ -214,6 +217,10 @@ export class LoginComponent {
          this.progress.set(100);
          this.loadingText.set('ACCESS GRANTED');
          this.loginState.set('success');
+         // Navigate to dashboard after success animation
+         setTimeout(() => {
+            this.router.navigate(['/']);
+         }, 500);
       }, 1800);
    }
    async attemptLogin() {

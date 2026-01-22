@@ -35,7 +35,7 @@ serve(async (req) => {
 
     const { data: profiles, error: profileError } = await adminClient
       .from('profiles')
-      .select('id,name,role,avatar_color,avatar_url,is_active,created_at,updated_at');
+      .select('id,name,role,avatar_color,avatar_url,is_active,updated_at');
 
     if (profileError) {
       return new Response(JSON.stringify({ error: profileError.message }), {

@@ -16,21 +16,17 @@ export class UserService {
         return this.mapProfileToUser(profile);
     });
     readonly availableUsers = signal<User[]>([]);
-    readonly isAdminSession = computed(() => !!this.authService.adminUser());
+    readonly isAdminSession = computed(() => {
+        const profile = this.authService.activeProfile();
+        return profile?.role === 'admin' || profile?.role === 'System Admin';
+    });
 
     constructor() {
         effect(() => {
             const profile = this.currentUser();
-            if (!this.isAdminSession()) {
-                this.availableUsers.set(profile ? [profile] : []);
-            }
+            this.availableUsers.set(profile ? [profile] : []);
         });
-
-        effect(() => {
-            if (this.isAdminSession()) {
-                this.loadUsers();
-            }
-        });
+        // Note: Admin users list is loaded on-demand via loadUsers() from UsersComponent
     }
 
     async loadUsers() {

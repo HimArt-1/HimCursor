@@ -9,6 +9,7 @@ import { AiAssistantComponent } from './shared/widgets/ai-assistant.component';
 import { SystemAlertComponent } from './shared/widgets/system-alert.component';
 import { ChatWidgetComponent } from './features/social/chat-widget.component';
 import { DataService } from './core/services/state/data.service';
+import { AuthService } from './core/services/domain/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -60,10 +61,17 @@ import { DataService } from './core/services/state/data.service';
 })
 export class AppComponent {
   private dataService = inject(DataService);
+  private authService = inject(AuthService);
   // FIX: Explicitly type injected Router to fix type inference issue.
   private router: Router = inject(Router);
 
-  isAuthenticated = computed(() => !!this.dataService.currentUser());
+  // Check session OR currentUser for authentication status
+  isAuthenticated = computed(() => {
+    const hasSession = this.authService.hasSession();
+    const hasUser = !!this.dataService.currentUser();
+    const hasAdminUser = !!this.authService.adminUser();
+    return hasSession || hasUser || hasAdminUser;
+  });
   isMobileMenuOpen = this.dataService.isMobileMenuOpen;
 
   constructor() {

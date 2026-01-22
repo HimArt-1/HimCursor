@@ -97,6 +97,9 @@ export class DataService {
   // Auth
   login(email: string, password: string) { this.auth.loginWithEmailPassword(email, password); }
   logout() { this.auth.logout(); }
+  
+  // Admin Users
+  async loadAdminUsers() { return this.user.loadUsers(); }
   updateUserProfile(id: string, upt: Partial<User>) { this.user.updateUserProfile(id, upt); }
   addUser(u: User) { this.user.addUser(u); }
   deleteUser(id: string) { this.user.deleteUser(id); }
