@@ -13,7 +13,7 @@ import { Icons } from '../../shared/ui/icons';
    template: `
     <!-- Floating Action Button (FAB) -->
     <button (click)="toggleChat()" 
-        class="fixed bottom-6 left-6 w-14 h-14 bg-wushai-dark hover:bg-wushai-deep text-white rounded-full shadow-2xl flex items-center justify-center transition-transform hover:scale-110 z-50 group">
+        class="fixed bottom-20 md:bottom-6 left-4 md:left-6 w-12 h-12 md:w-14 md:h-14 bg-wushai-dark hover:bg-wushai-deep text-white rounded-full shadow-2xl flex items-center justify-center transition-transform hover:scale-110 z-40 group">
         @if (!isOpen()) {
             <span [innerHTML]="getIcon('MessageCircle')" class="w-6 h-6 animate-fade-in"></span>
         } @else {
@@ -25,7 +25,7 @@ import { Icons } from '../../shared/ui/icons';
 
     <!-- Chat Window -->
     <div *ngIf="isOpen()" 
-         class="fixed bottom-24 left-6 w-80 md:w-96 h-[500px] bg-white dark:bg-wushai-black rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-wushai-sand z-50 animate-slide-up origin-bottom-left">
+         class="fixed bottom-[8.5rem] md:bottom-24 left-4 md:left-6 w-[calc(100vw-2rem)] md:w-96 h-[60vh] md:h-[500px] max-h-[500px] bg-white dark:bg-wushai-black rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-wushai-sand z-40 animate-slide-up origin-bottom-left">
       
       <!-- Header -->
       <div class="p-4 bg-wushai-dark text-white flex justify-between items-center shrink-0">

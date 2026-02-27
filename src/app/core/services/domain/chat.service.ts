@@ -13,6 +13,7 @@ export class ChatService {
 
     readonly messages = signal<ChatMessage[]>([]);
     readonly isConnected = signal<boolean>(false);
+    private readonly MESSAGE_TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
 
     constructor() {
         effect(() => {
@@ -68,8 +69,33 @@ export class ChatService {
                     return;
                 }
                 if (data) {
-                    this.messages.set(data.map(this.mapDbToMsg));
+                    const now = Date.now();
+                    const fresh: any[] = [];
+                    const staleIds: string[] = [];
+
+                    for (const msg of data) {
+                        const age = now - new Date(msg.created_at).getTime();
+                        if (age > this.MESSAGE_TTL_MS) {
+                            staleIds.push(msg.id);
+                        } else {
+                            fresh.push(msg);
+                        }
+                    }
+
+                    this.messages.set(fresh.map(this.mapDbToMsg));
                     this.isConnected.set(true);
+
+                    // Delete stale messages from DB
+                    if (staleIds.length > 0) {
+                        this.supabase!
+                            .from('chat_messages')
+                            .delete()
+                            .in('id', staleIds)
+                            .then(({ error: delErr }) => {
+                                if (delErr) console.error('Error cleaning old messages:', delErr);
+                                else console.log(`Cleaned ${staleIds.length} messages older than 48h`);
+                            });
+                    }
                 }
             });
 
@@ -78,6 +104,12 @@ export class ChatService {
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, payload => {
                 const newMsg = this.mapDbToMsg(payload.new);
                 this.messages.update(curr => [...curr, newMsg]);
+            })
+            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chat_messages' }, payload => {
+                const deletedId = payload.old?.id;
+                if (deletedId) {
+                    this.messages.update(curr => curr.filter(m => m.id !== deletedId));
+                }
             })
             .subscribe();
     }
