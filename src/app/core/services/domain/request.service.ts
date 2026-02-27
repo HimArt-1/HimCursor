@@ -48,11 +48,14 @@ export class RequestService {
         files: File[]
     ): Promise<SharedRequest | null> {
         if (!this.supabaseService.isConfigured) return null;
-        await this.authService.ensureSession();
 
-        const currentUser = this.userService.currentUser();
-        const userId = currentUser?.id || '';
-        const userName = currentUser?.name || 'مستخدم';
+        const userId = await this.getAuthUserId();
+        const userName = this.getCurrentUserName();
+
+        if (!userId) {
+            this.toastService.show('يجب تسجيل الدخول أولاً', 'error');
+            return null;
+        }
 
         const { data, error } = await this.supabaseService.client
             .from('shared_requests')
@@ -91,13 +94,28 @@ export class RequestService {
         return this.mapDbToRequest({ ...data, shared_request_attachments: [] });
     }
 
+    private async getAuthUserId(): Promise<string> {
+        const session = await this.authService.ensureSession();
+        return session?.user?.id || '';
+    }
+
+    private getCurrentUserName(): string {
+        const profile = this.authService.activeProfile();
+        if (profile?.name) return profile.name;
+        const user = this.userService.currentUser();
+        return user?.name || 'مستخدم';
+    }
+
     async assignRequest(requestId: string): Promise<boolean> {
         if (!this.supabaseService.isConfigured) return false;
-        await this.authService.ensureSession();
 
-        const currentUser = this.userService.currentUser();
-        const userId = currentUser?.id || '';
-        const userName = currentUser?.name || 'مستخدم';
+        const userId = await this.getAuthUserId();
+        const userName = this.getCurrentUserName();
+
+        if (!userId) {
+            this.toastService.show('يجب تسجيل الدخول أولاً', 'error');
+            return false;
+        }
 
         const { error } = await this.supabaseService.client
             .from('shared_requests')
@@ -133,10 +151,23 @@ export class RequestService {
         outputFiles: File[]
     ): Promise<boolean> {
         if (!this.supabaseService.isConfigured) return false;
-        await this.authService.ensureSession();
 
-        const currentUser = this.userService.currentUser();
-        const userId = currentUser?.id || '';
+        const userId = await this.getAuthUserId();
+        if (!userId) {
+            this.toastService.show('يجب تسجيل الدخول أولاً', 'error');
+            return false;
+        }
+
+        // Upload output files FIRST (before marking complete)
+        let uploadSuccess = true;
+        if (outputFiles.length > 0) {
+            uploadSuccess = await this.uploadFiles(requestId, outputFiles, 'output', userId);
+        }
+
+        if (!uploadSuccess) {
+            this.toastService.show('فشل رفع بعض الملفات، يرجى المحاولة مرة أخرى', 'error');
+            return false;
+        }
 
         const { error } = await this.supabaseService.client
             .from('shared_requests')
@@ -153,11 +184,6 @@ export class RequestService {
             console.error('Error completing request:', error);
             this.toastService.show('خطأ في إكمال الطلب', 'error');
             return false;
-        }
-
-        // Upload output files
-        if (outputFiles.length > 0) {
-            await this.uploadFiles(requestId, outputFiles, 'output', userId);
         }
 
         this.uiService.addNotification(
@@ -205,18 +231,23 @@ export class RequestService {
         return true;
     }
 
-    private async uploadFiles(requestId: string, files: File[], kind: 'input' | 'output', userId: string) {
+    private async uploadFiles(requestId: string, files: File[], kind: 'input' | 'output', userId: string): Promise<boolean> {
+        let allSuccess = true;
         for (const file of files) {
             const timestamp = Date.now();
             const safeName = file.name.replace(/[^a-zA-Z0-9._\u0600-\u06FF-]/g, '_');
             const filePath = `${requestId}/${kind}/${timestamp}_${safeName}`;
+
+            console.log(`Uploading file: ${file.name} to ${filePath} by user ${userId}`);
 
             const { error: uploadError } = await this.supabaseService.client.storage
                 .from('shared-requests')
                 .upload(filePath, file);
 
             if (uploadError) {
-                console.error('Error uploading file:', uploadError);
+                console.error('Error uploading file:', file.name, uploadError);
+                this.toastService.show(`فشل رفع الملف: ${file.name}`, 'error');
+                allSuccess = false;
                 continue;
             }
 
@@ -225,18 +256,32 @@ export class RequestService {
                 .getPublicUrl(filePath);
 
             // Insert attachment record
-            await this.supabaseService.client
+            const insertData: any = {
+                request_id: requestId,
+                file_name: file.name,
+                file_url: urlData.publicUrl,
+                file_type: file.type || 'application/octet-stream',
+                file_size: file.size,
+                kind,
+            };
+            // Only set uploaded_by if userId is valid (non-empty)
+            if (userId) {
+                insertData.uploaded_by = userId;
+            }
+
+            const { error: insertError } = await this.supabaseService.client
                 .from('shared_request_attachments')
-                .insert([{
-                    request_id: requestId,
-                    file_name: file.name,
-                    file_url: urlData.publicUrl,
-                    file_type: file.type,
-                    file_size: file.size,
-                    kind,
-                    uploaded_by: userId,
-                }]);
+                .insert([insertData]);
+
+            if (insertError) {
+                console.error('Error saving attachment record:', file.name, insertError);
+                this.toastService.show(`فشل حفظ سجل الملف: ${file.name}`, 'error');
+                allSuccess = false;
+            } else {
+                console.log(`File uploaded successfully: ${file.name}`);
+            }
         }
+        return allSuccess;
     }
 
     private mapDbToRequest(dbRecord: any): SharedRequest {
