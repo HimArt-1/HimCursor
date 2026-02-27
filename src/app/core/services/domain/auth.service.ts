@@ -5,8 +5,11 @@ import { supabaseClient, isSupabaseConfigured } from '../../supabase.client';
 export interface ActiveProfile {
   id: string;
   name: string;
+  email?: string;
   role: 'admin' | 'supervisor' | 'user' | string;
   is_active?: boolean;
+  avatar_url?: string;
+  avatar_color?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -96,11 +99,16 @@ export class AuthService {
     await this.ensureSession();
   }
 
+  async refreshProfile() {
+    const profile = this.activeProfile();
+    if (profile) await this.loadProfile(profile.id);
+  }
+
   private async loadProfile(userId: string) {
     if (!this.supabase || !isSupabaseConfigured) return;
     const { data, error } = await this.supabase
       .from('profiles')
-      .select('id,name,role,is_active')
+      .select('id,name,email,role,is_active,avatar_url,avatar_color')
       .eq('id', userId)
       .single();
     if (error) {
@@ -111,8 +119,11 @@ export class AuthService {
       const profile: ActiveProfile = {
         id: data.id,
         name: data.name,
+        email: data.email || '',
         role: data.role,
-        is_active: data.is_active
+        is_active: data.is_active,
+        avatar_url: data.avatar_url || '',
+        avatar_color: data.avatar_color || '#4B5842'
       };
       this.activeProfile.set(profile);
       localStorage.setItem(this.activeProfileKey, JSON.stringify(profile));

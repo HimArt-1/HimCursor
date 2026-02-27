@@ -146,10 +146,10 @@ export class ProfileComponent {
   isUploading = signal(false);
   isSaving = signal(false);
 
-  userName = computed(() => this.userService.currentUser()?.name || 'مستخدم');
-  userEmail = computed(() => this.userService.currentUser()?.email || '');
-  userRole = computed(() => this.userService.currentUser()?.role || 'user');
-  avatarUrl = computed(() => this.userService.currentUser()?.avatarUrl || '');
+  userName = computed(() => this.authService.activeProfile()?.name || 'مستخدم');
+  userEmail = computed(() => this.authService.activeProfile()?.email || this.userService.currentUser()?.email || '');
+  userRole = computed(() => this.authService.activeProfile()?.role || 'user');
+  avatarUrl = computed(() => this.authService.activeProfile()?.avatar_url || this.userService.currentUser()?.avatarUrl || '');
   lastSeen = signal<string | null>(null);
 
   constructor() {
@@ -184,46 +184,95 @@ export class ProfileComponent {
     const userId = this.authService.activeProfile()?.id;
     if (!userId) { this.isUploading.set(false); return; }
 
-    const ext = file.name.split('.').pop();
-    const path = `${userId}/avatar.${ext}`;
+    try {
+      // Compress and convert to base64 (max 200x200)
+      const dataUrl = await this.compressImage(file, 200, 0.7);
 
-    const { error: uploadErr } = await client.storage.from('avatars').upload(path, file, { upsert: true });
-    if (uploadErr) {
-      console.error('Avatar upload error:', uploadErr);
-      this.toastService.show('خطأ في رفع الصورة', 'error');
-      this.isUploading.set(false);
-      return;
+      // Update profiles table directly (RLS allows user to update own row)
+      const { error } = await client
+        .from('profiles')
+        .update({ avatar_url: dataUrl })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Avatar update error:', error);
+        this.toastService.show('خطأ في تحديث الصورة', 'error');
+      } else {
+        this.toastService.show('تم تحديث صورة العرض', 'success');
+        // Refresh the auth profile to reflect the change
+        this.authService.refreshProfile();
+      }
+    } catch (err) {
+      console.error('Image processing error:', err);
+      this.toastService.show('خطأ في معالجة الصورة', 'error');
     }
-
-    const { data: urlData } = client.storage.from('avatars').getPublicUrl(path);
-    const avatarUrl = urlData.publicUrl + '?t=' + Date.now();
-
-    await this.userService.updateUserProfile(userId, { avatarUrl });
-    this.toastService.show('تم تحديث صورة العرض', 'success');
     this.isUploading.set(false);
+  }
+
+  private compressImage(file: File, maxSize: number, quality: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w = img.width, h = img.height;
+          if (w > h) { if (w > maxSize) { h = h * maxSize / w; w = maxSize; } }
+          else { if (h > maxSize) { w = w * maxSize / h; h = maxSize; } }
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = reject;
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   async saveProfile() {
     if (!this.editName.trim()) return;
     this.isSaving.set(true);
 
+    const client = this.supabaseService.client;
     const userId = this.authService.activeProfile()?.id;
-    if (!userId) { this.isSaving.set(false); return; }
+    if (!client || !userId) { this.isSaving.set(false); return; }
 
-    await this.userService.updateUserProfile(userId, { name: this.editName.trim() });
-    this.toastService.show('تم تحديث الملف الشخصي', 'success');
+    const { error } = await client
+      .from('profiles')
+      .update({ name: this.editName.trim() })
+      .eq('id', userId);
+
+    if (error) {
+      console.error('Profile update error:', error);
+      this.toastService.show('خطأ في تحديث الملف الشخصي', 'error');
+    } else {
+      this.toastService.show('تم تحديث الملف الشخصي', 'success');
+      this.authService.refreshProfile();
+    }
     this.isSaving.set(false);
   }
 
   async changePassword() {
-    if (!this.newPassword) return;
+    if (!this.newPassword || this.newPassword.length < 6) {
+      this.toastService.show('كلمة المرور يجب أن تكون 6 أحرف على الأقل', 'error');
+      return;
+    }
     this.isSaving.set(true);
 
-    const userId = this.authService.activeProfile()?.id;
-    if (!userId) { this.isSaving.set(false); return; }
+    const client = this.supabaseService.client;
+    if (!client) { this.isSaving.set(false); return; }
 
-    await this.userService.resetPassword(userId, this.newPassword);
-    this.newPassword = '';
+    const { error } = await client.auth.updateUser({ password: this.newPassword });
+    if (error) {
+      console.error('Password change error:', error);
+      this.toastService.show('خطأ في تغيير كلمة المرور', 'error');
+    } else {
+      this.toastService.show('تم تغيير كلمة المرور بنجاح', 'success');
+      this.newPassword = '';
+    }
     this.isSaving.set(false);
   }
 
