@@ -44,7 +44,7 @@ import { Icons } from './shared/ui/icons';
           </header>
         }
         
-        <main class="flex-1 overflow-auto" [class.p-4]="isAuthenticated()" [class.md:p-8]="isAuthenticated()" [class.p-0]="!isAuthenticated()" [class.pb-20]="isAuthenticated()">
+        <main class="flex-1 overflow-auto" [class.p-4]="isAuthenticated()" [class.md:p-8]="isAuthenticated()" [class.p-0]="!isAuthenticated()" [class.pb-20]="isAuthenticated()" [class.md:pb-8]="isAuthenticated()">
           <router-outlet></router-outlet>
         </main>
 
