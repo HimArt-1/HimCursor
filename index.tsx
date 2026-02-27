@@ -114,6 +114,11 @@ bootstrapApplication(AppComponent, {
         loadComponent: () => import('./src/app/features/execution/inventory.component').then(m => m.InventoryComponent),
         canActivate: [AuthGuard]
       },
+      {
+        path: 'members',
+        loadComponent: () => import('./src/app/features/admin/members.component').then(m => m.MembersComponent),
+        canActivate: [AuthGuard]
+      },
       { path: '**', redirectTo: '' }
     ], withHashLocation())
   ]
