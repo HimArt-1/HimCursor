@@ -99,6 +99,21 @@ bootstrapApplication(AppComponent, {
         loadComponent: () => import('./src/app/features/intelligence/knowledge-base.component').then(m => m.KnowledgeBaseComponent),
         canActivate: [AuthGuard]
       },
+      {
+        path: 'profile',
+        loadComponent: () => import('./src/app/features/admin/profile.component').then(m => m.ProfileComponent),
+        canActivate: [AuthGuard]
+      },
+      {
+        path: 'invoices',
+        loadComponent: () => import('./src/app/features/admin/invoices.component').then(m => m.InvoicesComponent),
+        canActivate: [AuthGuard]
+      },
+      {
+        path: 'inventory',
+        loadComponent: () => import('./src/app/features/execution/inventory.component').then(m => m.InventoryComponent),
+        canActivate: [AuthGuard]
+      },
       { path: '**', redirectTo: '' }
     ], withHashLocation())
   ]

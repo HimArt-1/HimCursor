@@ -1,4 +1,4 @@
-import { Injectable, signal, inject, effect } from '@angular/core';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { supabaseClient, isSupabaseConfigured } from '../../supabase.client';
 import { UserService } from './user.service';
 import { ChatMessage } from '../../types';
@@ -14,6 +14,16 @@ export class ChatService {
     readonly messages = signal<ChatMessage[]>([]);
     readonly isConnected = signal<boolean>(false);
     private readonly MESSAGE_TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
+    private readonly LAST_SEEN_KEY = 'himcontrol_chat_last_seen';
+
+    private lastSeenTimestamp = signal<number>(
+        parseInt(localStorage.getItem('himcontrol_chat_last_seen') || '0', 10)
+    );
+
+    readonly unreadCount = computed(() => {
+        const lastSeen = this.lastSeenTimestamp();
+        return this.messages().filter(m => new Date(m.timestamp).getTime() > lastSeen).length;
+    });
 
     constructor() {
         effect(() => {
@@ -137,5 +147,11 @@ export class ChatService {
             error.status
         ].filter(Boolean);
         return parts.join(' | ');
+    }
+
+    markAsRead() {
+        const now = Date.now();
+        localStorage.setItem(this.LAST_SEEN_KEY, now.toString());
+        this.lastSeenTimestamp.set(now);
     }
 }

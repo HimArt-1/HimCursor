@@ -56,53 +56,65 @@ import { ToastService } from '../core/services/state/toast.service';
            <span class="font-medium text-sm">المهام والإنتاج</span>
         </a>
 
-        <a (click)="closeMobileMenu()" routerLink="/requests" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
-           <span [innerHTML]="getIcon('Inbox')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
-           <span class="font-medium text-sm">الطلبات المشتركة</span>
-        </a>
+         <a (click)="closeMobileMenu()" routerLink="/requests" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
+            <span [innerHTML]="getIcon('Inbox')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
+            <span class="font-medium text-sm">الطلبات المشتركة</span>
+         </a>
 
-        <a (click)="closeMobileMenu()" routerLink="/assets" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
-           <span [innerHTML]="getIcon('Image')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
-           <span class="font-medium text-sm">أصول البراند</span>
-        </a>
+         <a (click)="closeMobileMenu()" routerLink="/inventory" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
+            <span [innerHTML]="getIcon('ShoppingCart')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
+            <span class="font-medium text-sm">المخزون والمبيعات</span>
+         </a>
 
-        <a (click)="closeMobileMenu()" routerLink="/content" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
-           <span [innerHTML]="getIcon('Edit')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
-           <span class="font-medium text-sm">استوديو المحتوى</span>
-        </a>
-        
-        <a (click)="closeMobileMenu()" routerLink="/knowledge-base" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
-           <span [innerHTML]="getIcon('BookOpen')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
-           <span class="font-medium text-sm">مركز المعرفة</span>
-        </a>
+         <a (click)="closeMobileMenu()" routerLink="/assets" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
+            <span [innerHTML]="getIcon('Image')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
+            <span class="font-medium text-sm">أصول البراند</span>
+         </a>
 
-        <a (click)="closeMobileMenu()" routerLink="/dev" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
-           <span [innerHTML]="getIcon('Code')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
-           <span class="font-medium text-sm">مركز التطوير</span>
-        </a>
+         <a (click)="closeMobileMenu()" routerLink="/content" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
+            <span [innerHTML]="getIcon('Edit')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
+            <span class="font-medium text-sm">استوديو المحتوى</span>
+         </a>
+         
+         <a (click)="closeMobileMenu()" routerLink="/knowledge-base" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
+            <span [innerHTML]="getIcon('BookOpen')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
+            <span class="font-medium text-sm">مركز المعرفة</span>
+         </a>
 
-        <!-- Live Ops -->
-        <a (click)="closeMobileMenu()" routerLink="/ops" routerLinkActive="bg-red-900/50 text-red-100 border border-red-800 dark:bg-red-900/20 dark:border-red-800/50"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group text-red-200 dark:text-red-300 font-bold">
-           <span [innerHTML]="getIcon('Activity')" class="w-5 h-5 opacity-80 group-hover:opacity-100 animate-pulse"></span>
-           <span class="font-bold text-sm">غرفة العمليات</span>
-        </a>
+         <a (click)="closeMobileMenu()" routerLink="/dev" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
+            <span [innerHTML]="getIcon('Code')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
+            <span class="font-medium text-sm">مركز التطوير</span>
+         </a>
 
-        <!-- Section Header -->
-        <div class="pt-4 pb-2 px-2">
-           <p class="text-[11px] font-bold text-wushai-olive/70 dark:text-wushai-lilac/50 uppercase tracking-widest">إدارة الموارد</p>
-        </div>
+         <!-- Live Ops -->
+         <a (click)="closeMobileMenu()" routerLink="/ops" routerLinkActive="bg-red-900/50 text-red-100 border border-red-800 dark:bg-red-900/20 dark:border-red-800/50"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group text-red-200 dark:text-red-300 font-bold">
+            <span [innerHTML]="getIcon('Activity')" class="w-5 h-5 opacity-80 group-hover:opacity-100 animate-pulse"></span>
+            <span class="font-bold text-sm">غرفة العمليات</span>
+         </a>
 
-        <a (click)="closeMobileMenu()" routerLink="/finance" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
-           <span [innerHTML]="getIcon('Briefcase')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
-           <span class="font-medium text-sm">الخزنة (المالية)</span>
-        </a>
+         <!-- Section Header -->
+         <div class="pt-4 pb-2 px-2">
+            <p class="text-[11px] font-bold text-wushai-olive/70 dark:text-wushai-lilac/50 uppercase tracking-widest">إدارة الموارد</p>
+         </div>
+
+         <a (click)="closeMobileMenu()" routerLink="/finance" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
+            <span [innerHTML]="getIcon('Briefcase')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
+            <span class="font-medium text-sm">الخزنة (المالية)</span>
+         </a>
+
+         <a (click)="closeMobileMenu()" routerLink="/invoices" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
+            <span [innerHTML]="getIcon('CreditCard')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
+            <span class="font-medium text-sm">الفواتير الإلكترونية</span>
+         </a>
 
         <a (click)="closeMobileMenu()" routerLink="/team" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
@@ -179,7 +191,7 @@ import { ToastService } from '../core/services/state/toast.service';
       <div class="p-6 border-t border-wushai-olive/30 dark:border-wushai-lilac/10">
         @if (user()) {
            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
+               <a routerLink="/profile" (click)="closeMobileMenu()" class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
                 @if (user()?.avatarUrl) {
                   <img [src]="user()?.avatarUrl" [alt]="user()?.name" class="w-10 h-10 rounded-full object-cover border-2 border-white/20 dark:border-wushai-lilac/20 shadow-sm">
                 } @else {
@@ -192,7 +204,7 @@ import { ToastService } from '../core/services/state/toast.service';
                   <p class="text-sm font-bold truncate w-20 text-wushai-sand dark:text-wushai-lilac">{{ user()?.name }}</p>
                   <p class="text-[10px] text-wushai-sand/60 dark:text-wushai-lilac/60 truncate w-20">{{ user()?.role }}</p>
                 </div>
-              </div>
+               </a>
               <button (click)="logout()" class="text-gray-400 dark:text-wushai-lilac/50 hover:text-red-400 dark:hover:text-red-300 transition-colors" title="تسجيل الخروج">
                  <span [innerHTML]="getIcon('LogOut')" class="w-5 h-5"></span>
               </button>
