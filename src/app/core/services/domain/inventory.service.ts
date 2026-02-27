@@ -3,6 +3,16 @@ import { SupabaseService } from '../infra/supabase.service';
 import { AuthService } from './auth.service';
 import { ToastService } from '../state/toast.service';
 
+export const FASHION_CATEGORIES = ['تيشيرت', 'هودي', 'بلوفر'] as const;
+export const PRODUCT_CATEGORIES = [...FASHION_CATEGORIES, 'عام'] as const;
+export const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'] as const;
+export const COLORS = ['أبيض', 'أسود', 'رمادي', 'كحلي', 'بيج', 'أحمر', 'أزرق', 'أخضر', 'بني', 'وردي'] as const;
+export const GENDER_TYPES = ['رجالي', 'نسائي', 'أطفال', 'للجنسين'] as const;
+
+export function isFashionCategory(cat: string): boolean {
+    return (FASHION_CATEGORIES as readonly string[]).includes(cat);
+}
+
 export interface Product {
     id: string;
     name: string;
@@ -16,6 +26,10 @@ export interface Product {
     description: string;
     isActive: boolean;
     createdAt: string;
+    // Fashion-specific fields
+    size?: string;
+    color?: string;
+    gender?: string;
 }
 
 export interface Order {
@@ -39,6 +53,10 @@ export interface OrderItem {
     quantity: number;
     unitPrice: number;
     total: number;
+    // Fashion-specific fields
+    size?: string;
+    color?: string;
+    gender?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -72,7 +90,10 @@ export class InventoryService {
             imageUrl: product.imageUrl || '',
             description: product.description || '',
             isActive: true,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            ...(product.size && { size: product.size }),
+            ...(product.color && { color: product.color }),
+            ...(product.gender && { gender: product.gender }),
         };
         this.products.update(list => [p, ...list]);
         this.persistProducts();

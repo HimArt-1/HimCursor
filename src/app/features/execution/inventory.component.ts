@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { InventoryService, Product, Order, OrderItem } from '../../core/services/domain/inventory.service';
+import { InventoryService, Product, Order, OrderItem, PRODUCT_CATEGORIES, FASHION_CATEGORIES, SIZES, COLORS, GENDER_TYPES, isFashionCategory } from '../../core/services/domain/inventory.service';
 import { ToastService } from '../../core/services/state/toast.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
@@ -104,6 +104,19 @@ import { Icons } from '../../shared/ui/icons';
                   </div>
                   <p class="text-lg font-bold gradient-text">{{ product.price }}</p>
                 </div>
+                @if(product.size || product.color || product.gender) {
+                  <div class="flex flex-wrap gap-1 mb-2">
+                    @if(product.size) {
+                      <span class="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 rounded text-[10px] font-bold">{{ product.size }}</span>
+                    }
+                    @if(product.color) {
+                      <span class="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 rounded text-[10px] font-bold">{{ product.color }}</span>
+                    }
+                    @if(product.gender) {
+                      <span class="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded text-[10px] font-bold">{{ product.gender }}</span>
+                    }
+                  </div>
+                }
 
                 <div class="flex gap-2 mt-3">
                   <button (click)="editProduct(product)" class="flex-1 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg text-xs font-bold text-gray-700 dark:text-gray-300 transition-colors">
@@ -206,7 +219,11 @@ import { Icons } from '../../shared/ui/icons';
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">التصنيف</label>
-                  <input type="text" [(ngModel)]="productForm.category" name="pCat" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
+                  <select [(ngModel)]="productForm.category" name="pCat" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
+                    @for(cat of categories; track cat) {
+                      <option [value]="cat">{{ cat }}</option>
+                    }
+                  </select>
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-3">
@@ -229,6 +246,40 @@ import { Icons } from '../../shared/ui/icons';
                   <input type="number" [(ngModel)]="productForm.minStock" name="pMinStock" min="0" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
                 </div>
               </div>
+              @if(isFashion(productForm.category)) {
+                <div class="p-3 bg-wushai-sand/10 dark:bg-wushai-cocoa/10 rounded-xl border border-wushai-sand/20 dark:border-wushai-cocoa/20 space-y-3">
+                  <p class="text-xs font-bold text-wushai-cocoa dark:text-wushai-sand">خصائص الأزياء</p>
+                  <div class="grid grid-cols-3 gap-3">
+                    <div>
+                      <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">المقاس</label>
+                      <select [(ngModel)]="productForm.size" name="pSize" class="w-full px-3 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
+                        <option value="">—</option>
+                        @for(s of sizes; track s) {
+                          <option [value]="s">{{ s }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">اللون</label>
+                      <select [(ngModel)]="productForm.color" name="pColor" class="w-full px-3 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
+                        <option value="">—</option>
+                        @for(c of colors; track c) {
+                          <option [value]="c">{{ c }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">النوع</label>
+                      <select [(ngModel)]="productForm.gender" name="pGender" class="w-full px-3 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
+                        <option value="">—</option>
+                        @for(g of genderTypes; track g) {
+                          <option [value]="g">{{ g }}</option>
+                        }
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              }
               <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">الوصف</label>
                 <textarea [(ngModel)]="productForm.description" name="pDesc" rows="2" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa resize-none"></textarea>
@@ -268,18 +319,42 @@ import { Icons } from '../../shared/ui/icons';
               <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">المنتجات</label>
                 @for(item of orderForm.items; track $index; let i = $index) {
-                  <div class="flex gap-2 mb-2 items-center">
-                    <select [(ngModel)]="item.productId" [name]="'oProd'+i" (ngModelChange)="onOrderProductChange(i)"
-                      class="flex-1 px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none">
-                      <option value="">اختر المنتج</option>
-                      @for(p of products(); track p.id) {
-                        <option [value]="p.id">{{ p.name }} ({{ p.stock }})</option>
-                      }
-                    </select>
-                    <input type="number" [(ngModel)]="item.quantity" [name]="'oQty'+i" min="1" class="w-20 px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-center outline-none">
-                    <button (click)="orderForm.items.splice(i, 1)" class="p-2 text-red-400 hover:text-red-500">
-                      <span [innerHTML]="getIcon('X')" class="w-4 h-4"></span>
-                    </button>
+                  <div class="mb-3 p-3 bg-gray-50 dark:bg-white/5 rounded-xl space-y-2">
+                    <div class="flex gap-2 items-center">
+                      <select [(ngModel)]="item.productId" [name]="'oProd'+i" (ngModelChange)="onOrderProductChange(i)"
+                        class="flex-1 px-3 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none">
+                        <option value="">اختر المنتج</option>
+                        @for(p of products(); track p.id) {
+                          <option [value]="p.id">{{ p.name }} ({{ p.stock }})</option>
+                        }
+                      </select>
+                      <input type="number" [(ngModel)]="item.quantity" [name]="'oQty'+i" min="1" class="w-20 px-3 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-center outline-none">
+                      <button (click)="orderForm.items.splice(i, 1)" class="p-2 text-red-400 hover:text-red-500">
+                        <span [innerHTML]="getIcon('X')" class="w-4 h-4"></span>
+                      </button>
+                    </div>
+                    @if(isOrderItemFashion(i)) {
+                      <div class="grid grid-cols-3 gap-2">
+                        <select [(ngModel)]="item.size" [name]="'oSize'+i" class="px-2 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-xs outline-none">
+                          <option value="">المقاس</option>
+                          @for(s of sizes; track s) {
+                            <option [value]="s">{{ s }}</option>
+                          }
+                        </select>
+                        <select [(ngModel)]="item.color" [name]="'oColor'+i" class="px-2 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-xs outline-none">
+                          <option value="">اللون</option>
+                          @for(c of colors; track c) {
+                            <option [value]="c">{{ c }}</option>
+                          }
+                        </select>
+                        <select [(ngModel)]="item.gender" [name]="'oGender'+i" class="px-2 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-xs outline-none">
+                          <option value="">النوع</option>
+                          @for(g of genderTypes; track g) {
+                            <option [value]="g">{{ g }}</option>
+                          }
+                        </select>
+                      </div>
+                    }
                   </div>
                 }
                 <button (click)="addOrderItem()" class="text-xs text-wushai-cocoa dark:text-wushai-sand font-bold flex items-center gap-1">
@@ -311,10 +386,27 @@ export class InventoryComponent {
   products = this.inventoryService.products;
   orders = this.inventoryService.orders;
 
+  // Fashion constants
+  readonly categories = PRODUCT_CATEGORIES;
+  readonly sizes = SIZES;
+  readonly colors = COLORS;
+  readonly genderTypes = GENDER_TYPES;
+
   productForm: Partial<Product> = {};
-  orderForm: { customerName: string; customerPhone: string; items: { productId: string; quantity: number }[] } = {
+  orderForm: { customerName: string; customerPhone: string; items: { productId: string; quantity: number; size?: string; color?: string; gender?: string }[] } = {
     customerName: '', customerPhone: '', items: [{ productId: '', quantity: 1 }]
   };
+
+  isFashion(category?: string): boolean {
+    return !!category && isFashionCategory(category);
+  }
+
+  isOrderItemFashion(index: number): boolean {
+    const item = this.orderForm.items[index];
+    if (!item?.productId) return false;
+    const product = this.products().find(p => p.id === item.productId);
+    return !!product && isFashionCategory(product.category);
+  }
 
   filteredProducts = computed(() => {
     const q = this.searchQuery.toLowerCase();
@@ -357,12 +449,12 @@ export class InventoryComponent {
   }
 
   openAddOrder() {
-    this.orderForm = { customerName: '', customerPhone: '', items: [{ productId: '', quantity: 1 }] };
+    this.orderForm = { customerName: '', customerPhone: '', items: [{ productId: '', quantity: 1, size: '', color: '', gender: '' }] };
     this.showOrderModal.set(true);
   }
 
   addOrderItem() {
-    this.orderForm.items.push({ productId: '', quantity: 1 });
+    this.orderForm.items.push({ productId: '', quantity: 1, size: '', color: '', gender: '' });
   }
 
   onOrderProductChange(index: number) {
@@ -376,13 +468,17 @@ export class InventoryComponent {
       .filter(i => i.productId)
       .map(i => {
         const product = this.products().find(p => p.id === i.productId)!;
-        return {
+        const item: OrderItem = {
           productId: i.productId,
           productName: product?.name || '',
           quantity: i.quantity,
           unitPrice: product?.price || 0,
           total: i.quantity * (product?.price || 0)
         };
+        if (i.size) item.size = i.size;
+        if (i.color) item.color = i.color;
+        if (i.gender) item.gender = i.gender;
+        return item;
       });
 
     if (items.length === 0) return;

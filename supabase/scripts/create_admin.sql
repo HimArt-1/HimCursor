@@ -13,6 +13,6 @@ select
   '123456',          -- PIN (Make sure this matches the password you set)
   '#FF5733'          -- Avatar Color
 from auth.users
-where email = 'admin@himcontrol.local'  -- ⚠️ CHANGE THIS if you used a different email
+where email = 't9an2@hotmail.com'  -- ⚠️ CHANGE THIS if you used a different email
 on conflict (id) do update 
 set role = 'System Admin', pin = EXCLUDED.pin;
