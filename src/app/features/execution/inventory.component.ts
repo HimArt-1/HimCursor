@@ -62,11 +62,11 @@ import { Icons } from '../../shared/ui/icons';
       <!-- Tabs -->
       <div class="flex gap-1 mb-5 bg-gray-100 dark:bg-white/5 rounded-xl p-1">
         <button (click)="activeTab.set('products')" class="flex-1 py-2.5 rounded-lg text-sm font-bold transition-all"
-          [ngClass]="activeTab() === 'products' ? 'bg-white dark:bg-white/10 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 dark:text-gray-400'">
+          [ngClass]="activeTab() === 'products' ? 'bg-white dark:bg-white/10 text-wushai-cocoa dark:text-wushai-sand shadow-sm' : 'text-gray-500 dark:text-gray-400'">
           المنتجات
         </button>
         <button (click)="activeTab.set('orders')" class="flex-1 py-2.5 rounded-lg text-sm font-bold transition-all"
-          [ngClass]="activeTab() === 'orders' ? 'bg-white dark:bg-white/10 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-gray-500 dark:text-gray-400'">
+          [ngClass]="activeTab() === 'orders' ? 'bg-white dark:bg-white/10 text-wushai-cocoa dark:text-wushai-sand shadow-sm' : 'text-gray-500 dark:text-gray-400'">
           الطلبات
         </button>
       </div>
@@ -76,18 +76,18 @@ import { Icons } from '../../shared/ui/icons';
         <!-- Search -->
         <div class="mb-4">
           <input type="text" [(ngModel)]="searchQuery" name="search" placeholder="بحث عن منتج..."
-            class="w-full px-4 py-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 outline-none">
+            class="w-full px-4 py-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-wushai-cocoa outline-none">
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           @for(product of filteredProducts(); track product.id) {
             <div class="glass-card rounded-xl overflow-hidden hover:shadow-xl transition-all group">
               <!-- Product Image -->
-              <div class="h-32 bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 flex items-center justify-center relative">
+              <div class="h-32 bg-gradient-to-br from-wushai-sand/20 to-wushai-sand/20 dark:from-wushai-espresso/30 dark:to-wushai-espresso/30 flex items-center justify-center relative">
                 @if(product.imageUrl) {
                   <img [src]="product.imageUrl" class="w-full h-full object-cover">
                 } @else {
-                  <span [innerHTML]="getIcon('ShoppingCart')" class="w-10 h-10 text-violet-300 dark:text-violet-600"></span>
+                  <span [innerHTML]="getIcon('ShoppingCart')" class="w-10 h-10 text-wushai-sand dark:text-wushai-cocoa"></span>
                 }
                 <!-- Stock Badge -->
                 <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold"
@@ -135,12 +135,12 @@ import { Icons } from '../../shared/ui/icons';
               <div class="flex flex-col md:flex-row md:items-center gap-3">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-sm font-bold text-violet-600 dark:text-violet-400">{{ order.orderNumber }}</span>
+                    <span class="text-sm font-bold text-wushai-cocoa dark:text-wushai-sand">{{ order.orderNumber }}</span>
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
                       [ngClass]="{
                         'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400': order.status === 'pending',
                         'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400': order.status === 'processing',
-                        'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400': order.status === 'shipped',
+                        'bg-wushai-sand/20 text-wushai-cocoa dark:bg-wushai-cocoa/20 dark:text-wushai-sand': order.status === 'shipped',
                         'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400': order.status === 'delivered',
                         'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400': order.status === 'cancelled'
                       }">{{ orderStatusLabel(order.status) }}</span>
@@ -187,8 +187,8 @@ import { Icons } from '../../shared/ui/icons';
       <!-- Add/Edit Product Modal -->
       @if(showProductModal()) {
         <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" (click)="showProductModal.set(false)">
-          <div class="bg-white dark:bg-[#1e1a2e] rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl animate-scale-in" (click)="$event.stopPropagation()">
-            <div class="p-5 border-b border-gray-100 dark:border-white/10 flex justify-between items-center sticky top-0 bg-white dark:bg-[#1e1a2e] z-10">
+          <div class="bg-white dark:bg-[#1C1612] rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl animate-scale-in" (click)="$event.stopPropagation()">
+            <div class="p-5 border-b border-gray-100 dark:border-white/10 flex justify-between items-center sticky top-0 bg-white dark:bg-[#1C1612] z-10">
               <h3 class="font-bold text-lg text-gray-900 dark:text-white">{{ editingProductId() ? 'تعديل المنتج' : 'منتج جديد' }}</h3>
               <button (click)="showProductModal.set(false)" class="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors">
                 <span [innerHTML]="getIcon('X')" class="w-5 h-5 text-gray-400"></span>
@@ -197,41 +197,41 @@ import { Icons } from '../../shared/ui/icons';
             <div class="p-5 space-y-4">
               <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">اسم المنتج</label>
-                <input type="text" [(ngModel)]="productForm.name" name="pName" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500">
+                <input type="text" [(ngModel)]="productForm.name" name="pName" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
               </div>
               <div class="grid grid-cols-2 gap-3">
                 <div>
                   <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">الرمز (SKU)</label>
-                  <input type="text" [(ngModel)]="productForm.sku" name="pSku" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500">
+                  <input type="text" [(ngModel)]="productForm.sku" name="pSku" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">التصنيف</label>
-                  <input type="text" [(ngModel)]="productForm.category" name="pCat" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500">
+                  <input type="text" [(ngModel)]="productForm.category" name="pCat" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-3">
                 <div>
                   <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">سعر البيع</label>
-                  <input type="number" [(ngModel)]="productForm.price" name="pPrice" min="0" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500">
+                  <input type="number" [(ngModel)]="productForm.price" name="pPrice" min="0" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">التكلفة</label>
-                  <input type="number" [(ngModel)]="productForm.cost" name="pCost" min="0" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500">
+                  <input type="number" [(ngModel)]="productForm.cost" name="pCost" min="0" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-3">
                 <div>
                   <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">الكمية المتوفرة</label>
-                  <input type="number" [(ngModel)]="productForm.stock" name="pStock" min="0" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500">
+                  <input type="number" [(ngModel)]="productForm.stock" name="pStock" min="0" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">الحد الأدنى</label>
-                  <input type="number" [(ngModel)]="productForm.minStock" name="pMinStock" min="0" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500">
+                  <input type="number" [(ngModel)]="productForm.minStock" name="pMinStock" min="0" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
                 </div>
               </div>
               <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">الوصف</label>
-                <textarea [(ngModel)]="productForm.description" name="pDesc" rows="2" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500 resize-none"></textarea>
+                <textarea [(ngModel)]="productForm.description" name="pDesc" rows="2" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa resize-none"></textarea>
               </div>
               <div class="flex gap-2">
                 <button (click)="saveProduct()" class="btn-primary flex-1 py-3 rounded-xl font-bold text-sm">حفظ</button>
@@ -247,7 +247,7 @@ import { Icons } from '../../shared/ui/icons';
       <!-- Add Order Modal -->
       @if(showOrderModal()) {
         <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" (click)="showOrderModal.set(false)">
-          <div class="bg-white dark:bg-[#1e1a2e] rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl animate-scale-in" (click)="$event.stopPropagation()">
+          <div class="bg-white dark:bg-[#1C1612] rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl animate-scale-in" (click)="$event.stopPropagation()">
             <div class="p-5 border-b border-gray-100 dark:border-white/10 flex justify-between items-center">
               <h3 class="font-bold text-lg text-gray-900 dark:text-white">طلب جديد</h3>
               <button (click)="showOrderModal.set(false)" class="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors">
@@ -257,11 +257,11 @@ import { Icons } from '../../shared/ui/icons';
             <div class="p-5 space-y-4">
               <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">اسم العميل</label>
-                <input type="text" [(ngModel)]="orderForm.customerName" name="oName" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500">
+                <input type="text" [(ngModel)]="orderForm.customerName" name="oName" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
               </div>
               <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">رقم الجوال</label>
-                <input type="text" [(ngModel)]="orderForm.customerPhone" name="oPhone" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-500">
+                <input type="text" [(ngModel)]="orderForm.customerPhone" name="oPhone" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
               </div>
 
               <!-- Items -->
@@ -282,7 +282,7 @@ import { Icons } from '../../shared/ui/icons';
                     </button>
                   </div>
                 }
-                <button (click)="addOrderItem()" class="text-xs text-violet-600 dark:text-violet-400 font-bold flex items-center gap-1">
+                <button (click)="addOrderItem()" class="text-xs text-wushai-cocoa dark:text-wushai-sand font-bold flex items-center gap-1">
                   <span [innerHTML]="getIcon('Plus')" class="w-3.5 h-3.5"></span>
                   إضافة منتج
                 </button>

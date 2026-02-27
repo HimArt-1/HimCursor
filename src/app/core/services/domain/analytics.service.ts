@@ -46,7 +46,7 @@ export class AnalyticsService {
             datasets: [{
                 label: 'Tasks Count',
                 data: Object.values(domains),
-                backgroundColor: '#a855f7' // Purple-500
+                backgroundColor: '#E6D3B3' // Purple-500
             }]
         };
     });

@@ -329,11 +329,11 @@ export class RequestService {
 
     getTypeColor(type: string): string {
         switch (type) {
-            case 'تصميم': return 'bg-purple-500/20 text-purple-400';
+            case 'تصميم': return 'bg-wushai-cocoa/20 text-wushai-sand';
             case 'برمجة': return 'bg-cyan-500/20 text-cyan-400';
             case 'محتوى': return 'bg-pink-500/20 text-pink-400';
             case 'تسويق': return 'bg-orange-500/20 text-orange-400';
-            case 'إداري': return 'bg-indigo-500/20 text-indigo-400';
+            case 'إداري': return 'bg-indigo-500/20 text-wushai-olive';
             default: return 'bg-gray-500/20 text-gray-400';
         }
     }

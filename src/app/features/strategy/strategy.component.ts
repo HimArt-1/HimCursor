@@ -49,7 +49,7 @@ import { Icons } from '../../shared/ui/icons';
             </h3>
             <div class="flex gap-2">
                <span class="flex items-center gap-1 text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-bold">Marketing</span>
-               <span class="flex items-center gap-1 text-[10px] bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-bold">Product</span>
+               <span class="flex items-center gap-1 text-[10px] bg-wushai-sand/20 text-wushai-cocoa px-2 py-1 rounded-full font-bold">Product</span>
                <span class="flex items-center gap-1 text-[10px] bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-bold">Milestone</span>
             </div>
          </div>
@@ -99,10 +99,10 @@ import { Icons } from '../../shared/ui/icons';
                   </div>
 
                   <!-- 2. Product Development (High Priority Tasks) -->
-                  <div class="relative h-20 bg-purple-50/50 dark:bg-purple-900/10 rounded-xl border border-purple-100 dark:border-purple-900/30 flex items-center px-4">
-                     <div class="absolute left-0 -ml-4 -rotate-90 text-[10px] font-bold text-purple-400 uppercase tracking-widest w-20 text-center">Product</div>
+                  <div class="relative h-20 bg-purple-50/50 dark:bg-wushai-espresso/10 rounded-xl border border-wushai-sand/20 dark:border-wushai-espresso/30 flex items-center px-4">
+                     <div class="absolute left-0 -ml-4 -rotate-90 text-[10px] font-bold text-wushai-sand uppercase tracking-widest w-20 text-center">Product</div>
                      @for(task of highPriorityTasks(); track task.id) {
-                        <div class="absolute top-2 bottom-2 bg-purple-500/80 rounded-lg shadow-sm border border-purple-400/50 flex items-center justify-center text-white text-[10px] font-bold px-2 overflow-hidden whitespace-nowrap hover:bg-purple-600 transition-colors cursor-help"
+                        <div class="absolute top-2 bottom-2 bg-wushai-cocoa/80 rounded-lg shadow-sm border border-wushai-sand/50 flex items-center justify-center text-white text-[10px] font-bold px-2 overflow-hidden whitespace-nowrap hover:bg-wushai-cocoa transition-colors cursor-help"
                              [style.left.%]="getDatePosition(task.dueDate)"
                              [style.width.%]="8"
                              title="{{task.title}}">
@@ -130,7 +130,7 @@ import { Icons } from '../../shared/ui/icons';
                - {{ task.title }} ({{ task.owner }})
             }
 
-            <span class="text-purple-600 font-bold block mt-4">## 📢 Campaigns Launched</span>
+            <span class="text-wushai-cocoa font-bold block mt-4">## 📢 Campaigns Launched</span>
             @for(camp of recentCampaigns(); track camp.id) {
                - {{ camp.title }} on {{ camp.platform }}
             }

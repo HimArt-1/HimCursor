@@ -104,7 +104,7 @@ interface TeamMember {
 
                   <!-- XP Bar -->
                   <div class="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-1">
-                     <div class="h-full bg-gradient-to-r from-blue-400 to-purple-500 transition-all duration-500" [style.width.%]="(member.xp % 100)"></div>
+                     <div class="h-full bg-gradient-to-r from-blue-400 to-wushai-cocoa transition-all duration-500" [style.width.%]="(member.xp % 100)"></div>
                   </div>
                   <div class="flex justify-between w-full text-[9px] text-gray-400 mb-4">
                      <span>{{ member.xp % 100 }} / 100 XP</span>

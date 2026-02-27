@@ -71,7 +71,7 @@ import { ConfettiService } from '../../core/services/state/confetti.service';
               </button>
            </div>
 
-           <button class="bg-wushai-brown hover:bg-wushai-deep dark:bg-wushai-lilac dark:hover:bg-purple-400 dark:text-wushai-sidebar-dark text-white px-5 py-2 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-lg shadow-wushai-brown/20 dark:shadow-none"
+           <button class="bg-wushai-brown hover:bg-wushai-deep dark:bg-wushai-lilac dark:hover:bg-wushai-sand dark:text-wushai-sidebar-dark text-white px-5 py-2 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-lg shadow-wushai-brown/20 dark:shadow-none"
                 (click)="openModal(null)">
               <span [innerHTML]="getIcon('Plus')" class="w-5 h-5"></span>
               <span class="hidden md:inline">مهمة جديدة</span>
@@ -134,7 +134,7 @@ import { ConfettiService } from '../../core/services/state/confetti.service';
         </button>
         <button (click)="toggleHighPriority()"
                 class="px-3 py-1.5 rounded-full text-xs font-bold border transition-colors flex items-center gap-2"
-                [ngClass]="highPriorityOnly() ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800/50' : 'bg-white dark:bg-wushai-surface text-gray-500 border-wushai-sand dark:border-wushai-lilac/10 hover:text-purple-600'">
+                [ngClass]="highPriorityOnly() ? 'bg-wushai-sand/20 text-wushai-cocoa border-wushai-sand/50 dark:bg-wushai-espresso/20 dark:text-wushai-sand dark:border-wushai-deep-cocoa/50' : 'bg-white dark:bg-wushai-surface text-gray-500 border-wushai-sand dark:border-wushai-lilac/10 hover:text-wushai-cocoa'">
           أولوية عالية
           <span class="text-[10px] bg-white/70 dark:bg-black/20 px-1.5 py-0.5 rounded">{{ highPriorityCount() }}</span>
         </button>
@@ -483,7 +483,7 @@ import { ConfettiService } from '../../core/services/state/confetti.service';
                     </div>
                     
                     <button (click)="saveTask(tTitle.value, tDesc.value, tDomain.value, tPriority.value, tOwner.value, tDate.value, tTags.value)" 
-                        class="w-full bg-wushai-dark dark:bg-wushai-lilac text-white dark:text-wushai-sidebar-dark py-3 rounded-xl font-bold hover:bg-wushai-black dark:hover:bg-purple-300 transition-all mt-2 shadow-lg shadow-wushai-dark/20 dark:shadow-none">
+                        class="w-full bg-wushai-dark dark:bg-wushai-lilac text-white dark:text-wushai-sidebar-dark py-3 rounded-xl font-bold hover:bg-wushai-black dark:hover:bg-wushai-sand transition-all mt-2 shadow-lg shadow-wushai-dark/20 dark:shadow-none">
                         {{ editingTask() ? 'حفظ التعديلات' : 'إنشاء المهمة' }}
                     </button>
                 </div>

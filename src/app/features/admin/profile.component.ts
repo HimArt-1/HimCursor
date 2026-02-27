@@ -28,7 +28,7 @@ import { Icons } from '../../shared/ui/icons';
       <!-- Profile Card -->
       <div class="glass-card rounded-2xl overflow-hidden">
         <!-- Banner -->
-        <div class="h-32 bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 relative">
+        <div class="h-32 bg-gradient-to-br from-wushai-cocoa via-wushai-cocoa to-wushai-olive relative">
           <div class="absolute inset-0 bg-black/10"></div>
           <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/30 to-transparent"></div>
         </div>
@@ -38,7 +38,7 @@ import { Icons } from '../../shared/ui/icons';
           <div class="flex flex-col md:flex-row items-center md:items-end gap-4">
             <!-- Avatar -->
             <div class="relative group">
-              <div class="w-28 h-28 rounded-2xl overflow-hidden ring-4 ring-white dark:ring-[#1e1a2e] shadow-xl bg-gradient-to-br from-violet-400 to-purple-500">
+              <div class="w-28 h-28 rounded-2xl overflow-hidden ring-4 ring-white dark:ring-[#1C1612] shadow-xl bg-gradient-to-br from-wushai-sand to-wushai-cocoa">
                 @if(avatarUrl()) {
                   <img [src]="avatarUrl()" class="w-full h-full object-cover" alt="الصورة الشخصية">
                 } @else {
@@ -63,7 +63,7 @@ import { Icons } from '../../shared/ui/icons';
             <div class="flex-1 text-center md:text-right pb-2">
               <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ userName() }}</h2>
               <p class="text-sm text-gray-500 dark:text-gray-400">{{ userEmail() }}</p>
-              <span class="inline-block mt-1 px-3 py-0.5 bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300 text-xs font-bold rounded-full">
+              <span class="inline-block mt-1 px-3 py-0.5 bg-wushai-sand/20 dark:bg-wushai-cocoa/20 text-wushai-cocoa dark:text-wushai-sand text-xs font-bold rounded-full">
                 {{ userRole() }}
               </span>
             </div>
@@ -81,7 +81,7 @@ import { Icons } from '../../shared/ui/icons';
       <!-- Edit Form -->
       <div class="glass-card rounded-2xl p-6 mt-6">
         <h3 class="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <span [innerHTML]="getIcon('Edit')" class="w-5 h-5 text-violet-500"></span>
+          <span [innerHTML]="getIcon('Edit')" class="w-5 h-5 text-wushai-cocoa"></span>
           تعديل المعلومات
         </h3>
 
@@ -90,7 +90,7 @@ import { Icons } from '../../shared/ui/icons';
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">اسم العرض</label>
             <input type="text" [(ngModel)]="editName" name="editName"
-              class="w-full px-4 py-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+              class="w-full px-4 py-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-wushai-cocoa focus:border-transparent outline-none transition-all"
               placeholder="أدخل اسم العرض">
           </div>
 

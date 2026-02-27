@@ -74,14 +74,14 @@ interface LogItem {
 
          <!-- Orders -->
          <div class="bg-wushai-black border border-gray-800 rounded-2xl p-6 relative overflow-hidden group">
-            <div class="absolute right-4 top-4 text-purple-500/20 group-hover:scale-110 transition-transform">
+            <div class="absolute right-4 top-4 text-wushai-cocoa/20 group-hover:scale-110 transition-transform">
                <span class="scale-150" [innerHTML]="getIcon('ShoppingCart')"></span>
             </div>
             <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Orders Today</p>
             <p class="text-3xl font-mono font-bold text-white mt-2">{{ ordersCount() }}</p>
             <div class="flex items-center gap-1 mt-2">
                @for(i of [1,2,3,4,5]; track i) {
-                  <div class="w-1.5 h-1.5 rounded-full" [ngClass]="i <= (ordersCount() % 5) + 1 ? 'bg-purple-500' : 'bg-gray-800'"></div>
+                  <div class="w-1.5 h-1.5 rounded-full" [ngClass]="i <= (ordersCount() % 5) + 1 ? 'bg-wushai-cocoa' : 'bg-gray-800'"></div>
                }
             </div>
          </div>
@@ -161,7 +161,7 @@ interface LogItem {
             
             <div class="absolute bottom-4 right-4 flex gap-4 text-xs text-gray-400">
                <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-blue-400"></div> Mobile (65%)</div>
-               <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-purple-400"></div> Desktop (35%)</div>
+               <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-wushai-sand"></div> Desktop (35%)</div>
             </div>
          </div>
       </div>

@@ -241,7 +241,7 @@ interface CalendarDay {
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="block text-sm font-bold text-wushai-olive">المحتوى / الوصف</label>
-                            <button (click)="generateMagicBrief(cTitle.value, cPlatform.value)" class="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full flex items-center gap-1 hover:bg-purple-200 transition-colors font-bold">
+                            <button (click)="generateMagicBrief(cTitle.value, cPlatform.value)" class="text-[10px] bg-wushai-sand/20 text-wushai-cocoa px-2 py-0.5 rounded-full flex items-center gap-1 hover:bg-wushai-sand/50 transition-colors font-bold">
                                 <span [innerHTML]="getIcon('Magic')" class="w-3 h-3"></span> AI Generator
                             </button>
                         </div>

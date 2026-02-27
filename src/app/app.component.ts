@@ -50,21 +50,21 @@ import { Icons } from './shared/ui/icons';
 
         <!-- Mobile Bottom Navigation -->
         @if(isAuthenticated()) {
-          <nav class="md:hidden fixed bottom-0 left-0 right-0 z-30 bottom-nav bg-white/95 dark:bg-[#1e1a2e]/95 backdrop-blur-xl border-t border-gray-200 dark:border-white/10 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
+          <nav class="md:hidden fixed bottom-0 left-0 right-0 z-30 bottom-nav bg-white/95 dark:bg-[#1C1612]/95 backdrop-blur-xl border-t border-gray-200 dark:border-white/10 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
             <div class="flex items-center justify-around h-16 px-2">
-              <a routerLink="/dashboard" routerLinkActive="text-purple-600 dark:text-purple-400" class="flex flex-col items-center justify-center gap-0.5 w-14 h-14 rounded-2xl transition-all text-gray-500 dark:text-gray-400 active:scale-90">
+              <a routerLink="/dashboard" routerLinkActive="text-wushai-cocoa dark:text-wushai-sand" class="flex flex-col items-center justify-center gap-0.5 w-14 h-14 rounded-2xl transition-all text-gray-500 dark:text-gray-400 active:scale-90">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
                 <span class="text-[10px] font-bold leading-none">الرئيسية</span>
               </a>
-              <a routerLink="/tasks" routerLinkActive="text-purple-600 dark:text-purple-400" class="flex flex-col items-center justify-center gap-0.5 w-14 h-14 rounded-2xl transition-all text-gray-500 dark:text-gray-400 active:scale-90">
+              <a routerLink="/tasks" routerLinkActive="text-wushai-cocoa dark:text-wushai-sand" class="flex flex-col items-center justify-center gap-0.5 w-14 h-14 rounded-2xl transition-all text-gray-500 dark:text-gray-400 active:scale-90">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
                 <span class="text-[10px] font-bold leading-none">المهام</span>
               </a>
-              <a routerLink="/requests" routerLinkActive="text-purple-600 dark:text-purple-400" class="flex flex-col items-center justify-center gap-0.5 w-14 h-14 rounded-2xl transition-all text-gray-500 dark:text-gray-400 active:scale-90">
+              <a routerLink="/requests" routerLinkActive="text-wushai-cocoa dark:text-wushai-sand" class="flex flex-col items-center justify-center gap-0.5 w-14 h-14 rounded-2xl transition-all text-gray-500 dark:text-gray-400 active:scale-90">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
                 <span class="text-[10px] font-bold leading-none">الطلبات</span>
               </a>
-              <a routerLink="/strategy" routerLinkActive="text-purple-600 dark:text-purple-400" class="flex flex-col items-center justify-center gap-0.5 w-14 h-14 rounded-2xl transition-all text-gray-500 dark:text-gray-400 active:scale-90">
+              <a routerLink="/strategy" routerLinkActive="text-wushai-cocoa dark:text-wushai-sand" class="flex flex-col items-center justify-center gap-0.5 w-14 h-14 rounded-2xl transition-all text-gray-500 dark:text-gray-400 active:scale-90">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
                 <span class="text-[10px] font-bold leading-none">الاستراتيجية</span>
               </a>
@@ -80,7 +80,7 @@ import { Icons } from './shared/ui/icons';
       <!-- PWA Install Prompt -->
       @if(showInstallPrompt()) {
         <div class="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-80 z-50 install-prompt">
-          <div class="bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-2xl p-4 shadow-2xl shadow-purple-500/30 flex items-center gap-3">
+          <div class="bg-gradient-to-r from-wushai-cocoa to-wushai-cocoa text-white rounded-2xl p-4 shadow-2xl shadow-wushai-cocoa/30 flex items-center gap-3">
             <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             </div>
@@ -88,7 +88,7 @@ import { Icons } from './shared/ui/icons';
               <p class="text-sm font-bold">تثبيت HimControl</p>
               <p class="text-xs text-white/70">أضف التطبيق للشاشة الرئيسية</p>
             </div>
-            <button (click)="installApp()" class="px-3 py-1.5 bg-white text-purple-600 font-bold text-sm rounded-lg flex-shrink-0 active:scale-95 transition-transform">
+            <button (click)="installApp()" class="px-3 py-1.5 bg-white text-wushai-cocoa font-bold text-sm rounded-lg flex-shrink-0 active:scale-95 transition-transform">
               تثبيت
             </button>
             <button (click)="dismissInstallPrompt()" class="p-1 text-white/60 hover:text-white flex-shrink-0">

@@ -85,9 +85,9 @@ import { Icons } from '../../shared/ui/icons';
           <p class="text-3xl font-extrabold text-amber-600 dark:text-amber-400 mt-2">{{ dueSoonCount() }}</p>
           <p class="text-xs text-gray-500 mt-1">خلال 7 أيام</p>
         </a>
-        <a routerLink="/tasks" [queryParams]="{ priority: 'High' }" class="bg-white dark:bg-wushai-surface p-5 rounded-2xl shadow-sm border border-purple-200/60 dark:border-purple-900/30 hover:shadow-lg transition-all">
-          <p class="text-xs font-bold text-purple-500 uppercase tracking-widest">أولوية عالية</p>
-          <p class="text-3xl font-extrabold text-purple-600 dark:text-purple-400 mt-2">{{ highPriorityCount() }}</p>
+        <a routerLink="/tasks" [queryParams]="{ priority: 'High' }" class="bg-white dark:bg-wushai-surface p-5 rounded-2xl shadow-sm border border-wushai-sand/50/60 dark:border-wushai-espresso/30 hover:shadow-lg transition-all">
+          <p class="text-xs font-bold text-wushai-cocoa uppercase tracking-widest">أولوية عالية</p>
+          <p class="text-3xl font-extrabold text-wushai-cocoa dark:text-wushai-sand mt-2">{{ highPriorityCount() }}</p>
           <p class="text-xs text-gray-500 mt-1">تأثير مباشر على الهدف</p>
         </a>
         <a routerLink="/tasks" [queryParams]="{ owner: 'غير محدد' }" class="bg-white dark:bg-wushai-surface p-5 rounded-2xl shadow-sm border border-wushai-sand dark:border-wushai-lilac/10 hover:shadow-lg transition-all">

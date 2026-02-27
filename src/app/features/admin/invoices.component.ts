@@ -56,7 +56,7 @@ import { Icons } from '../../shared/ui/icons';
             <div class="glass-card rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-3 hover:shadow-lg transition-shadow cursor-pointer" (click)="editInvoice(inv)">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
-                  <span class="text-sm font-bold text-violet-600 dark:text-violet-400">{{ inv.number }}</span>
+                  <span class="text-sm font-bold text-wushai-cocoa dark:text-wushai-sand">{{ inv.number }}</span>
                   <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
                     [ngClass]="{
                       'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400': inv.status === 'draft',
@@ -86,7 +86,7 @@ import { Icons } from '../../shared/ui/icons';
       @if(showEditor()) {
         <div class="glass-card rounded-2xl overflow-hidden">
           <!-- Editor Header -->
-          <div class="p-5 bg-gradient-to-r from-violet-600 to-purple-700 text-white flex justify-between items-center">
+          <div class="p-5 bg-gradient-to-r from-wushai-cocoa to-wushai-cocoa text-white flex justify-between items-center">
             <div class="flex items-center gap-3">
               <button (click)="closeEditor()" class="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-colors" title="عودة">
                 <span [innerHTML]="getIcon('ArrowRight')" class="w-5 h-5"></span>
@@ -114,17 +114,17 @@ import { Icons } from '../../shared/ui/icons';
               <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">اسم العميل</label>
                 <input type="text" [(ngModel)]="currentInvoice.clientName" name="clientName"
-                  class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 outline-none">
+                  class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-wushai-cocoa outline-none">
               </div>
               <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">البريد الإلكتروني</label>
                 <input type="email" [(ngModel)]="currentInvoice.clientEmail" name="clientEmail"
-                  class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 outline-none">
+                  class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-wushai-cocoa outline-none">
               </div>
               <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">رقم الجوال</label>
                 <input type="text" [(ngModel)]="currentInvoice.clientPhone" name="clientPhone"
-                  class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 outline-none">
+                  class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-wushai-cocoa outline-none">
               </div>
             </div>
 
@@ -133,17 +133,17 @@ import { Icons } from '../../shared/ui/icons';
               <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">تاريخ الفاتورة</label>
                 <input type="date" [(ngModel)]="currentInvoice.date" name="date"
-                  class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 outline-none">
+                  class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-wushai-cocoa outline-none">
               </div>
               <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">تاريخ الاستحقاق</label>
                 <input type="date" [(ngModel)]="currentInvoice.dueDate" name="dueDate"
-                  class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 outline-none">
+                  class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-wushai-cocoa outline-none">
               </div>
               <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">الحالة</label>
                 <select [(ngModel)]="currentInvoice.status" name="status"
-                  class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 outline-none">
+                  class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-wushai-cocoa outline-none">
                   <option value="draft">مسودة</option>
                   <option value="sent">مُرسلة</option>
                   <option value="paid">مدفوعة</option>
@@ -156,7 +156,7 @@ import { Icons } from '../../shared/ui/icons';
             <div>
               <div class="flex justify-between items-center mb-3">
                 <label class="text-sm font-bold text-gray-700 dark:text-gray-300">البنود</label>
-                <button (click)="addItem()" class="text-xs text-violet-600 dark:text-violet-400 font-bold flex items-center gap-1 hover:text-violet-700">
+                <button (click)="addItem()" class="text-xs text-wushai-cocoa dark:text-wushai-sand font-bold flex items-center gap-1 hover:text-wushai-cocoa">
                   <span [innerHTML]="getIcon('Plus')" class="w-3.5 h-3.5"></span>
                   إضافة بند
                 </button>
@@ -174,13 +174,13 @@ import { Icons } from '../../shared/ui/icons';
               @for(item of currentInvoice.items; track item.id; let i = $index) {
                 <div class="grid grid-cols-12 gap-2 mb-2 items-center">
                   <input type="text" [(ngModel)]="item.description" [name]="'desc'+i"
-                    class="col-span-12 md:col-span-5 px-3 py-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-sm outline-none focus:ring-1 focus:ring-violet-500"
+                    class="col-span-12 md:col-span-5 px-3 py-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-sm outline-none focus:ring-1 focus:ring-wushai-cocoa"
                     placeholder="وصف البند">
                   <input type="number" [(ngModel)]="item.quantity" [name]="'qty'+i" (ngModelChange)="recalc()"
-                    class="col-span-4 md:col-span-2 px-3 py-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-center outline-none focus:ring-1 focus:ring-violet-500"
+                    class="col-span-4 md:col-span-2 px-3 py-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-center outline-none focus:ring-1 focus:ring-wushai-cocoa"
                     min="1">
                   <input type="number" [(ngModel)]="item.unitPrice" [name]="'price'+i" (ngModelChange)="recalc()"
-                    class="col-span-4 md:col-span-2 px-3 py-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-center outline-none focus:ring-1 focus:ring-violet-500"
+                    class="col-span-4 md:col-span-2 px-3 py-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-center outline-none focus:ring-1 focus:ring-wushai-cocoa"
                     min="0" step="0.01">
                   <div class="col-span-3 md:col-span-2 text-center text-sm font-bold text-gray-700 dark:text-gray-300 py-2">
                     {{ (item.quantity * item.unitPrice) | number:'1.2-2' }}
@@ -197,7 +197,7 @@ import { Icons } from '../../shared/ui/icons';
               <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">ملاحظات</label>
                 <textarea [(ngModel)]="currentInvoice.notes" name="notes" rows="3"
-                  class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 outline-none resize-none"
+                  class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-wushai-cocoa outline-none resize-none"
                   placeholder="ملاحظات إضافية..."></textarea>
               </div>
               <div class="space-y-3">
@@ -340,14 +340,14 @@ export class InvoicesComponent {
     <html dir="rtl"><head><title>فاتورة ${inv.number}</title>
     <style>body{font-family:Tajawal,sans-serif;padding:40px;color:#333}
     .header{display:flex;justify-content:space-between;margin-bottom:30px}
-    .logo{font-size:24px;font-weight:bold;color:#7c3aed}
+    .logo{font-size:24px;font-weight:bold;color:#7A4E2D}
     table{width:100%;border-collapse:collapse;margin:20px 0}
     th{background:#f8f6f1;padding:10px;text-align:right;font-size:13px;color:#666}
-    .total-row{font-size:18px;font-weight:bold;color:#7c3aed}</style></head>
+    .total-row{font-size:18px;font-weight:bold;color:#7A4E2D}</style></head>
     <body>
       <div class="header">
         <div><div class="logo">HimControl</div><p style="color:#999;font-size:12px">فاتورة إلكترونية</p></div>
-        <div style="text-align:left"><h2 style="color:#7c3aed;margin:0">${inv.number}</h2>
+        <div style="text-align:left"><h2 style="color:#7A4E2D;margin:0">${inv.number}</h2>
         <p style="color:#999;font-size:12px">التاريخ: ${inv.date}</p>
         <p style="color:#999;font-size:12px">الاستحقاق: ${inv.dueDate || '-'}</p></div>
       </div>
@@ -362,7 +362,7 @@ export class InvoicesComponent {
         <div style="display:flex;justify-content:space-between;padding:5px 0"><span>المجموع</span><span>${this.calcSubtotal().toFixed(2)} ر.س</span></div>
         <div style="display:flex;justify-content:space-between;padding:5px 0"><span>الضريبة (${inv.taxRate}%)</span><span>${this.calcTax().toFixed(2)} ر.س</span></div>
         ${inv.discount > 0 ? '<div style="display:flex;justify-content:space-between;padding:5px 0"><span>خصم</span><span>-' + inv.discount.toFixed(2) + ' ر.س</span></div>' : ''}
-        <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid #7c3aed;margin-top:5px" class="total-row">
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid #7A4E2D;margin-top:5px" class="total-row">
           <span>الإجمالي</span><span>${this.calcTotal().toFixed(2)} ر.س</span>
         </div>
       </div>

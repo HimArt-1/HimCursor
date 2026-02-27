@@ -65,8 +65,8 @@ interface SystemError {
       </div>
 
       <!-- Supabase SQL Generator (NEW) -->
-      <div class="bg-gray-900 border border-indigo-900/50 rounded-xl p-6 shadow-lg font-mono">
-         <h3 class="text-indigo-400 font-bold mb-4 flex items-center gap-2">
+      <div class="bg-gray-900 border border-wushai-espresso/50 rounded-xl p-6 shadow-lg font-mono">
+         <h3 class="text-wushai-olive font-bold mb-4 flex items-center gap-2">
             <span [innerHTML]="getIcon('Code')"></span> Supabase SQL Editor Generator
          </h3>
          <div class="text-xs text-gray-400 mb-4">
@@ -79,8 +79,8 @@ interface SystemError {
                <div class="text-xs font-bold text-gray-500 px-2 py-1 mb-1">Recent User Creations</div>
                @for(log of userCreationLogs(); track log.id) {
                   <button (click)="selectLogForSql(log)" 
-                     class="w-full text-left p-2 rounded hover:bg-indigo-900/20 text-xs flex justify-between items-center group transition-colors"
-                     [class.bg-indigo-900-40]="selectedLog()?.id === log.id">
+                     class="w-full text-left p-2 rounded hover:bg-wushai-espresso/20 text-xs flex justify-between items-center group transition-colors"
+                     [class.bg-wushai-espresso-40]="selectedLog()?.id === log.id">
                      <span class="text-gray-300">{{ log.details }}</span>
                      <span class="text-gray-600 group-hover:text-white">{{ log.timestamp | date:'shortDate' }}</span>
                   </button>

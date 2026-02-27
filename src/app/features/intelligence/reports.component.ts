@@ -66,7 +66,7 @@ import { DataService } from '../../core/services/state/data.service';
         <!-- 2. Tasks by Domain (Bar) -->
          <div class="bg-white dark:bg-wushai-black p-6 rounded-2xl border border-wushai-sand shadow-sm flex flex-col md:col-span-2">
            <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-             <span [innerHTML]="getIcon('BarChart')" class="w-5 h-5 text-purple-500"></span>
+             <span [innerHTML]="getIcon('BarChart')" class="w-5 h-5 text-wushai-cocoa"></span>
              توزيع المهام (By Domain)
            </h3>
            <div class="flex-1 min-h-[250px]">

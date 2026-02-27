@@ -20,12 +20,12 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
       <!-- Header -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 class="text-3xl md:text-4xl font-black bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 bg-clip-text text-transparent">
+          <h1 class="text-3xl md:text-4xl font-black bg-gradient-to-r from-wushai-cocoa via-wushai-cocoa to-fuchsia-500 bg-clip-text text-transparent">
             الطلبات المشتركة
           </h1>
           <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">أنشئ طلبات وشاركها مع الفريق</p>
         </div>
-        <button (click)="openCreateModal()" class="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg shadow-purple-500/25 transition-all duration-300 hover:shadow-purple-500/40 hover:-translate-y-0.5 active:translate-y-0">
+        <button (click)="openCreateModal()" class="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-wushai-cocoa to-wushai-cocoa hover:from-wushai-cocoa hover:to-wushai-cocoa text-white font-bold rounded-xl shadow-lg shadow-wushai-cocoa/25 transition-all duration-300 hover:shadow-wushai-cocoa/40 hover:-translate-y-0.5 active:translate-y-0">
           <span [innerHTML]="getIcon('Plus')" class="w-5 h-5"></span>
           <span>طلب جديد</span>
         </button>
@@ -49,11 +49,11 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
 
       <!-- Filters -->
       <div class="flex flex-wrap gap-2 mb-6">
-        <button (click)="filterStatus.set(null)" [class]="filterStatus() === null ? 'bg-purple-600 text-white' : 'bg-white dark:bg-wushai-surface/50 text-gray-600 dark:text-gray-300'" class="px-4 py-2 rounded-xl text-sm font-bold transition-all border border-gray-200/50 dark:border-white/10 hover:shadow-md">
+        <button (click)="filterStatus.set(null)" [class]="filterStatus() === null ? 'bg-wushai-cocoa text-white' : 'bg-white dark:bg-wushai-surface/50 text-gray-600 dark:text-gray-300'" class="px-4 py-2 rounded-xl text-sm font-bold transition-all border border-gray-200/50 dark:border-white/10 hover:shadow-md">
           الكل
         </button>
         @for (status of statuses; track status) {
-          <button (click)="filterStatus.set(status)" [class]="filterStatus() === status ? 'bg-purple-600 text-white' : 'bg-white dark:bg-wushai-surface/50 text-gray-600 dark:text-gray-300'" class="px-4 py-2 rounded-xl text-sm font-bold transition-all border border-gray-200/50 dark:border-white/10 hover:shadow-md">
+          <button (click)="filterStatus.set(status)" [class]="filterStatus() === status ? 'bg-wushai-cocoa text-white' : 'bg-white dark:bg-wushai-surface/50 text-gray-600 dark:text-gray-300'" class="px-4 py-2 rounded-xl text-sm font-bold transition-all border border-gray-200/50 dark:border-white/10 hover:shadow-md">
             {{ status }}
           </button>
         }
@@ -62,15 +62,15 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
       <!-- Loading State -->
       @if (requestService.loading()) {
         <div class="flex items-center justify-center py-20">
-          <div class="w-10 h-10 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
+          <div class="w-10 h-10 border-4 border-wushai-cocoa/30 border-t-wushai-cocoa rounded-full animate-spin"></div>
         </div>
       }
 
       <!-- Empty State -->
       @if (!requestService.loading() && filteredRequests().length === 0) {
         <div class="flex flex-col items-center justify-center py-20 text-center">
-          <div class="w-20 h-20 rounded-3xl bg-purple-500/10 dark:bg-purple-500/20 flex items-center justify-center mb-4">
-            <span [innerHTML]="getIcon('Inbox')" class="w-10 h-10 text-purple-500"></span>
+          <div class="w-20 h-20 rounded-3xl bg-wushai-cocoa/10 dark:bg-wushai-cocoa/20 flex items-center justify-center mb-4">
+            <span [innerHTML]="getIcon('Inbox')" class="w-10 h-10 text-wushai-cocoa"></span>
           </div>
           <h3 class="text-xl font-bold text-gray-700 dark:text-gray-200 mb-2">لا توجد طلبات</h3>
           <p class="text-sm text-gray-500 dark:text-gray-400">ابدأ بإنشاء طلب جديد لمشاركته مع الفريق</p>
@@ -80,9 +80,9 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
       <!-- Request Cards Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         @for (req of filteredRequests(); track req.id) {
-          <div (click)="openDetailModal(req)" class="group cursor-pointer bg-white dark:bg-wushai-surface/60 backdrop-blur-sm rounded-2xl border border-gray-200/60 dark:border-white/10 shadow-sm hover:shadow-xl hover:shadow-purple-500/10 dark:hover:shadow-purple-500/5 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+          <div (click)="openDetailModal(req)" class="group cursor-pointer bg-white dark:bg-wushai-surface/60 backdrop-blur-sm rounded-2xl border border-gray-200/60 dark:border-white/10 shadow-sm hover:shadow-xl hover:shadow-wushai-cocoa/10 dark:hover:shadow-wushai-cocoa/5 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
             <!-- Card Header with Status Stripe -->
-            <div class="h-1.5 w-full" [class]="req.status === 'مكتمل' ? 'bg-gradient-to-r from-emerald-400 to-green-500' : req.status === 'قيد التنفيذ' ? 'bg-gradient-to-r from-amber-400 to-orange-500' : 'bg-gradient-to-r from-blue-400 to-violet-500'"></div>
+            <div class="h-1.5 w-full" [class]="req.status === 'مكتمل' ? 'bg-gradient-to-r from-emerald-400 to-green-500' : req.status === 'قيد التنفيذ' ? 'bg-gradient-to-r from-amber-400 to-orange-500' : 'bg-gradient-to-r from-blue-400 to-wushai-cocoa'"></div>
 
             <div class="p-5">
               <!-- Type badge + Status -->
@@ -96,7 +96,7 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
               </div>
 
               <!-- Title -->
-              <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2 line-clamp-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+              <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2 line-clamp-1 group-hover:text-wushai-cocoa dark:group-hover:text-wushai-sand transition-colors">
                 {{ req.title }}
               </h3>
 
@@ -108,7 +108,7 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
               <!-- Footer -->
               <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/5">
                 <div class="flex items-center gap-2">
-                  <div class="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                  <div class="w-7 h-7 rounded-full bg-gradient-to-br from-wushai-cocoa to-pink-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
                     {{ req.requesterName?.charAt(0) || '?' }}
                   </div>
                   <span class="text-xs text-gray-500 dark:text-gray-400">{{ req.requesterName || 'مستخدم' }}</span>
@@ -132,9 +132,9 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
       @if (showCreateModal()) {
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" (click)="closeCreateModal()">
           <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-          <div class="relative bg-white dark:bg-[#1e1a2e] rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+          <div class="relative bg-white dark:bg-[#1C1612] rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
             <!-- Modal Header -->
-            <div class="sticky top-0 z-10 bg-white dark:bg-[#1e1a2e] p-6 pb-4 border-b border-gray-100 dark:border-white/10 rounded-t-3xl">
+            <div class="sticky top-0 z-10 bg-white dark:bg-[#1C1612] p-6 pb-4 border-b border-gray-100 dark:border-white/10 rounded-t-3xl">
               <div class="flex items-center justify-between">
                 <h2 class="text-xl font-bold text-gray-800 dark:text-white">طلب جديد</h2>
                 <button (click)="closeCreateModal()" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
@@ -147,13 +147,13 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
               <!-- Title -->
               <div>
                 <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">عنوان الطلب *</label>
-                <input #createTitle type="text" placeholder="مثال: تصميم شعار جديد..." class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all">
+                <input #createTitle type="text" placeholder="مثال: تصميم شعار جديد..." class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-wushai-cocoa focus:border-transparent outline-none transition-all">
               </div>
 
               <!-- Description -->
               <div>
                 <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">وصف الطلب *</label>
-                <textarea #createDesc rows="3" placeholder="اشرح تفاصيل الطلب..." class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all resize-none"></textarea>
+                <textarea #createDesc rows="3" placeholder="اشرح تفاصيل الطلب..." class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-wushai-cocoa focus:border-transparent outline-none transition-all resize-none"></textarea>
               </div>
 
               <!-- Type -->
@@ -161,7 +161,7 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
                 <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">نوع الطلب</label>
                 <div class="grid grid-cols-3 gap-2">
                   @for (type of types; track type) {
-                    <button (click)="selectedType.set(type)" [class]="selectedType() === type ? 'ring-2 ring-purple-500 border-purple-500 dark:border-purple-400 bg-purple-50 dark:bg-purple-500/20' : 'border-gray-200 dark:border-white/10 hover:border-purple-300'" class="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm font-bold text-gray-700 dark:text-gray-300 transition-all">
+                    <button (click)="selectedType.set(type)" [class]="selectedType() === type ? 'ring-2 ring-wushai-cocoa border-wushai-cocoa dark:border-wushai-sand bg-purple-50 dark:bg-wushai-cocoa/20' : 'border-gray-200 dark:border-white/10 hover:border-wushai-sand'" class="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm font-bold text-gray-700 dark:text-gray-300 transition-all">
                       {{ requestService.getTypeIcon(type) }} {{ type }}
                     </button>
                   }
@@ -171,15 +171,15 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
               <!-- Notes -->
               <div>
                 <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">ملاحظات</label>
-                <textarea #createNotes rows="2" placeholder="ملاحظات إضافية..." class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all resize-none"></textarea>
+                <textarea #createNotes rows="2" placeholder="ملاحظات إضافية..." class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-wushai-cocoa focus:border-transparent outline-none transition-all resize-none"></textarea>
               </div>
 
               <!-- File Upload -->
               <div>
                 <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">المرفقات</label>
-                <div (click)="fileInput.click()" (dragover)="$event.preventDefault()" (drop)="onFileDrop($event)" class="border-2 border-dashed border-gray-300 dark:border-white/20 rounded-xl p-6 text-center cursor-pointer hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50/50 dark:hover:bg-purple-500/5 transition-all group">
-                  <span [innerHTML]="getIcon('Upload')" class="w-8 h-8 text-gray-400 group-hover:text-purple-500 mx-auto mb-2"></span>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400">اسحب الملفات هنا أو اضغط للاختيار</p>
+                <div (click)="fileInput.click()" (dragover)="$event.preventDefault()" (drop)="onFileDrop($event)" class="border-2 border-dashed border-gray-300 dark:border-white/20 rounded-xl p-6 text-center cursor-pointer hover:border-wushai-sand dark:hover:border-wushai-cocoa hover:bg-purple-50/50 dark:hover:bg-wushai-cocoa/5 transition-all group">
+                  <span [innerHTML]="getIcon('Upload')" class="w-8 h-8 text-gray-400 group-hover:text-wushai-cocoa mx-auto mb-2"></span>
+                  <p class="text-sm text-gray-500 dark:text-gray-400 group-hover:text-wushai-cocoa dark:group-hover:text-wushai-sand">اسحب الملفات هنا أو اضغط للاختيار</p>
                   <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">صور • مستندات • ملفات مضغوطة</p>
                 </div>
                 <input #fileInput type="file" multiple class="hidden" (change)="onFileSelect($event)">
@@ -205,12 +205,12 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
             </div>
 
             <!-- Modal Footer -->
-            <div class="sticky bottom-0 bg-white dark:bg-[#1e1a2e] p-6 pt-4 border-t border-gray-100 dark:border-white/10 rounded-b-3xl">
+            <div class="sticky bottom-0 bg-white dark:bg-[#1C1612] p-6 pt-4 border-t border-gray-100 dark:border-white/10 rounded-b-3xl">
               <div class="flex gap-3">
                 <button (click)="closeCreateModal()" class="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                   إلغاء
                 </button>
-                <button (click)="submitCreate(createTitle.value, createDesc.value, createNotes.value)" [disabled]="submitting()" class="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold shadow-lg shadow-purple-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                <button (click)="submitCreate(createTitle.value, createDesc.value, createNotes.value)" [disabled]="submitting()" class="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-wushai-cocoa to-wushai-cocoa hover:from-wushai-cocoa hover:to-wushai-cocoa text-white font-bold shadow-lg shadow-wushai-cocoa/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                   @if (submitting()) {
                     <span class="flex items-center justify-center gap-2">
                       <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
@@ -230,10 +230,10 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
       @if (showDetailModal() && selectedRequest()) {
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" (click)="closeDetailModal()">
           <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-          <div class="relative bg-white dark:bg-[#1e1a2e] rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+          <div class="relative bg-white dark:bg-[#1C1612] rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
             <!-- Detail Header -->
-            <div class="sticky top-0 z-10 bg-white dark:bg-[#1e1a2e] rounded-t-3xl">
-              <div class="h-2 w-full rounded-t-3xl" [class]="selectedRequest()!.status === 'مكتمل' ? 'bg-gradient-to-r from-emerald-400 to-green-500' : selectedRequest()!.status === 'قيد التنفيذ' ? 'bg-gradient-to-r from-amber-400 to-orange-500' : 'bg-gradient-to-r from-blue-400 to-violet-500'"></div>
+            <div class="sticky top-0 z-10 bg-white dark:bg-[#1C1612] rounded-t-3xl">
+              <div class="h-2 w-full rounded-t-3xl" [class]="selectedRequest()!.status === 'مكتمل' ? 'bg-gradient-to-r from-emerald-400 to-green-500' : selectedRequest()!.status === 'قيد التنفيذ' ? 'bg-gradient-to-r from-amber-400 to-orange-500' : 'bg-gradient-to-r from-blue-400 to-wushai-cocoa'"></div>
               <div class="p-6 pb-4 border-b border-gray-100 dark:border-white/10">
                 <div class="flex items-start justify-between gap-4">
                   <div class="flex-1 min-w-0">
@@ -273,7 +273,7 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
 
               <!-- Requester Info -->
               <div class="flex items-center gap-3 bg-gray-50 dark:bg-white/5 rounded-xl p-4">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold shadow-sm">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-wushai-cocoa to-pink-500 flex items-center justify-center text-white font-bold shadow-sm">
                   {{ selectedRequest()!.requesterName?.charAt(0) || '?' }}
                 </div>
                 <div>
@@ -301,7 +301,7 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
                             <p class="text-xs text-gray-400">{{ requestService.formatFileSize(att.fileSize) }}</p>
                           </div>
                         </div>
-                        <span [innerHTML]="getIcon('Download')" class="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors flex-shrink-0"></span>
+                        <span [innerHTML]="getIcon('Download')" class="w-5 h-5 text-gray-400 group-hover:text-wushai-cocoa transition-colors flex-shrink-0"></span>
                       </a>
                     }
                   </div>
@@ -310,7 +310,7 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
 
               <!-- Assignee / Action Section -->
               @if (selectedRequest()!.status === 'جديد') {
-                <button (click)="acceptRequest()" [disabled]="submitting()" class="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50">
+                <button (click)="acceptRequest()" [disabled]="submitting()" class="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-wushai-olive hover:from-blue-500 hover:to-wushai-olive text-white font-bold shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50">
                   @if (submitting()) {
                     <span class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                   } @else {

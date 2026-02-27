@@ -14,7 +14,7 @@ import { Icons } from '../../shared/ui/icons';
     <!-- Floating Action Button (FAB) -->
     <button (click)="toggleChat()" 
         class="fixed bottom-[5.5rem] md:bottom-6 right-4 md:left-6 md:right-auto w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 z-40 group"
-        [ngClass]="isOpen() ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gradient-to-br from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600'">
+        [ngClass]="isOpen() ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gradient-to-br from-wushai-cocoa to-wushai-cocoa hover:from-wushai-cocoa hover:to-wushai-cocoa'">
         @if (!isOpen()) {
             <span [innerHTML]="getIcon('MessageSquare')" class="w-6 h-6 text-white animate-fade-in"></span>
         } @else {
@@ -30,13 +30,13 @@ import { Icons } from '../../shared/ui/icons';
 
     <!-- Chat Window -->
     <div *ngIf="isOpen()" 
-         class="fixed bottom-[8.5rem] md:bottom-24 right-4 md:left-6 md:right-auto w-[calc(100vw-2rem)] md:w-96 h-[60vh] md:h-[500px] max-h-[500px] bg-white dark:bg-[#1e1a2e] rounded-2xl shadow-2xl shadow-black/20 flex flex-col overflow-hidden border border-gray-200 dark:border-white/10 z-40 animate-slide-up origin-bottom-right md:origin-bottom-left">
+         class="fixed bottom-[8.5rem] md:bottom-24 right-4 md:left-6 md:right-auto w-[calc(100vw-2rem)] md:w-96 h-[60vh] md:h-[500px] max-h-[500px] bg-white dark:bg-[#1C1612] rounded-2xl shadow-2xl shadow-black/20 flex flex-col overflow-hidden border border-gray-200 dark:border-white/10 z-40 animate-slide-up origin-bottom-right md:origin-bottom-left">
       
       <!-- Header -->
-      <div class="p-4 bg-gradient-to-r from-violet-600 to-purple-700 text-white flex justify-between items-center shrink-0">
+      <div class="p-4 bg-gradient-to-r from-wushai-cocoa to-wushai-cocoa text-white flex justify-between items-center shrink-0">
          <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-white/15 backdrop-blur flex items-center justify-center relative">
-               <span class="w-3 h-3 bg-emerald-400 rounded-full border-2 border-purple-600 absolute -bottom-0.5 -right-0.5"></span>
+               <span class="w-3 h-3 bg-emerald-400 rounded-full border-2 border-wushai-cocoa absolute -bottom-0.5 -right-0.5"></span>
                <span [innerHTML]="getIcon('MessageSquare')" class="w-5 h-5"></span>
             </div>
             <div>
@@ -60,7 +60,7 @@ import { Icons } from '../../shared/ui/icons';
               <!-- Avatar -->
               <div class="w-8 h-8 rounded-full overflow-hidden shrink-0 ring-2 ring-white/20 dark:ring-white/10">
                 <img *ngIf="msg.senderAvatar" [src]="msg.senderAvatar" class="w-full h-full object-cover">
-                <div *ngIf="!msg.senderAvatar" class="w-full h-full flex items-center justify-center text-[10px] font-bold bg-gradient-to-br from-violet-400 to-purple-500 text-white">
+                <div *ngIf="!msg.senderAvatar" class="w-full h-full flex items-center justify-center text-[10px] font-bold bg-gradient-to-br from-wushai-sand to-wushai-cocoa text-white">
                    {{ msg.senderName.charAt(0) }}
                 </div>
               </div>
@@ -72,7 +72,7 @@ import { Icons } from '../../shared/ui/icons';
                  </div>
                  <div class="px-3 py-2 rounded-2xl text-sm shadow-sm break-words"
                       [ngClass]="{
-                        'bg-gradient-to-br from-violet-600 to-purple-700 text-white rounded-tr-none': isMe(msg.senderId),
+                        'bg-gradient-to-br from-wushai-cocoa to-wushai-cocoa text-white rounded-tr-none': isMe(msg.senderId),
                         'bg-white dark:bg-white/10 border border-gray-100 dark:border-white/5 rounded-tl-none text-gray-800 dark:text-gray-200': !isMe(msg.senderId)
                       }">
                     {{ msg.content }}
@@ -86,15 +86,15 @@ import { Icons } from '../../shared/ui/icons';
       </div>
 
       <!-- Input Area -->
-      <div class="p-3 bg-white dark:bg-[#1e1a2e] border-t border-gray-100 dark:border-white/10 shrink-0">
+      <div class="p-3 bg-white dark:bg-[#1C1612] border-t border-gray-100 dark:border-white/10 shrink-0">
          @if (currentUser()) {
              <form (submit)="sendMessage()" class="flex gap-2 items-end">
                 <input type="text" [(ngModel)]="newMessage" name="msg" 
                    placeholder="اكتب رسالتك..." 
-                   class="flex-1 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none text-sm"
+                   class="flex-1 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-wushai-cocoa focus:border-transparent outline-none text-sm"
                    autocomplete="off">
                 <button type="submit" [disabled]="!newMessage.trim()"
-                   class="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-xl flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-90">
+                   class="w-10 h-10 bg-gradient-to-br from-wushai-cocoa to-wushai-cocoa hover:from-wushai-cocoa hover:to-wushai-cocoa text-white rounded-xl flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-90">
                    <span [innerHTML]="getIcon('Send')" class="w-5 h-5 -rotate-90"></span>
                 </button>
              </form>

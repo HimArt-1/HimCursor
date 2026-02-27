@@ -57,7 +57,7 @@ import * as d3 from 'd3';
           <span [innerHTML]="getIcon('Plus')" class="w-4 h-4"></span> تصميم جديد (Design)
         </button>
         <button (click)="openModal('TestCase')"
-          class="bg-wushai-lavender hover:bg-purple-300 text-wushai-deep px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
+          class="bg-wushai-lavender hover:bg-wushai-sand text-wushai-deep px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
           <span [innerHTML]="getIcon('Plus')" class="w-4 h-4"></span> اختبار جديد (Test Case)
         </button>
       </div>
@@ -310,7 +310,7 @@ import * as d3 from 'd3';
             <div class="absolute top-4 left-4 bg-white/90 dark:bg-black/50 p-3 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 backdrop-blur-sm text-xs space-y-2 z-20">
                <div class="font-bold mb-1 text-wushai-dark dark:text-wushai-sand">Legend</div>
                <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300"><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#3b82f6"></circle></svg> Objective</div>
-               <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300"><svg width="12" height="12"><rect x="1" y="1" width="10" height="10" fill="#a855f7"></rect></svg> Requirement</div>
+               <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300"><svg width="12" height="12"><rect x="1" y="1" width="10" height="10" fill="#E6D3B3"></rect></svg> Requirement</div>
                <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300"><svg width="12" height="12"><path d="M6 0 L12 10 L0 10 Z" fill="#5A3E2B"></path></svg> Design</div>
                <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300"><svg width="12" height="12"><path d="M6 0 L12 6 L6 12 L0 6 Z" fill="#22c55e"></path></svg> Test Case</div>
             </div>
@@ -442,10 +442,10 @@ import * as d3 from 'd3';
                            </div>
                         }
                         @for(des of getImpactDesigns(impactReq()!); track des.id) {
-                           <div class="w-64 p-4 rounded-xl bg-white border-2 border-purple-200 shadow-sm relative group hover:-translate-y-1 transition-transform">
-                              <div class="absolute -left-10 top-1/2 w-10 h-0.5 bg-purple-200 hidden md:block"></div>
+                           <div class="w-64 p-4 rounded-xl bg-white border-2 border-wushai-sand/50 shadow-sm relative group hover:-translate-y-1 transition-transform">
+                              <div class="absolute -left-10 top-1/2 w-10 h-0.5 bg-wushai-sand/50 hidden md:block"></div>
                               <div class="flex items-center gap-2 mb-1">
-                                 <span class="text-[10px] font-bold bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded">{{ des.id }}</span>
+                                 <span class="text-[10px] font-bold bg-purple-50 text-wushai-cocoa px-1.5 py-0.5 rounded">{{ des.id }}</span>
                               </div>
                               <p class="font-bold text-sm text-gray-800 truncate">{{ des.title }}</p>
                               <a [href]="des.url" target="_blank" class="text-xs text-blue-500 hover:underline mt-1 block truncate">{{ des.url }}</a>
@@ -832,7 +832,7 @@ export class TraceabilityComponent {
   getColorForNode(node: any): string {
     switch (node.group) {
       case 'Objective': return '#3b82f6'; // blue-500
-      case 'Requirement': return '#a855f7'; // purple-500
+      case 'Requirement': return '#E6D3B3'; // wushai-cocoa
       case 'Design': return '#5A3E2B'; // wushai-brown
       case 'TestCase':
         switch (node.data.status) {

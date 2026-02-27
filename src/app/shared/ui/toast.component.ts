@@ -17,7 +17,7 @@ import { Icons } from './icons';
                'border-green-500': toast.type === 'success',
                'border-red-500': toast.type === 'error',
                'border-blue-500': toast.type === 'info',
-               'border-purple-500': toast.type === 'celebrate'
+               'border-wushai-cocoa': toast.type === 'celebrate'
              }">
            
            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
@@ -25,7 +25,7 @@ import { Icons } from './icons';
                'bg-green-100 text-green-600': toast.type === 'success',
                'bg-red-100 text-red-600': toast.type === 'error',
                'bg-blue-100 text-blue-600': toast.type === 'info',
-               'bg-purple-100 text-purple-600': toast.type === 'celebrate'
+               'bg-wushai-sand/20 text-wushai-cocoa': toast.type === 'celebrate'
              }">
              <span [innerHTML]="getIcon(toast.type)"></span>
            </div>
