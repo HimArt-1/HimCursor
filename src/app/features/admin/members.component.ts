@@ -1,29 +1,30 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../core/services/domain/user.service';
 import { AuthService } from '../../core/services/domain/auth.service';
 import { SupabaseService } from '../../core/services/infra/supabase.service';
 import { ToastService } from '../../core/services/state/toast.service';
+import { PresenceService } from '../../core/services/state/presence.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
 
 interface MemberInfo {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-    avatarUrl: string;
-    avatarColor: string;
-    isOnline: boolean;
-    lastSeen: string | null;
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatarUrl: string;
+  avatarColor: string;
+  isOnline: boolean;
+  lastSeen: string | null;
 }
 
 @Component({
-    selector: 'app-members',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-members',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="animate-fade-in-up">
       <!-- Header -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -47,6 +48,9 @@ interface MemberInfo {
         <div class="stat-card rounded-xl p-4 text-center">
           <p class="text-xs text-gray-500 dark:text-wushai-taupe">متصل الآن</p>
           <p class="text-2xl font-bold text-wushai-success mt-1">{{ onlineCount() }}</p>
+          @if(presenceService.isConnected()) {
+            <p class="text-[10px] text-wushai-success mt-0.5 animate-pulse-soft">● مباشر</p>
+          }
         </div>
         <div class="stat-card rounded-xl p-4 text-center">
           <p class="text-xs text-gray-500 dark:text-wushai-taupe">غير متصل</p>
@@ -76,13 +80,16 @@ interface MemberInfo {
                   </div>
                 }
                 <span class="absolute bottom-0 left-0 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-wushai-espresso"
-                  [ngClass]="member.isOnline ? 'bg-wushai-success' : 'bg-gray-400 dark:bg-wushai-taupe/50'"></span>
+                  [ngClass]="member.isOnline ? 'bg-wushai-success animate-pulse-soft' : 'bg-gray-400 dark:bg-wushai-taupe/50'"></span>
               </div>
 
               <!-- Info -->
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   <h3 class="font-bold text-sm text-gray-900 dark:text-wushai-cream truncate">{{ member.name }}</h3>
+                  @if(member.isOnline) {
+                    <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-wushai-success/20 text-wushai-success animate-pulse-soft">+ متصل</span>
+                  }
                   <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
                     [ngClass]="{
                       'bg-wushai-sand/20 text-wushai-cocoa dark:bg-wushai-sand/10 dark:text-wushai-sand': member.role === 'admin',
@@ -229,182 +236,199 @@ interface MemberInfo {
   `
 })
 export class MembersComponent implements OnInit {
-    private userService = inject(UserService);
-    private authService = inject(AuthService);
-    private supabaseService = inject(SupabaseService);
-    private toastService = inject(ToastService);
-    private sanitizer = inject(DomSanitizer);
-    private location = inject(Location);
+  private userService = inject(UserService);
+  private authService = inject(AuthService);
+  private supabaseService = inject(SupabaseService);
+  private toastService = inject(ToastService);
+  private sanitizer = inject(DomSanitizer);
+  private location = inject(Location);
+  presenceService = inject(PresenceService);
 
-    members = signal<MemberInfo[]>([]);
-    isLoading = signal(true);
-    searchQuery = '';
-    showRequestModal = signal(false);
-    showTaskModal = signal(false);
-    selectedMember = signal<MemberInfo | null>(null);
+  members = signal<MemberInfo[]>([]);
+  rawMembers = signal<MemberInfo[]>([]);
+  isLoading = signal(true);
+  searchQuery = '';
+  showRequestModal = signal(false);
+  showTaskModal = signal(false);
+  selectedMember = signal<MemberInfo | null>(null);
 
-    currentUserId = computed(() => this.authService.activeProfile()?.id || '');
-    onlineCount = computed(() => this.members().filter(m => m.isOnline).length);
+  currentUserId = computed(() => this.authService.activeProfile()?.id || '');
+  onlineCount = computed(() => this.members().filter(m => m.isOnline).length);
 
-    filteredMembers = computed(() => {
-        const q = this.searchQuery.toLowerCase();
-        const list = this.members();
-        if (!q) return list;
-        return list.filter(m =>
-            m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || m.role.toLowerCase().includes(q)
-        );
+  filteredMembers = computed(() => {
+    const q = this.searchQuery.toLowerCase();
+    const list = this.members();
+    if (!q) return list;
+    return list.filter(m =>
+      m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || m.role.toLowerCase().includes(q)
+    );
+  });
+
+  requestForm = { title: '', description: '', priority: 'medium' };
+  taskForm = { title: '', description: '', priority: 'Medium', dueDate: '' };
+
+  constructor() {
+    // React to real-time presence changes
+    effect(() => {
+      const onlineIds = this.presenceService.onlineUserIds();
+      const raw = this.rawMembers();
+      if (raw.length === 0) return;
+
+      const updated = raw.map(m => ({
+        ...m,
+        isOnline: onlineIds.has(m.id)
+      }));
+
+      updated.sort((a, b) => {
+        if (a.isOnline && !b.isOnline) return -1;
+        if (!a.isOnline && b.isOnline) return 1;
+        return a.name.localeCompare(b.name);
+      });
+
+      this.members.set(updated);
+    });
+  }
+
+  ngOnInit() {
+    this.loadMembers();
+  }
+
+  async loadMembers() {
+    const client = this.supabaseService.client;
+    if (!client) { this.isLoading.set(false); return; }
+
+    const { data, error } = await client
+      .from('profiles')
+      .select('id,name,email,role,is_active,avatar_url,avatar_color,last_seen')
+      .eq('is_active', true)
+      .order('name');
+
+    if (error) {
+      console.error('Load members error:', error);
+      this.isLoading.set(false);
+      return;
+    }
+
+    if (data) {
+      const onlineIds = this.presenceService.onlineUserIds();
+      const mapped: MemberInfo[] = data.map((p: any) => ({
+        id: p.id,
+        name: p.name || 'مستخدم',
+        email: p.email || '',
+        role: p.role || 'user',
+        avatarUrl: p.avatar_url || '',
+        avatarColor: p.avatar_color || '#6B705C',
+        isOnline: onlineIds.has(p.id),
+        lastSeen: p.last_seen
+      }));
+
+      mapped.sort((a, b) => {
+        if (a.isOnline && !b.isOnline) return -1;
+        if (!a.isOnline && b.isOnline) return 1;
+        return a.name.localeCompare(b.name);
+      });
+
+      this.rawMembers.set(mapped);
+      this.members.set(mapped);
+    }
+    this.isLoading.set(false);
+  }
+
+  openSendRequest(member: MemberInfo) {
+    this.selectedMember.set(member);
+    this.requestForm = { title: '', description: '', priority: 'medium' };
+    this.showRequestModal.set(true);
+  }
+
+  openAssignTask(member: MemberInfo) {
+    this.selectedMember.set(member);
+    this.taskForm = { title: '', description: '', priority: 'Medium', dueDate: '' };
+    this.showTaskModal.set(true);
+  }
+
+  closeModals() {
+    this.showRequestModal.set(false);
+    this.showTaskModal.set(false);
+    this.selectedMember.set(null);
+  }
+
+  async sendRequest() {
+    if (!this.requestForm.title) return;
+    const client = this.supabaseService.client;
+    const member = this.selectedMember();
+    const sender = this.authService.activeProfile();
+    if (!client || !member || !sender) return;
+
+    const { error } = await client.from('shared_requests').insert({
+      title: this.requestForm.title,
+      description: this.requestForm.description,
+      priority: this.requestForm.priority,
+      status: 'pending',
+      requester_id: sender.id,
+      requester_name: sender.name,
+      assigned_to: member.id,
+      assigned_name: member.name,
+      category: 'طلب خاص'
     });
 
-    requestForm = { title: '', description: '', priority: 'medium' };
-    taskForm = { title: '', description: '', priority: 'Medium', dueDate: '' };
-
-    ngOnInit() {
-        this.loadMembers();
-        // Refresh every 30 seconds for activity tracking
-        setInterval(() => this.loadMembers(), 30000);
+    if (error) {
+      console.error('Send request error:', error);
+      this.toastService.show('خطأ في إرسال الطلب', 'error');
+    } else {
+      this.toastService.show(`تم إرسال الطلب إلى ${member.name}`, 'success');
+      this.closeModals();
     }
+  }
 
-    async loadMembers() {
-        const client = this.supabaseService.client;
-        if (!client) { this.isLoading.set(false); return; }
+  async assignTask() {
+    if (!this.taskForm.title) return;
+    const client = this.supabaseService.client;
+    const member = this.selectedMember();
+    const sender = this.authService.activeProfile();
+    if (!client || !member || !sender) return;
 
-        const { data, error } = await client
-            .from('profiles')
-            .select('id,name,email,role,is_active,avatar_url,avatar_color,last_seen')
-            .eq('is_active', true)
-            .order('name');
+    const { error } = await client.from('tasks').insert({
+      title: this.taskForm.title,
+      description: this.taskForm.description,
+      priority: this.taskForm.priority,
+      status: 'To Do',
+      owner: member.name,
+      domain: 'تكليف من ' + sender.name,
+      due_date: this.taskForm.dueDate || null,
+      tags: ['تكليف مباشر']
+    });
 
-        if (error) {
-            console.error('Load members error:', error);
-            this.isLoading.set(false);
-            return;
-        }
-
-        if (data) {
-            const now = Date.now();
-            const ONLINE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
-
-            const mapped: MemberInfo[] = data.map((p: any) => {
-                const lastSeenTime = p.last_seen ? new Date(p.last_seen).getTime() : 0;
-                return {
-                    id: p.id,
-                    name: p.name || 'مستخدم',
-                    email: p.email || '',
-                    role: p.role || 'user',
-                    avatarUrl: p.avatar_url || '',
-                    avatarColor: p.avatar_color || '#6B705C',
-                    isOnline: lastSeenTime > 0 && (now - lastSeenTime) < ONLINE_THRESHOLD,
-                    lastSeen: p.last_seen
-                };
-            });
-
-            // Sort: online first, then by name
-            mapped.sort((a, b) => {
-                if (a.isOnline && !b.isOnline) return -1;
-                if (!a.isOnline && b.isOnline) return 1;
-                return a.name.localeCompare(b.name);
-            });
-
-            this.members.set(mapped);
-        }
-        this.isLoading.set(false);
+    if (error) {
+      console.error('Assign task error:', error);
+      this.toastService.show('خطأ في تكليف المهمة', 'error');
+    } else {
+      this.toastService.show(`تم تكليف ${member.name} بالمهمة`, 'success');
+      this.closeModals();
     }
+  }
 
-    openSendRequest(member: MemberInfo) {
-        this.selectedMember.set(member);
-        this.requestForm = { title: '', description: '', priority: 'medium' };
-        this.showRequestModal.set(true);
-    }
+  formatLastSeen(dt: string): string {
+    if (!dt) return '';
+    const diff = Date.now() - new Date(dt).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'الآن';
+    if (mins < 60) return `منذ ${mins} دقيقة`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `منذ ${hours} ساعة`;
+    const days = Math.floor(hours / 24);
+    return `منذ ${days} يوم`;
+  }
 
-    openAssignTask(member: MemberInfo) {
-        this.selectedMember.set(member);
-        this.taskForm = { title: '', description: '', priority: 'Medium', dueDate: '' };
-        this.showTaskModal.set(true);
-    }
+  roleLabel(role: string): string {
+    const map: Record<string, string> = { admin: 'مدير', supervisor: 'مشرف', user: 'عضو' };
+    return map[role] || role;
+  }
 
-    closeModals() {
-        this.showRequestModal.set(false);
-        this.showTaskModal.set(false);
-        this.selectedMember.set(null);
-    }
+  getIcon(name: keyof typeof Icons): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
+  }
 
-    async sendRequest() {
-        if (!this.requestForm.title) return;
-        const client = this.supabaseService.client;
-        const member = this.selectedMember();
-        const sender = this.authService.activeProfile();
-        if (!client || !member || !sender) return;
-
-        const { error } = await client.from('shared_requests').insert({
-            title: this.requestForm.title,
-            description: this.requestForm.description,
-            priority: this.requestForm.priority,
-            status: 'pending',
-            requester_id: sender.id,
-            requester_name: sender.name,
-            assigned_to: member.id,
-            assigned_name: member.name,
-            category: 'طلب خاص'
-        });
-
-        if (error) {
-            console.error('Send request error:', error);
-            this.toastService.show('خطأ في إرسال الطلب', 'error');
-        } else {
-            this.toastService.show(`تم إرسال الطلب إلى ${member.name}`, 'success');
-            this.closeModals();
-        }
-    }
-
-    async assignTask() {
-        if (!this.taskForm.title) return;
-        const client = this.supabaseService.client;
-        const member = this.selectedMember();
-        const sender = this.authService.activeProfile();
-        if (!client || !member || !sender) return;
-
-        const { error } = await client.from('tasks').insert({
-            title: this.taskForm.title,
-            description: this.taskForm.description,
-            priority: this.taskForm.priority,
-            status: 'To Do',
-            owner: member.name,
-            domain: 'تكليف من ' + sender.name,
-            due_date: this.taskForm.dueDate || null,
-            tags: ['تكليف مباشر']
-        });
-
-        if (error) {
-            console.error('Assign task error:', error);
-            this.toastService.show('خطأ في تكليف المهمة', 'error');
-        } else {
-            this.toastService.show(`تم تكليف ${member.name} بالمهمة`, 'success');
-            this.closeModals();
-        }
-    }
-
-    formatLastSeen(dt: string): string {
-        if (!dt) return '';
-        const diff = Date.now() - new Date(dt).getTime();
-        const mins = Math.floor(diff / 60000);
-        if (mins < 1) return 'الآن';
-        if (mins < 60) return `منذ ${mins} دقيقة`;
-        const hours = Math.floor(mins / 60);
-        if (hours < 24) return `منذ ${hours} ساعة`;
-        const days = Math.floor(hours / 24);
-        return `منذ ${days} يوم`;
-    }
-
-    roleLabel(role: string): string {
-        const map: Record<string, string> = { admin: 'مدير', supervisor: 'مشرف', user: 'عضو' };
-        return map[role] || role;
-    }
-
-    getIcon(name: keyof typeof Icons): SafeHtml {
-        return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
-    }
-
-    goBack() {
-        this.location.back();
-    }
+  goBack() {
+    this.location.back();
+  }
 }

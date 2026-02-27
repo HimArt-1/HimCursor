@@ -10,6 +10,7 @@ import { AiAssistantComponent } from './shared/widgets/ai-assistant.component';
 import { SystemAlertComponent } from './shared/widgets/system-alert.component';
 import { ChatWidgetComponent } from './features/social/chat-widget.component';
 import { DataService } from './core/services/state/data.service';
+import { PresenceService } from './core/services/state/presence.service';
 import { AuthService } from './core/services/domain/auth.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from './shared/ui/icons';
@@ -116,6 +117,7 @@ export class AppComponent implements OnInit {
   private authService = inject(AuthService);
   private router: Router = inject(Router);
   private sanitizer = inject(DomSanitizer);
+  private _presence = inject(PresenceService);
 
   isAuthenticated = computed(() => {
     const hasSession = this.authService.hasSession();
