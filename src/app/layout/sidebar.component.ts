@@ -56,6 +56,12 @@ import { ToastService } from '../core/services/state/toast.service';
            <span class="font-medium text-sm">المهام والإنتاج</span>
         </a>
 
+        <a (click)="closeMobileMenu()" routerLink="/requests" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
+           <span [innerHTML]="getIcon('Inbox')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
+           <span class="font-medium text-sm">الطلبات المشتركة</span>
+        </a>
+
         <a (click)="closeMobileMenu()" routerLink="/assets" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
            <span [innerHTML]="getIcon('Image')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
@@ -216,9 +222,9 @@ export class SidebarComponent implements OnDestroy {
    timeLeft = signal(25 * 60); // 25 minutes
    timerActive = signal(false);
    intervalId: any;
-  unreadCount = computed(() => this.dataService.notifications().filter(n => !n.read).length);
-  user = this.dataService.currentUser;
-  isAdmin = computed(() => this.user()?.role === 'admin');
+   unreadCount = computed(() => this.dataService.notifications().filter(n => !n.read).length);
+   user = this.dataService.currentUser;
+   isAdmin = computed(() => this.user()?.role === 'admin');
 
    constructor() {
       this.restoreTimer();

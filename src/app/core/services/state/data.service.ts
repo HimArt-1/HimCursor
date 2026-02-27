@@ -12,6 +12,7 @@ import { AuthService } from '../domain/auth.service';
 import { TaskService } from '../domain/task.service';
 import { FinancialService } from '../domain/finance.service';
 import { StrategyService, Objective } from '../domain/strategy.service';
+import { RequestService } from '../domain/request.service';
 import { AuditService } from '../infra/audit.service';
 
 // Re-export Types
@@ -19,7 +20,8 @@ export type {
   Status, Priority, Domain, TraceStatus, EntityType, AuditAction,
   User, AuditLogEntry, Notification, SystemAlert, Design,
   Requirement, TestCase, Task, Asset, Campaign, Idea, Transaction,
-  DevCommit, Milestone, Comment, KnowledgeArticle
+  DevCommit, Milestone, Comment, KnowledgeArticle,
+  SharedRequest, RequestAttachment, RequestType, RequestStatus
 } from '../../types';
 
 // Types
@@ -44,6 +46,7 @@ export class DataService {
   public task = inject(TaskService);
   public finance = inject(FinancialService);
   public strategy = inject(StrategyService);
+  public request = inject(RequestService);
   public audit = inject(AuditService);
 
   // Legacy injections kept for direct access if needed
@@ -97,7 +100,7 @@ export class DataService {
   // Auth
   login(email: string, password: string) { this.auth.loginWithEmailPassword(email, password); }
   logout() { this.auth.logout(); }
-  
+
   // Admin Users
   async loadAdminUsers() { return this.user.loadUsers(); }
   updateUserProfile(id: string, upt: Partial<User>) { this.user.updateUserProfile(id, upt); }

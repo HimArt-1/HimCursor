@@ -25,6 +25,11 @@ bootstrapApplication(AppComponent, {
         canActivate: [AuthGuard]
       },
       {
+        path: 'requests',
+        loadComponent: () => import('./src/app/features/execution/requests.component').then(m => m.RequestsComponent),
+        canActivate: [AuthGuard]
+      },
+      {
         path: 'traceability',
         loadComponent: () => import('./src/app/features/intelligence/traceability.component').then(m => m.TraceabilityComponent),
         canActivate: [AuthGuard]

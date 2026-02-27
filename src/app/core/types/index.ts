@@ -169,3 +169,38 @@ export interface KnowledgeArticle {
   updatedAt: string; // ISO String
   authorId: string;
 }
+
+// Shared Requests (الطلبات المشتركة)
+export type RequestType = 'تصميم' | 'برمجة' | 'محتوى' | 'تسويق' | 'إداري' | 'أخرى';
+export type RequestStatus = 'جديد' | 'قيد التنفيذ' | 'مكتمل';
+
+export interface SharedRequest {
+  id: string;
+  title: string;
+  description: string;
+  type: RequestType;
+  status: RequestStatus;
+  notes?: string;
+  requesterId: string;
+  requesterName?: string;
+  assigneeId?: string;
+  assigneeName?: string;
+  completedAt?: string;
+  outputNotes?: string;
+  outputLink?: string;
+  attachments: RequestAttachment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RequestAttachment {
+  id: string;
+  requestId: string;
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: number;
+  kind: 'input' | 'output';
+  uploadedBy: string;
+  createdAt: string;
+}
