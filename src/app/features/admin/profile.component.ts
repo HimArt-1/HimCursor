@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../core/services/domain/user.service';
 import { AuthService } from '../../core/services/domain/auth.service';
@@ -9,15 +9,20 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
 
 @Component({
-    selector: 'app-profile',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-profile',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="max-w-2xl mx-auto animate-fade-in-up">
       <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">الملف الشخصي</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">إدارة معلومات حسابك وصورة العرض</p>
+      <div class="mb-8 flex items-center gap-3">
+        <button (click)="goBack()" class="p-2 rounded-xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
+          <span [innerHTML]="getIcon('ArrowRight')" class="w-5 h-5 text-gray-600 dark:text-gray-300"></span>
+        </button>
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">الملف الشخصي</h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">إدارة معلومات حسابك وصورة العرض</p>
+        </div>
       </div>
 
       <!-- Profile Card -->
@@ -129,99 +134,104 @@ import { Icons } from '../../shared/ui/icons';
   `
 })
 export class ProfileComponent {
-    private userService = inject(UserService);
-    private authService = inject(AuthService);
-    private supabaseService = inject(SupabaseService);
-    private toastService = inject(ToastService);
-    private sanitizer = inject(DomSanitizer);
+  private userService = inject(UserService);
+  private authService = inject(AuthService);
+  private supabaseService = inject(SupabaseService);
+  private toastService = inject(ToastService);
+  private sanitizer = inject(DomSanitizer);
+  private location = inject(Location);
 
-    editName = '';
-    newPassword = '';
-    isUploading = signal(false);
-    isSaving = signal(false);
+  editName = '';
+  newPassword = '';
+  isUploading = signal(false);
+  isSaving = signal(false);
 
-    userName = computed(() => this.userService.currentUser()?.name || 'مستخدم');
-    userEmail = computed(() => this.userService.currentUser()?.email || '');
-    userRole = computed(() => this.userService.currentUser()?.role || 'user');
-    avatarUrl = computed(() => this.userService.currentUser()?.avatarUrl || '');
-    lastSeen = signal<string | null>(null);
+  userName = computed(() => this.userService.currentUser()?.name || 'مستخدم');
+  userEmail = computed(() => this.userService.currentUser()?.email || '');
+  userRole = computed(() => this.userService.currentUser()?.role || 'user');
+  avatarUrl = computed(() => this.userService.currentUser()?.avatarUrl || '');
+  lastSeen = signal<string | null>(null);
 
-    constructor() {
-        // Pre-fill the edit name
-        const user = this.userService.currentUser();
-        if (user) this.editName = user.name;
-        this.loadLastSeen();
+  constructor() {
+    // Pre-fill the edit name
+    const user = this.userService.currentUser();
+    if (user) this.editName = user.name;
+    this.loadLastSeen();
+  }
+
+  async loadLastSeen() {
+    const client = this.supabaseService.client;
+    if (!client) return;
+    const profile = this.authService.activeProfile();
+    if (!profile) return;
+
+    // Update last_seen
+    await client.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', profile.id);
+
+    const { data } = await client.from('profiles').select('last_seen').eq('id', profile.id).single();
+    if (data?.last_seen) this.lastSeen.set(data.last_seen);
+  }
+
+  async onAvatarSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.isUploading.set(true);
+    const client = this.supabaseService.client;
+    if (!client) { this.isUploading.set(false); return; }
+
+    const userId = this.authService.activeProfile()?.id;
+    if (!userId) { this.isUploading.set(false); return; }
+
+    const ext = file.name.split('.').pop();
+    const path = `${userId}/avatar.${ext}`;
+
+    const { error: uploadErr } = await client.storage.from('avatars').upload(path, file, { upsert: true });
+    if (uploadErr) {
+      console.error('Avatar upload error:', uploadErr);
+      this.toastService.show('خطأ في رفع الصورة', 'error');
+      this.isUploading.set(false);
+      return;
     }
 
-    async loadLastSeen() {
-        const client = this.supabaseService.client;
-        if (!client) return;
-        const profile = this.authService.activeProfile();
-        if (!profile) return;
+    const { data: urlData } = client.storage.from('avatars').getPublicUrl(path);
+    const avatarUrl = urlData.publicUrl + '?t=' + Date.now();
 
-        // Update last_seen
-        await client.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', profile.id);
+    await this.userService.updateUserProfile(userId, { avatarUrl });
+    this.toastService.show('تم تحديث صورة العرض', 'success');
+    this.isUploading.set(false);
+  }
 
-        const { data } = await client.from('profiles').select('last_seen').eq('id', profile.id).single();
-        if (data?.last_seen) this.lastSeen.set(data.last_seen);
-    }
+  async saveProfile() {
+    if (!this.editName.trim()) return;
+    this.isSaving.set(true);
 
-    async onAvatarSelected(event: Event) {
-        const input = event.target as HTMLInputElement;
-        const file = input.files?.[0];
-        if (!file) return;
+    const userId = this.authService.activeProfile()?.id;
+    if (!userId) { this.isSaving.set(false); return; }
 
-        this.isUploading.set(true);
-        const client = this.supabaseService.client;
-        if (!client) { this.isUploading.set(false); return; }
+    await this.userService.updateUserProfile(userId, { name: this.editName.trim() });
+    this.toastService.show('تم تحديث الملف الشخصي', 'success');
+    this.isSaving.set(false);
+  }
 
-        const userId = this.authService.activeProfile()?.id;
-        if (!userId) { this.isUploading.set(false); return; }
+  async changePassword() {
+    if (!this.newPassword) return;
+    this.isSaving.set(true);
 
-        const ext = file.name.split('.').pop();
-        const path = `${userId}/avatar.${ext}`;
+    const userId = this.authService.activeProfile()?.id;
+    if (!userId) { this.isSaving.set(false); return; }
 
-        const { error: uploadErr } = await client.storage.from('avatars').upload(path, file, { upsert: true });
-        if (uploadErr) {
-            console.error('Avatar upload error:', uploadErr);
-            this.toastService.show('خطأ في رفع الصورة', 'error');
-            this.isUploading.set(false);
-            return;
-        }
+    await this.userService.resetPassword(userId, this.newPassword);
+    this.newPassword = '';
+    this.isSaving.set(false);
+  }
 
-        const { data: urlData } = client.storage.from('avatars').getPublicUrl(path);
-        const avatarUrl = urlData.publicUrl + '?t=' + Date.now();
+  getIcon(name: keyof typeof Icons): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
+  }
 
-        await this.userService.updateUserProfile(userId, { avatarUrl });
-        this.toastService.show('تم تحديث صورة العرض', 'success');
-        this.isUploading.set(false);
-    }
-
-    async saveProfile() {
-        if (!this.editName.trim()) return;
-        this.isSaving.set(true);
-
-        const userId = this.authService.activeProfile()?.id;
-        if (!userId) { this.isSaving.set(false); return; }
-
-        await this.userService.updateUserProfile(userId, { name: this.editName.trim() });
-        this.toastService.show('تم تحديث الملف الشخصي', 'success');
-        this.isSaving.set(false);
-    }
-
-    async changePassword() {
-        if (!this.newPassword) return;
-        this.isSaving.set(true);
-
-        const userId = this.authService.activeProfile()?.id;
-        if (!userId) { this.isSaving.set(false); return; }
-
-        await this.userService.resetPassword(userId, this.newPassword);
-        this.newPassword = '';
-        this.isSaving.set(false);
-    }
-
-    getIcon(name: keyof typeof Icons): SafeHtml {
-        return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
-    }
+  goBack() {
+    this.location.back();
+  }
 }

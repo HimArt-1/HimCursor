@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InvoiceService, Invoice, InvoiceItem } from '../../core/services/domain/invoice.service';
 import { ToastService } from '../../core/services/state/toast.service';
@@ -7,16 +7,21 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
 
 @Component({
-    selector: 'app-invoices',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-invoices',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="animate-fade-in-up">
       <!-- Header -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">الفواتير الإلكترونية</h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">إنشاء وإدارة فواتيرك بسهولة</p>
+        <div class="flex items-center gap-3">
+          <button (click)="goBack()" class="p-2 rounded-xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
+            <span [innerHTML]="getIcon('ArrowRight')" class="w-5 h-5 text-gray-600 dark:text-gray-300"></span>
+          </button>
+          <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">الفواتير الإلكترونية</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">إنشاء وإدارة فواتيرك بسهولة</p>
+          </div>
         </div>
         <button (click)="openCreate()" class="btn-primary px-5 py-3 rounded-xl font-bold text-sm flex items-center gap-2">
           <span [innerHTML]="getIcon('Plus')" class="w-4 h-4"></span>
@@ -82,11 +87,16 @@ import { Icons } from '../../shared/ui/icons';
         <div class="glass-card rounded-2xl overflow-hidden">
           <!-- Editor Header -->
           <div class="p-5 bg-gradient-to-r from-violet-600 to-purple-700 text-white flex justify-between items-center">
-            <div>
-              <h2 class="font-bold text-lg">{{ editingId() ? 'تعديل فاتورة' : 'فاتورة جديدة' }}</h2>
-              @if(editingId()) {
-                <span class="text-xs text-white/60">{{ currentInvoice.number }}</span>
-              }
+            <div class="flex items-center gap-3">
+              <button (click)="closeEditor()" class="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-colors" title="عودة">
+                <span [innerHTML]="getIcon('ArrowRight')" class="w-5 h-5"></span>
+              </button>
+              <div>
+                <h2 class="font-bold text-lg">{{ editingId() ? 'تعديل فاتورة' : 'فاتورة جديدة' }}</h2>
+                @if(editingId()) {
+                  <span class="text-xs text-white/60">{{ currentInvoice.number }}</span>
+                }
+              </div>
             </div>
             <div class="flex gap-2">
               @if(editingId()) {
@@ -95,9 +105,6 @@ import { Icons } from '../../shared/ui/icons';
                   PDF
                 </button>
               }
-              <button (click)="closeEditor()" class="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors">
-                <span [innerHTML]="getIcon('X')" class="w-4 h-4"></span>
-              </button>
             </div>
           </div>
 
@@ -240,86 +247,87 @@ import { Icons } from '../../shared/ui/icons';
   `
 })
 export class InvoicesComponent {
-    private invoiceService = inject(InvoiceService);
-    private toastService = inject(ToastService);
-    private sanitizer = inject(DomSanitizer);
+  private invoiceService = inject(InvoiceService);
+  private toastService = inject(ToastService);
+  private sanitizer = inject(DomSanitizer);
+  private location = inject(Location);
 
-    invoices = this.invoiceService.invoices;
-    showEditor = signal(false);
-    editingId = signal<string | null>(null);
+  invoices = this.invoiceService.invoices;
+  showEditor = signal(false);
+  editingId = signal<string | null>(null);
 
-    currentInvoice: Invoice = this.emptyInvoice();
+  currentInvoice: Invoice = this.emptyInvoice();
 
-    openCreate() {
-        this.currentInvoice = this.emptyInvoice();
-        this.editingId.set(null);
-        this.showEditor.set(true);
+  openCreate() {
+    this.currentInvoice = this.emptyInvoice();
+    this.editingId.set(null);
+    this.showEditor.set(true);
+  }
+
+  editInvoice(inv: Invoice) {
+    this.currentInvoice = JSON.parse(JSON.stringify(inv));
+    this.editingId.set(inv.id);
+    this.showEditor.set(true);
+  }
+
+  closeEditor() {
+    this.showEditor.set(false);
+    this.editingId.set(null);
+  }
+
+  addItem() {
+    this.currentInvoice.items.push({
+      id: crypto.randomUUID(),
+      description: '',
+      quantity: 1,
+      unitPrice: 0,
+      total: 0
+    });
+  }
+
+  removeItem(index: number) {
+    this.currentInvoice.items.splice(index, 1);
+    this.recalc();
+  }
+
+  recalc() {
+    this.invoiceService.recalculate(this.currentInvoice);
+  }
+
+  calcSubtotal(): number {
+    return this.currentInvoice.items.reduce((s, i) => s + (i.quantity * i.unitPrice), 0);
+  }
+
+  calcTax(): number {
+    return this.calcSubtotal() * (this.currentInvoice.taxRate / 100);
+  }
+
+  calcTotal(): number {
+    return this.calcSubtotal() + this.calcTax() - this.currentInvoice.discount;
+  }
+
+  saveInvoice() {
+    if (this.editingId()) {
+      this.invoiceService.updateInvoice(this.editingId()!, this.currentInvoice);
+      this.toastService.show('تم تحديث الفاتورة', 'success');
+    } else {
+      this.invoiceService.createInvoice(this.currentInvoice);
+      this.toastService.show('تم إنشاء الفاتورة', 'success');
     }
+    this.closeEditor();
+  }
 
-    editInvoice(inv: Invoice) {
-        this.currentInvoice = JSON.parse(JSON.stringify(inv));
-        this.editingId.set(inv.id);
-        this.showEditor.set(true);
+  deleteCurrentInvoice() {
+    if (this.editingId()) {
+      this.invoiceService.deleteInvoice(this.editingId()!);
+      this.toastService.show('تم حذف الفاتورة', 'success');
+      this.closeEditor();
     }
+  }
 
-    closeEditor() {
-        this.showEditor.set(false);
-        this.editingId.set(null);
-    }
-
-    addItem() {
-        this.currentInvoice.items.push({
-            id: crypto.randomUUID(),
-            description: '',
-            quantity: 1,
-            unitPrice: 0,
-            total: 0
-        });
-    }
-
-    removeItem(index: number) {
-        this.currentInvoice.items.splice(index, 1);
-        this.recalc();
-    }
-
-    recalc() {
-        this.invoiceService.recalculate(this.currentInvoice);
-    }
-
-    calcSubtotal(): number {
-        return this.currentInvoice.items.reduce((s, i) => s + (i.quantity * i.unitPrice), 0);
-    }
-
-    calcTax(): number {
-        return this.calcSubtotal() * (this.currentInvoice.taxRate / 100);
-    }
-
-    calcTotal(): number {
-        return this.calcSubtotal() + this.calcTax() - this.currentInvoice.discount;
-    }
-
-    saveInvoice() {
-        if (this.editingId()) {
-            this.invoiceService.updateInvoice(this.editingId()!, this.currentInvoice);
-            this.toastService.show('تم تحديث الفاتورة', 'success');
-        } else {
-            this.invoiceService.createInvoice(this.currentInvoice);
-            this.toastService.show('تم إنشاء الفاتورة', 'success');
-        }
-        this.closeEditor();
-    }
-
-    deleteCurrentInvoice() {
-        if (this.editingId()) {
-            this.invoiceService.deleteInvoice(this.editingId()!);
-            this.toastService.show('تم حذف الفاتورة', 'success');
-            this.closeEditor();
-        }
-    }
-
-    printInvoice() {
-        const inv = this.currentInvoice;
-        const itemsHtml = inv.items.map(item => `
+  printInvoice() {
+    const inv = this.currentInvoice;
+    const itemsHtml = inv.items.map(item => `
       <tr>
         <td style="padding:8px;border-bottom:1px solid #eee">${item.description}</td>
         <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${item.quantity}</td>
@@ -328,7 +336,7 @@ export class InvoicesComponent {
       </tr>
     `).join('');
 
-        const html = `
+    const html = `
     <html dir="rtl"><head><title>فاتورة ${inv.number}</title>
     <style>body{font-family:Tajawal,sans-serif;padding:40px;color:#333}
     .header{display:flex;justify-content:space-between;margin-bottom:30px}
@@ -361,38 +369,42 @@ export class InvoicesComponent {
       ${inv.notes ? '<div style="margin-top:30px;padding:15px;background:#f8f6f1;border-radius:8px;font-size:13px"><strong>ملاحظات:</strong> ' + inv.notes + '</div>' : ''}
     </body></html>`;
 
-        const win = window.open('', '_blank', 'width=800,height=600');
-        if (win) {
-            win.document.write(html);
-            win.document.close();
-            setTimeout(() => { win.print(); }, 500);
-        }
+    const win = window.open('', '_blank', 'width=800,height=600');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => { win.print(); }, 500);
     }
+  }
 
-    countByStatus(status: string): number {
-        return this.invoices().filter(i => i.status === status).length;
-    }
+  countByStatus(status: string): number {
+    return this.invoices().filter(i => i.status === status).length;
+  }
 
-    totalRevenue(): number {
-        return this.invoices().filter(i => i.status === 'paid').reduce((s, i) => s + i.total, 0);
-    }
+  totalRevenue(): number {
+    return this.invoices().filter(i => i.status === 'paid').reduce((s, i) => s + i.total, 0);
+  }
 
-    statusLabel(status: string): string {
-        const map: Record<string, string> = { draft: 'مسودة', sent: 'مُرسلة', paid: 'مدفوعة', overdue: 'متأخرة' };
-        return map[status] || status;
-    }
+  statusLabel(status: string): string {
+    const map: Record<string, string> = { draft: 'مسودة', sent: 'مُرسلة', paid: 'مدفوعة', overdue: 'متأخرة' };
+    return map[status] || status;
+  }
 
-    private emptyInvoice(): Invoice {
-        return {
-            id: '', number: '', clientName: '', clientEmail: '', clientPhone: '',
-            date: new Date().toISOString().split('T')[0], dueDate: '',
-            items: [{ id: crypto.randomUUID(), description: '', quantity: 1, unitPrice: 0, total: 0 }],
-            notes: '', taxRate: 15, discount: 0, status: 'draft',
-            subtotal: 0, taxAmount: 0, total: 0, createdAt: ''
-        };
-    }
+  private emptyInvoice(): Invoice {
+    return {
+      id: '', number: '', clientName: '', clientEmail: '', clientPhone: '',
+      date: new Date().toISOString().split('T')[0], dueDate: '',
+      items: [{ id: crypto.randomUUID(), description: '', quantity: 1, unitPrice: 0, total: 0 }],
+      notes: '', taxRate: 15, discount: 0, status: 'draft',
+      subtotal: 0, taxAmount: 0, total: 0, createdAt: ''
+    };
+  }
 
-    getIcon(name: keyof typeof Icons): SafeHtml {
-        return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
-    }
+  getIcon(name: keyof typeof Icons): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
+  }
+
+  goBack() {
+    this.location.back();
+  }
 }

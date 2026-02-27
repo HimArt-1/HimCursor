@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventoryService, Product, Order, OrderItem } from '../../core/services/domain/inventory.service';
 import { ToastService } from '../../core/services/state/toast.service';
@@ -7,16 +7,21 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
 
 @Component({
-    selector: 'app-inventory',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-inventory',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="animate-fade-in-up">
       <!-- Header -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">المخزون والمبيعات</h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">إدارة المنتجات والطلبات والمبيعات</p>
+        <div class="flex items-center gap-3">
+          <button (click)="goBack()" class="p-2 rounded-xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
+            <span [innerHTML]="getIcon('ArrowRight')" class="w-5 h-5 text-gray-600 dark:text-gray-300"></span>
+          </button>
+          <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">المخزون والمبيعات</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">إدارة المنتجات والطلبات والمبيعات</p>
+          </div>
         </div>
         <div class="flex gap-2">
           <button (click)="openAddProduct()" class="btn-primary px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-1.5">
@@ -292,114 +297,119 @@ import { Icons } from '../../shared/ui/icons';
   `
 })
 export class InventoryComponent {
-    inventoryService = inject(InventoryService);
-    private toastService = inject(ToastService);
-    private sanitizer = inject(DomSanitizer);
+  inventoryService = inject(InventoryService);
+  private toastService = inject(ToastService);
+  private sanitizer = inject(DomSanitizer);
+  private location = inject(Location);
 
-    activeTab = signal<'products' | 'orders'>('products');
-    searchQuery = '';
-    showProductModal = signal(false);
-    showOrderModal = signal(false);
-    editingProductId = signal<string | null>(null);
+  activeTab = signal<'products' | 'orders'>('products');
+  searchQuery = '';
+  showProductModal = signal(false);
+  showOrderModal = signal(false);
+  editingProductId = signal<string | null>(null);
 
-    products = this.inventoryService.products;
-    orders = this.inventoryService.orders;
+  products = this.inventoryService.products;
+  orders = this.inventoryService.orders;
 
-    productForm: Partial<Product> = {};
-    orderForm: { customerName: string; customerPhone: string; items: { productId: string; quantity: number }[] } = {
-        customerName: '', customerPhone: '', items: [{ productId: '', quantity: 1 }]
-    };
+  productForm: Partial<Product> = {};
+  orderForm: { customerName: string; customerPhone: string; items: { productId: string; quantity: number }[] } = {
+    customerName: '', customerPhone: '', items: [{ productId: '', quantity: 1 }]
+  };
 
-    filteredProducts = computed(() => {
-        const q = this.searchQuery.toLowerCase();
-        if (!q) return this.products();
-        return this.products().filter(p =>
-            p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
-        );
+  filteredProducts = computed(() => {
+    const q = this.searchQuery.toLowerCase();
+    if (!q) return this.products();
+    return this.products().filter(p =>
+      p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
+    );
+  });
+
+  openAddProduct() {
+    this.productForm = { category: 'عام', stock: 0, minStock: 5, price: 0, cost: 0 };
+    this.editingProductId.set(null);
+    this.showProductModal.set(true);
+  }
+
+  editProduct(p: Product) {
+    this.productForm = { ...p };
+    this.editingProductId.set(p.id);
+    this.showProductModal.set(true);
+  }
+
+  saveProduct() {
+    if (!this.productForm.name) return;
+    if (this.editingProductId()) {
+      this.inventoryService.updateProduct(this.editingProductId()!, this.productForm);
+      this.toastService.show('تم تحديث المنتج', 'success');
+    } else {
+      this.inventoryService.addProduct(this.productForm);
+      this.toastService.show('تم إضافة المنتج', 'success');
+    }
+    this.showProductModal.set(false);
+  }
+
+  deleteProduct() {
+    if (this.editingProductId()) {
+      this.inventoryService.deleteProduct(this.editingProductId()!);
+      this.toastService.show('تم حذف المنتج', 'success');
+      this.showProductModal.set(false);
+    }
+  }
+
+  openAddOrder() {
+    this.orderForm = { customerName: '', customerPhone: '', items: [{ productId: '', quantity: 1 }] };
+    this.showOrderModal.set(true);
+  }
+
+  addOrderItem() {
+    this.orderForm.items.push({ productId: '', quantity: 1 });
+  }
+
+  onOrderProductChange(index: number) {
+    const item = this.orderForm.items[index];
+    const product = this.products().find(p => p.id === item.productId);
+    if (product) item.quantity = 1;
+  }
+
+  submitOrder() {
+    const items: OrderItem[] = this.orderForm.items
+      .filter(i => i.productId)
+      .map(i => {
+        const product = this.products().find(p => p.id === i.productId)!;
+        return {
+          productId: i.productId,
+          productName: product?.name || '',
+          quantity: i.quantity,
+          unitPrice: product?.price || 0,
+          total: i.quantity * (product?.price || 0)
+        };
+      });
+
+    if (items.length === 0) return;
+    this.inventoryService.createOrder({
+      customerName: this.orderForm.customerName,
+      customerPhone: this.orderForm.customerPhone,
+      items
     });
+    this.toastService.show('تم إنشاء الطلب', 'success');
+    this.showOrderModal.set(false);
+  }
 
-    openAddProduct() {
-        this.productForm = { category: 'عام', stock: 0, minStock: 5, price: 0, cost: 0 };
-        this.editingProductId.set(null);
-        this.showProductModal.set(true);
-    }
+  orderStatusLabel(s: string): string {
+    const map: Record<string, string> = { pending: 'معلق', processing: 'قيد التنفيذ', shipped: 'تم الشحن', delivered: 'تم التسليم', cancelled: 'ملغي' };
+    return map[s] || s;
+  }
 
-    editProduct(p: Product) {
-        this.productForm = { ...p };
-        this.editingProductId.set(p.id);
-        this.showProductModal.set(true);
-    }
+  paymentLabel(s: string): string {
+    const map: Record<string, string> = { unpaid: 'غير مدفوع', paid: 'مدفوع', refunded: 'مسترد' };
+    return map[s] || s;
+  }
 
-    saveProduct() {
-        if (!this.productForm.name) return;
-        if (this.editingProductId()) {
-            this.inventoryService.updateProduct(this.editingProductId()!, this.productForm);
-            this.toastService.show('تم تحديث المنتج', 'success');
-        } else {
-            this.inventoryService.addProduct(this.productForm);
-            this.toastService.show('تم إضافة المنتج', 'success');
-        }
-        this.showProductModal.set(false);
-    }
+  getIcon(name: keyof typeof Icons): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
+  }
 
-    deleteProduct() {
-        if (this.editingProductId()) {
-            this.inventoryService.deleteProduct(this.editingProductId()!);
-            this.toastService.show('تم حذف المنتج', 'success');
-            this.showProductModal.set(false);
-        }
-    }
-
-    openAddOrder() {
-        this.orderForm = { customerName: '', customerPhone: '', items: [{ productId: '', quantity: 1 }] };
-        this.showOrderModal.set(true);
-    }
-
-    addOrderItem() {
-        this.orderForm.items.push({ productId: '', quantity: 1 });
-    }
-
-    onOrderProductChange(index: number) {
-        const item = this.orderForm.items[index];
-        const product = this.products().find(p => p.id === item.productId);
-        if (product) item.quantity = 1;
-    }
-
-    submitOrder() {
-        const items: OrderItem[] = this.orderForm.items
-            .filter(i => i.productId)
-            .map(i => {
-                const product = this.products().find(p => p.id === i.productId)!;
-                return {
-                    productId: i.productId,
-                    productName: product?.name || '',
-                    quantity: i.quantity,
-                    unitPrice: product?.price || 0,
-                    total: i.quantity * (product?.price || 0)
-                };
-            });
-
-        if (items.length === 0) return;
-        this.inventoryService.createOrder({
-            customerName: this.orderForm.customerName,
-            customerPhone: this.orderForm.customerPhone,
-            items
-        });
-        this.toastService.show('تم إنشاء الطلب', 'success');
-        this.showOrderModal.set(false);
-    }
-
-    orderStatusLabel(s: string): string {
-        const map: Record<string, string> = { pending: 'معلق', processing: 'قيد التنفيذ', shipped: 'تم الشحن', delivered: 'تم التسليم', cancelled: 'ملغي' };
-        return map[s] || s;
-    }
-
-    paymentLabel(s: string): string {
-        const map: Record<string, string> = { unpaid: 'غير مدفوع', paid: 'مدفوع', refunded: 'مسترد' };
-        return map[s] || s;
-    }
-
-    getIcon(name: keyof typeof Icons): SafeHtml {
-        return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
-    }
+  goBack() {
+    this.location.back();
+  }
 }
