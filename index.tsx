@@ -5,6 +5,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { AppComponent } from './src/app/app.component';
 import { provideRouter, withHashLocation, withPreloading, PreloadAllModules, withViewTransitions } from '@angular/router';
 import { AuthGuard } from './src/app/core/guards/auth.guard';
+import { RoleGuard } from './src/app/core/guards/role.guard';
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -67,7 +68,7 @@ bootstrapApplication(AppComponent, {
       {
         path: 'settings',
         loadComponent: () => import('./src/app/features/admin/settings.component').then(m => m.SettingsComponent),
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard, RoleGuard('settings.manage')]
       },
       {
         path: 'team',
@@ -77,12 +78,12 @@ bootstrapApplication(AppComponent, {
       {
         path: 'admin-users',
         loadComponent: () => import('./src/app/features/admin/users.component').then(m => m.AdminUsersComponent),
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard, RoleGuard('admin.users')]
       },
       {
         path: 'finance',
         loadComponent: () => import('./src/app/features/admin/finance.component').then(m => m.FinanceComponent),
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard, RoleGuard('finance.view')]
       },
       {
         path: 'strategy',
@@ -92,7 +93,7 @@ bootstrapApplication(AppComponent, {
       {
         path: 'support',
         loadComponent: () => import('./src/app/features/admin/support.component').then(m => m.SupportComponent),
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard, RoleGuard('support.manage')]
       },
       {
         path: 'knowledge-base',
@@ -117,7 +118,7 @@ bootstrapApplication(AppComponent, {
       {
         path: 'members',
         loadComponent: () => import('./src/app/features/admin/members.component').then(m => m.MembersComponent),
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard, RoleGuard('members.view')]
       },
       { path: '**', redirectTo: '' }
     ], withHashLocation(), withPreloading(PreloadAllModules), withViewTransitions())

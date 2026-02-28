@@ -24,6 +24,7 @@ export class AuthService {
 
   readonly hasActiveProfile = computed(() => !!this.activeProfile());
   readonly hasSession = computed(() => !!this.session());
+  readonly userPermissions = signal<string[]>([]);
 
   constructor() {
     this.restoreActiveProfile();
@@ -44,6 +45,7 @@ export class AuthService {
         this.adminUser.set(null);
         if (!session) {
           this.activeProfile.set(null);
+          this.userPermissions.set([]);
           localStorage.removeItem(this.activeProfileKey);
         }
       }
@@ -82,6 +84,7 @@ export class AuthService {
 
   logout() {
     this.activeProfile.set(null);
+    this.userPermissions.set([]);
     localStorage.removeItem(this.activeProfileKey);
     if (this.supabase && isSupabaseConfigured) {
       this.supabase.auth.signOut();
@@ -96,6 +99,7 @@ export class AuthService {
     if (!this.supabase || !isSupabaseConfigured) return;
     await this.supabase.auth.signOut();
     this.adminUser.set(null);
+    this.userPermissions.set([]);
     await this.ensureSession();
   }
 
@@ -108,7 +112,7 @@ export class AuthService {
     if (!this.supabase || !isSupabaseConfigured) return;
     const { data, error } = await this.supabase
       .from('profiles')
-      .select('id,name,email,role,is_active,avatar_url,avatar_color')
+      .select('id,name,email,role,is_active,avatar_url,avatar_color,role_id')
       .eq('id', userId)
       .single();
     if (error) {
@@ -132,6 +136,38 @@ export class AuthService {
         if (sessionUser) this.adminUser.set(sessionUser);
       } else {
         this.adminUser.set(null);
+      }
+
+      // Load role permissions
+      if (data.role_id) {
+        const { data: roleData } = await this.supabase
+          .from('roles')
+          .select('permissions')
+          .eq('id', data.role_id)
+          .single();
+        if (roleData) {
+          try {
+            const perms = typeof roleData.permissions === 'string'
+              ? JSON.parse(roleData.permissions)
+              : (roleData.permissions || []);
+            this.userPermissions.set(perms);
+          } catch { this.userPermissions.set([]); }
+        }
+      } else {
+        // Fallback by role name
+        const { data: roleData } = await this.supabase
+          .from('roles')
+          .select('permissions')
+          .eq('name', (data.role || 'member').toLowerCase())
+          .single();
+        if (roleData) {
+          try {
+            const perms = typeof roleData.permissions === 'string'
+              ? JSON.parse(roleData.permissions)
+              : (roleData.permissions || []);
+            this.userPermissions.set(perms);
+          } catch { this.userPermissions.set([]); }
+        }
       }
     }
   }

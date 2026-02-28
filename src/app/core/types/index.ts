@@ -28,13 +28,44 @@ export interface AuditLogEntry {
   details: string;
 }
 
+export interface Role {
+  id: string;
+  name: string;
+  description?: string;
+  permissions: string[];
+  isSystem: boolean;
+  createdAt?: string;
+}
+
+export interface Permission {
+  key: string;
+  label: string;
+  category: string;
+}
+
+export interface AuditEntry {
+  id: string;
+  userId: string;
+  userName: string;
+  action: string;
+  entityType?: string;
+  entityId?: string;
+  details?: string;
+  ipAddress?: string;
+  createdAt: string;
+}
+
 export interface Notification {
   id: string;
+  userId?: string;
   title: string;
   message: string;
   time: string;
   read: boolean;
   type: 'Success' | 'Info' | 'Warning' | 'celebrate';
+  category?: string;
+  actionUrl?: string;
+  groupedKey?: string;
 }
 
 export interface SystemAlert {
