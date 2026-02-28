@@ -19,6 +19,7 @@ import { Icons } from './shared/ui/icons';
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, SidebarComponent, ToastComponent, CommandPaletteComponent, NotificationPanelComponent, AiAssistantComponent, SystemAlertComponent, ChatWidgetComponent],
+  // Using @defer in template for ChatWidget to improve initial load
   template: `
     <div class="h-screen w-full flex bg-wushai-light dark:bg-wushai-espresso transition-colors duration-300 overflow-hidden">
       @if(isAuthenticated()) {
@@ -107,7 +108,9 @@ import { Icons } from './shared/ui/icons';
         <app-command-palette></app-command-palette>
         <app-notification-panel></app-notification-panel>
         <app-ai-assistant></app-ai-assistant>
-        <app-chat-widget></app-chat-widget>
+        @defer (on idle) {
+          <app-chat-widget></app-chat-widget>
+        }
       }
     </div>
   `

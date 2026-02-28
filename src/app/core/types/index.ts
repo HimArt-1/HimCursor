@@ -150,6 +150,31 @@ export interface Comment {
   timestamp: string; // ISO String
 }
 
+export interface ChatChannel {
+  id: string;
+  name: string;
+  description?: string;
+  type: 'direct' | 'group' | 'project';
+  icon: string;
+  createdBy?: string;
+  isDefault?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  memberCount?: number;
+  lastMessageAt?: string;
+  lastMessagePreview?: string;
+}
+
+export interface ChatChannelMember {
+  id: string;
+  channelId: string;
+  userId: string;
+  userName?: string;
+  userAvatar?: string;
+  role: 'admin' | 'member';
+  joinedAt: string;
+}
+
 export interface ChatMessage {
   id: string;
   senderId: string;
@@ -157,8 +182,16 @@ export interface ChatMessage {
   senderAvatar: string;
   content: string;
   timestamp: string;
-  channelId?: string; // e.g. 'global'
+  channelId: string;
   status?: 'sending' | 'sent' | 'error';
+  messageType: 'text' | 'file' | 'image' | 'system';
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  replyToId?: string;
+  replyToMessage?: ChatMessage;
+  isPinned?: boolean;
+  reactions?: Record<string, string[]>; // emoji -> userId[]
 }
 
 export interface KnowledgeArticle {

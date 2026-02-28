@@ -3,7 +3,7 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { AppComponent } from './src/app/app.component';
-import { provideRouter, withHashLocation } from '@angular/router';
+import { provideRouter, withHashLocation, withPreloading, PreloadAllModules, withViewTransitions } from '@angular/router';
 import { AuthGuard } from './src/app/core/guards/auth.guard';
 
 bootstrapApplication(AppComponent, {
@@ -120,7 +120,7 @@ bootstrapApplication(AppComponent, {
         canActivate: [AuthGuard]
       },
       { path: '**', redirectTo: '' }
-    ], withHashLocation())
+    ], withHashLocation(), withPreloading(PreloadAllModules), withViewTransitions())
   ]
 }).catch(err => console.error(err));
 

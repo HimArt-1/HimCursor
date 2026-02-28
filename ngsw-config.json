@@ -44,6 +44,17 @@
                 "maxAge": "1h",
                 "timeout": "10s"
             }
+        },
+        {
+            "name": "storage-performance",
+            "urls": [
+                "https://*.supabase.co/storage/**"
+            ],
+            "cacheConfig": {
+                "strategy": "performance",
+                "maxSize": 200,
+                "maxAge": "7d"
+            }
         }
     ]
 }
