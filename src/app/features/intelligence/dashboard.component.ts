@@ -3,6 +3,7 @@ import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DataService } from '../../core/services/state/data.service';
+import { AnalyticsService } from '../../core/services/domain/analytics.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
 
@@ -156,6 +157,66 @@ import { Icons } from '../../shared/ui/icons';
         </div>
       </div>
 
+      <!-- Analytics Section -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Productivity Score -->
+        <div class="bg-white dark:bg-wushai-surface rounded-2xl shadow-sm border border-wushai-sand dark:border-wushai-lilac/10 p-6 flex flex-col items-center">
+          <h3 class="text-sm font-bold text-wushai-olive dark:text-wushai-lilac/70 mb-4 self-start">مؤشر الإنتاجية</h3>
+          <div class="relative w-28 h-28">
+            <svg viewBox="0 0 100 100" class="w-full h-full transform -rotate-90">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" class="text-gray-200 dark:text-white/10" stroke-width="8"/>
+              <circle cx="50" cy="50" r="42" fill="none" [attr.stroke]="analytics.productivityColor()" stroke-width="8" stroke-linecap="round"
+                [attr.stroke-dasharray]="264" [attr.stroke-dashoffset]="264 - (264 * analytics.productivityScore() / 100)"
+                class="transition-all duration-1000"/>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="text-2xl font-extrabold text-wushai-dark dark:text-wushai-sand">{{ analytics.productivityScore() }}</span>
+              <span class="text-[9px] text-gray-500">من 100</span>
+            </div>
+          </div>
+          <span class="mt-3 px-3 py-1 rounded-full text-xs font-bold" [style.background]="analytics.productivityColor() + '20'" [style.color]="analytics.productivityColor()">{{ analytics.productivityLabel() }}</span>
+        </div>
+
+        <!-- Weekly Trend -->
+        <div class="bg-white dark:bg-wushai-surface rounded-2xl shadow-sm border border-wushai-sand dark:border-wushai-lilac/10 p-6">
+          <h3 class="text-sm font-bold text-wushai-olive dark:text-wushai-lilac/70 mb-4">تنفيذ المهام الأسبوعي</h3>
+          <div class="flex items-end gap-2 h-20 mb-3">
+            @for (val of analytics.weeklyTrend(); track $index; let i = $index) {
+              <div class="flex-1 flex flex-col items-center gap-1">
+                <span class="text-[10px] font-bold text-wushai-dark dark:text-wushai-sand">{{ val }}</span>
+                <div class="w-full rounded-t-lg transition-all duration-700" [style.height.%]="getBarHeight(val)" [style.background]="i === 3 ? '#22c55e' : '#E6D3B3'"></div>
+              </div>
+            }
+          </div>
+          <div class="flex justify-between text-[9px] text-gray-400">
+            <span>الأسبوع -3</span><span>الأسبوع -2</span><span>الأسبوع -1</span><span>هذا الأسبوع</span>
+          </div>
+          <div class="mt-4 flex items-center gap-2">
+            <span class="text-2xl font-extrabold text-wushai-dark dark:text-wushai-sand">{{ analytics.velocity() }}</span>
+            <span class="text-xs text-gray-500">مهمة/أسبوع (المعدل)</span>
+          </div>
+        </div>
+
+        <!-- Team Workload -->
+        <div class="bg-white dark:bg-wushai-surface rounded-2xl shadow-sm border border-wushai-sand dark:border-wushai-lilac/10 p-6">
+          <h3 class="text-sm font-bold text-wushai-olive dark:text-wushai-lilac/70 mb-4">توزيع الأعباء</h3>
+          <div class="space-y-3">
+            @for (member of analytics.teamWorkload().slice(0, 5); track member.name) {
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-bold text-wushai-dark dark:text-wushai-sand w-20 truncate">{{ member.name }}</span>
+                <div class="flex-1 bg-gray-100 dark:bg-white/5 rounded-full h-3 overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-700" [style.width.%]="getWorkloadPercent(member.count)" [style.background]="member.color"></div>
+                </div>
+                <span class="text-xs font-bold text-gray-500 w-6 text-left">{{ member.count }}</span>
+              </div>
+            }
+            @if (analytics.teamWorkload().length === 0) {
+              <p class="text-xs text-gray-400 text-center py-3">لا توجد بيانات</p>
+            }
+          </div>
+        </div>
+      </div>
+
       <!-- Integrity Alert Section -->
       @if (traceReport().status !== 'Verified') {
         <div class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-2xl p-6 animate-pulse-once">
@@ -245,6 +306,7 @@ import { Icons } from '../../shared/ui/icons';
 })
 export class DashboardComponent {
   private dataService = inject(DataService);
+  analytics = inject(AnalyticsService);
   private sanitizer = inject(DomSanitizer);
 
   todayDate = new Date();
@@ -291,6 +353,16 @@ export class DashboardComponent {
     const report = this.traceReport();
     if (report.total === 0) return 0;
     return Math.round((report.verifiedCount / report.total) * 100);
+  }
+
+  getBarHeight(val: number): number {
+    const max = Math.max(...this.analytics.weeklyTrend(), 1);
+    return Math.max(10, (val / max) * 100);
+  }
+
+  getWorkloadPercent(count: number): number {
+    const max = Math.max(...this.analytics.teamWorkload().map(w => w.count), 1);
+    return Math.max(5, (count / max) * 100);
   }
 
   private isOverdue(dateStr: string): boolean {
