@@ -204,6 +204,10 @@ export class InventoryService {
         this.persistProducts();
     }
 
+    getProductBySku(sku: string): Product | undefined {
+        return this.products().find(p => p.sku === sku && p.isActive);
+    }
+
     deleteProduct(id: string) {
         this.products.update(list => list.filter(p => p.id !== id));
         this.persistProducts();

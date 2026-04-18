@@ -116,6 +116,11 @@ bootstrapApplication(AppComponent, {
         canActivate: [AuthGuard]
       },
       {
+        path: 'booth',
+        loadComponent: () => import('./src/app/features/execution/booth.component').then(m => m.BoothComponent),
+        canActivate: [AuthGuard]
+      },
+      {
         path: 'members',
         loadComponent: () => import('./src/app/features/admin/members.component').then(m => m.MembersComponent),
         canActivate: [AuthGuard, RoleGuard('members.view')]

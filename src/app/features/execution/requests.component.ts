@@ -171,7 +171,7 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
               <!-- Relay Toggle -->
               <div class="flex items-center justify-between p-4 bg-wushai-cocoa/5 dark:bg-wushai-cocoa/10 rounded-2xl border border-wushai-cocoa/20">
                 <div>
-                  <h4 class="text-sm font-bold text-wushai-cocoa dark:text-wushai-sand">تفعيل التتابع (Relay)</h4>
+                  <h4 class="text-sm font-bold text-wushai-cocoa dark:text-wushai-sand">تفعيل التتابع التلقائي</h4>
                   <p class="text-[11px] text-gray-500 dark:text-gray-400">تحويل الطلب تلقائياً بين الفريق حسب المراحل</p>
                 </div>
                 <button (click)="isRelayMode.set(!isRelayMode())" [class]="isRelayMode() ? 'bg-wushai-cocoa' : 'bg-gray-300 dark:bg-gray-700'" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none">

@@ -100,13 +100,13 @@ export class TaskService {
             if (createdTask) {
                 this.tasks.update(ts => ts.map(t => t.id === tempId ? createdTask : t));
                 this.auditService.logChange(createdTask.owner, 'Create', 'Task', createdTask.id, `Created Task: ${createdTask.title}`);
-                this.uiService.addNotification('تم النشر', `${createdTask.owner} added "${createdTask.title}"`, 'Success');
+                this.uiService.addNotification('تم النشر', `قام ${createdTask.owner} بإضافة "${createdTask.title}"`, 'Success');
             } else {
                 this.tasks.update(ts => ts.filter(t => t.id !== tempId)); // Rollback
             }
         } else {
             this.auditService.logChange(task.owner, 'Create', 'Task', task.id, `Created Task (local): ${task.title}`);
-            this.uiService.addNotification('تم الحفظ محلياً', 'Task created locally', 'Success');
+            this.uiService.addNotification('تم الحفظ محلياً', 'تم إنشاء المهمة محلياً', 'Success');
         }
     }
 
@@ -121,11 +121,11 @@ export class TaskService {
                 this.tasks.set(originalTasks); // Rollback
             } else {
                 this.auditService.logChange('Me', 'Update', 'Task', id, 'Updated task details');
-                this.uiService.addNotification('تحديث', 'Task updated', 'Info');
+                this.uiService.addNotification('تحديث', 'تم تحديث المهمة', 'Info');
             }
         } else {
             this.auditService.logChange('Me', 'Update', 'Task', id, 'Updated task details (local)');
-            this.uiService.addNotification('تحديث محلي', 'Task updated locally', 'Info');
+            this.uiService.addNotification('تحديث محلي', 'تم تحديث المهمة محلياً', 'Info');
         }
     }
 
@@ -140,11 +140,11 @@ export class TaskService {
                 this.tasks.set(originalTasks); // Rollback
             } else {
                 this.auditService.logChange('Me', 'Delete', 'Task', id, 'Deleted task');
-                this.uiService.addNotification('حذف', 'Task deleted', 'Info');
+                this.uiService.addNotification('حذف', 'تم حذف المهمة', 'Info');
             }
         } else {
             this.auditService.logChange('Me', 'Delete', 'Task', id, 'Deleted task (local)');
-            this.uiService.addNotification('حذف محلي', 'Task deleted locally', 'Info');
+            this.uiService.addNotification('حذف محلي', 'تم حذف المهمة محلياً', 'Info');
         }
     }
 

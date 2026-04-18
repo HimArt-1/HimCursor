@@ -68,6 +68,12 @@ import { ToastService } from '../core/services/state/toast.service';
             <span class="font-medium text-sm">المخزون والمبيعات</span>
          </a>
 
+         <a (click)="closeMobileMenu()" routerLink="/booth" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-green-500/20 dark:hover:bg-green-500/10 group border-2 border-transparent hover:border-green-500/30">
+            <span [innerHTML]="getIcon('Barcode')" class="w-5 h-5 text-green-500 group-hover:scale-110 transition-transform"></span>
+            <span class="font-bold text-sm text-green-600 dark:text-green-400">واجهة البوث (POS)</span>
+         </a>
+
          <a (click)="closeMobileMenu()" routerLink="/assets" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
             class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
             <span [innerHTML]="getIcon('Image')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
