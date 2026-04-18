@@ -5,11 +5,12 @@ import { InventoryService, Product, Order, OrderItem, PRODUCT_CATEGORIES } from 
 import { Icons } from '../../shared/ui/icons';
 import { FormsModule } from '@angular/forms';
 import { PrintService } from '../../core/services/utils/print.service';
+import { BarcodeScannerComponent } from '../../shared/ui/barcode-scanner.component';
 
 @Component({
     selector: 'app-booth',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, BarcodeScannerComponent],
     template: `
     <div class="h-screen flex flex-col bg-[#fdfaf6] text-[#2c1810]">
         <!-- Header -->
@@ -42,9 +43,9 @@ import { PrintService } from '../../core/services/utils/print.service';
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-[#7A4E2D] group-focus-within:scale-110 transition-transform">
                         <div [innerHTML]="getIcon('Search')" class="w-5 h-5"></div>
                     </div>
-                    <div class="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
-                        <div [innerHTML]="getIcon('Barcode')" class="w-6 h-6 text-[#a09c94]"></div>
-                        <span class="text-[10px] font-bold text-[#a09c94]">SCANNER READY</span>
+                    <div (click)="showScanner.set(true)" class="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 cursor-pointer hover:bg-[#7A4E2D10] px-2 py-1 rounded-lg transition-colors pointer-events-auto">
+                        <div [innerHTML]="getIcon('Barcode')" class="w-6 h-6 text-[#7A4E2D]"></div>
+                        <span class="text-[10px] font-bold text-[#7A4E2D]">SCAN</span>
                     </div>
                 </div>
             </div>
@@ -342,6 +343,11 @@ import { PrintService } from '../../core/services/utils/print.service';
                 </div>
             </div>
         }
+
+        <!-- Scanner Overlay -->
+        @if (showScanner()) {
+            <app-barcode-scanner (scanSuccess)="onScanSuccess($event)" (onClosed)="showScanner.set(false)"></app-barcode-scanner>
+        }
     </div>
     `,
     styles: [`
@@ -376,6 +382,7 @@ export class BoothComponent {
     viewMode = signal<'grid' | 'list'>('grid');
     cart = signal<any[]>([]);
     lastOrder = signal<Order | null>(null);
+    showScanner = signal(false);
 
     // Dynamic Categories from available products
     availableCategories = computed(() => {
@@ -438,6 +445,17 @@ export class BoothComponent {
         if (product) {
             this.addToCart(product);
             this.searchQuery = '';
+        }
+    }
+
+    onScanSuccess(sku: string) {
+        const product = this.inventoryService.getProductBySku(sku);
+        if (product) {
+            this.addToCart(product);
+            // We keep the scanner open for multiple scans, but show a temporary success indicator
+            // Or just a toast
+        } else {
+            alert(`المنتج بالرمز ${sku} غير موجود`);
         }
     }
 

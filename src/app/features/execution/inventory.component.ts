@@ -1,33 +1,24 @@
-import { Component, inject, signal, computed } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { InventoryService, Product, Order, OrderItem, PRODUCT_CATEGORIES, FASHION_CATEGORIES, SIZES, COLORS, GENDER_TYPES, isFashionCategory } from '../../core/services/domain/inventory.service';
-import { ToastService } from '../../core/services/state/toast.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
+import { BarcodeScannerComponent } from '../../shared/ui/barcode-scanner.component';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BarcodeScannerComponent, RouterModule],
   template: `
     <div class="animate-fade-in-up">
       <!-- Header -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div class="flex items-center gap-3">
-          <button (click)="goBack()" class="p-2 rounded-xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
-            <span [innerHTML]="getIcon('ArrowRight')" class="w-5 h-5 text-gray-600 dark:text-gray-300"></span>
-          </button>
-          <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">المخزون والمبيعات</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">إدارة المنتجات والطلبات والمبيعات</p>
-          </div>
-        </div>
         <div class="flex gap-2">
-          <button routerLink="/qr-maker" class="px-4 py-2.5 bg-wushai-sand/20 dark:bg-wushai-lilac/10 hover:bg-wushai-sand/30 text-wushai-cocoa dark:text-wushai-sand rounded-xl text-sm font-bold flex items-center gap-1.5 transition-all">
+          <button (click)="showScanner.set(true)" class="px-4 py-2.5 bg-wushai-sand/20 dark:bg-wushai-lilac/10 hover:bg-wushai-sand/30 text-wushai-cocoa dark:text-wushai-sand rounded-xl text-sm font-bold flex items-center gap-1.5 transition-all">
             <span [innerHTML]="getIcon('Barcode')" class="w-4 h-4"></span>
-            صانع الباركود
+            مسح باركود
           </button>
+          <a routerLink="/qr-maker" class="px-4 py-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 text-gray-600 dark:text-gray-300 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-all" title="صانع الرموز">
+            <span [innerHTML]="getIcon('Zap')" class="w-4 h-4"></span>
+            صانع QR
+          </a>
           <button (click)="openAddProduct()" class="btn-primary px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-1.5">
             <span [innerHTML]="getIcon('Plus')" class="w-4 h-4"></span>
             منتج جديد
@@ -372,6 +363,11 @@ import { Icons } from '../../shared/ui/icons';
           </div>
         </div>
       }
+
+      <!-- Scanner Overlay -->
+      @if (showScanner()) {
+        <app-barcode-scanner (scanSuccess)="onScanSuccess($event)" (onClosed)="showScanner.set(false)"></app-barcode-scanner>
+      }
     </div>
   `
 })
@@ -385,6 +381,7 @@ export class InventoryComponent {
   searchQuery = '';
   showProductModal = signal(false);
   showOrderModal = signal(false);
+  showScanner = signal(false);
   editingProductId = signal<string | null>(null);
 
   products = this.inventoryService.products;
@@ -442,6 +439,16 @@ export class InventoryComponent {
       this.toastService.show('تم إضافة المنتج', 'success');
     }
     this.showProductModal.set(false);
+  }
+
+  onScanSuccess(sku: string) {
+    const product = this.inventoryService.getProductBySku(sku);
+    if (product) {
+      this.showScanner.set(false);
+      this.editProduct(product);
+    } else {
+      alert(`المنتج بالرمز ${sku} غير موجود`);
+    }
   }
 
   deleteProduct() {
