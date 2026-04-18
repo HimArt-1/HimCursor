@@ -59,6 +59,20 @@ export interface OrderItem {
     gender?: string;
 }
 
+export interface OrderForm {
+    type: 'sale' | 'restock';
+    customerName: string;
+    customerPhone: string;
+    paymentStatus: 'paid' | 'unpaid';
+    items: { 
+        productId: string; 
+        quantity: number; 
+        size?: string; 
+        color?: string; 
+        gender?: string 
+    }[];
+}
+
 export interface StockMovement {
     id: string;
     productId: string;
@@ -324,8 +338,9 @@ export class InventoryService {
 
     // ===== ORDERS =====
 
-    async createOrder(order: Partial<Order>): Promise<Order | null> {
+    async createOrder(order: Partial<Order> & { type?: 'sale' | 'restock' }): Promise<Order | null> {
         const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
+        const isRestock = order.type === 'restock';
         
         // 1. Core Order
         const { data: orderData, error: orderError } = await this.supabaseService.client
@@ -338,7 +353,9 @@ export class InventoryService {
                 tax_amount: order.tax,
                 total_amount: order.total,
                 payment_method: 'cash',
-                status: 'completed'
+                status: 'completed',
+                payment_status: order.paymentStatus || 'paid',
+                notes: isRestock ? 'عملية توريد للمستودع' : order.notes
             }])
             .select()
             .single();
@@ -368,9 +385,12 @@ export class InventoryService {
 
         const newOrder = this.mapOrder(orderData, order.items || []);
         
-        // Stock reduction is handled by DB triggers ideally, but if not:
+        // 3. Adjust Stock based on type
+        // if sale: subtract, if restock: add
+        const multiplier = isRestock ? 1 : -1;
+        
         order.items?.forEach(item => {
-            this.adjustStock(item.productId, -item.quantity, `طلب رقم ${orderNumber}`);
+            this.adjustStock(item.productId, item.quantity * multiplier, `${isRestock ? 'توريد' : 'طلب'} رقم ${orderNumber}`);
         });
 
         return newOrder;

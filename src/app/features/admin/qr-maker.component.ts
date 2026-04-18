@@ -13,241 +13,260 @@ declare var bwipjs: any;
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="min-h-screen bg-[#fdfaf6] p-4 md:p-8 text-[#2c1810] print:p-0 print:bg-white overflow-x-hidden">
-      <!-- Header (Hidden on Print) -->
-      <header class="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4 print:hidden">
-        <div class="flex items-center gap-4">
-          <div class="w-12 h-12 bg-[#7A4E2D] rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3">
-            <div [innerHTML]="getIcon('Barcode')" class="w-6 h-6"></div>
-          </div>
-          <div>
-            <h1 class="text-2xl font-black tracking-tight">استوديو الملصقات والباركود</h1>
-            <p class="text-[10px] text-[#a09c94] uppercase tracking-widest font-bold">PROFESSIONAL LABEL ENGINE</p>
+    <div class="h-screen bg-[#f8f6f2] text-[#2c1810] selection:bg-[#7A4E2D20] selection:text-[#7A4E2D] overflow-hidden flex flex-col">
+      <!-- Background Elements -->
+      <div class="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-wushai-sand/10 blur-[120px] rounded-full pointer-events-none"></div>
+      <div class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-wushai-cocoa/5 blur-[120px] rounded-full pointer-events-none"></div>
+
+      <!-- Header -->
+      <header class="h-20 bg-white/80 backdrop-blur-xl border-b border-wushai-cocoa/10 px-8 flex items-center justify-between z-30 shadow-sm">
+        <div class="flex items-center gap-6">
+          <button (click)="goBack()" class="w-12 h-12 flex items-center justify-center bg-white/50 hover:bg-white border border-wushai-cocoa/10 rounded-2xl transition-all active:scale-95 shadow-sm group">
+            <span [innerHTML]="getIcon('ChevronRight')" class="w-6 h-6 group-hover:translate-x-1 transition-transform"></span>
+          </button>
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-wushai-cocoa rounded-2xl flex items-center justify-center text-white shadow-lg rotate-3 overflow-hidden group">
+              <span [innerHTML]="getIcon('Zap')" class="w-6 h-6 group-hover:scale-125 transition-transform duration-500"></span>
+              <div class="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"></div>
+            </div>
+            <div>
+              <h1 class="text-2xl font-black tracking-tight">استوديو الباركود الذكي</h1>
+              <p class="text-[9px] text-[#a09c94] uppercase tracking-[0.3em] font-black opacity-60">Professional Asset Engine</p>
+            </div>
           </div>
         </div>
-        
-        <div class="flex bg-white p-1 rounded-2xl shadow-sm border border-[#7a4e2d10]">
+
+        <div class="flex bg-white/50 backdrop-blur-md p-1.5 rounded-2xl border border-wushai-cocoa/10 shadow-inner">
           <button (click)="mode.set('invoice')" 
-            class="px-6 py-2 rounded-xl text-xs font-black transition-all"
-            [ngClass]="mode() === 'invoice' ? 'bg-[#7A4E2D] text-white shadow-lg' : 'text-[#a09c94]'">
+            class="px-8 py-2.5 rounded-xl text-xs font-black transition-all"
+            [ngClass]="mode() === 'invoice' ? 'bg-wushai-cocoa text-white shadow-xl' : 'text-[#a09c94] hover:text-wushai-cocoa'">
             فاتورة ضريبية (QR)
           </button>
           <button (click)="mode.set('product')" 
-            class="px-6 py-2 rounded-xl text-xs font-black transition-all"
-            [ngClass]="mode() === 'product' ? 'bg-[#7A4E2D] text-white shadow-lg' : 'text-[#a09c94]'">
-            ملصق منتج (Barcode/QR)
+            class="px-8 py-2.5 rounded-xl text-xs font-black transition-all"
+            [ngClass]="mode() === 'product' ? 'bg-wushai-cocoa text-white shadow-xl' : 'text-[#a09c94] hover:text-wushai-cocoa'">
+            ملصق منتج (Barcode)
           </button>
         </div>
       </header>
 
-      <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 print:block">
-        <!-- Controls Panel (Hidden on Print) -->
-        <div class="lg:col-span-7 bg-white rounded-[32px] p-8 shadow-xl border border-[#7a4e2d10] print:hidden">
+      <!-- Main Content -->
+      <main class="flex-1 overflow-y-auto p-8 relative z-20 custom-scrollbar">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          <!-- Mode 1: Invoice QR -->
-          @if (mode() === 'invoice') {
-            <h2 class="text-lg font-bold mb-6 flex items-center gap-3">
-              <div [innerHTML]="getIcon('Edit')" class="w-4 h-4 text-[#7A4E2D]"></div>
-              بيانات الفاتورة الضريبية (ZATCA)
-            </h2>
-            <div class="space-y-4">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="space-y-1">
-                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">اسم المورد</label>
-                  <input type="text" [(ngModel)]="fields.sellerName" (input)="updateBarcode()" 
-                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm" />
-                </div>
-                <div class="space-y-2">
-                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">الرقم الضريبي</label>
-                  <input type="text" [(ngModel)]="fields.vatNumber" (input)="updateBarcode()" 
-                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm" />
-                </div>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="space-y-1">
-                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">التاريخ</label>
-                  <input type="datetime-local" [(ngModel)]="timestampDate" (input)="updateQrFromDate()" 
-                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm" />
-                </div>
-                <div class="space-y-1">
-                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">الإجمالي (مع الضريبة)</label>
-                  <input type="number" [(ngModel)]="fields.totalAmount" (input)="calculateVatAndSubmit()" 
-                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm" />
-                </div>
-              </div>
-            </div>
-          }
-
-          <!-- Mode 2: Product Label -->
-          @if (mode() === 'product') {
-            <h2 class="text-lg font-bold mb-6 flex items-center gap-3">
-              <div [innerHTML]="getIcon('Edit')" class="w-4 h-4 text-[#7A4E2D]"></div>
-              تخصيص ملصق المنتج
-            </h2>
-            
-            <div class="space-y-6">
-              <!-- Select Product -->
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">اختر المنتج من المخزون</label>
-                <select (change)="onProductSelect($event)" 
-                  class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm">
-                  <option value="">— اختر منتج لإدراج بياناته فورا —</option>
-                  @for (p of products(); track p.id) {
-                    <option [value]="p.id">{{p.name}} ({{p.sku}})</option>
-                  }
-                </select>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="space-y-1">
-                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">اسم المنتج</label>
-                  <input type="text" [(ngModel)]="labelConfig.name" (input)="updateBarcode()" 
-                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm" />
-                </div>
-                <div class="space-y-1">
-                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">الرمز (SKU/Barcode)</label>
-                  <input type="text" [(ngModel)]="labelConfig.sku" (input)="updateBarcode()" 
-                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm" />
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="space-y-1">
-                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">السعر</label>
-                  <input type="number" [(ngModel)]="labelConfig.price" (input)="updateBarcode()" 
-                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm" />
-                </div>
-                <div class="space-y-1">
-                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">نوع الكود</label>
-                  <select [(ngModel)]="labelConfig.type" (change)="updateBarcode()" 
-                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm">
-                    <option value="code128">Code 128 (Barcode)</option>
-                    <option value="qrcode">QR Code</option>
-                    <option value="ean13">EAN-13</option>
-                  </select>
-                </div>
-                <div class="space-y-1">
-                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">المقاس</label>
-                  <select [(ngModel)]="labelConfig.size" (change)="updateBarcode()" 
-                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm">
-                    <option value="small">صغير (30x20mm)</option>
-                    <option value="medium">متوسط (50x30mm)</option>
-                    <option value="large">كبير (100x50mm)</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Toggles -->
-              <div class="flex flex-wrap gap-4 pt-2">
-                <label class="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" [(ngModel)]="labelConfig.showName" (change)="updateBarcode()" class="w-4 h-4 accent-[#7A4E2D]">
-                  <span class="text-xs font-bold text-gray-500">إظهار الاسم</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" [(ngModel)]="labelConfig.showPrice" (change)="updateBarcode()" class="w-4 h-4 accent-[#7A4E2D]">
-                  <span class="text-xs font-bold text-gray-500">إظهار السعر</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" [(ngModel)]="labelConfig.showSku" (change)="updateBarcode()" class="w-4 h-4 accent-[#7A4E2D]">
-                  <span class="text-xs font-bold text-gray-500">إظهار الرمز</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" [(ngModel)]="labelConfig.dark" (change)="updateBarcode()" class="w-4 h-4 accent-[#7A4E2D]">
-                  <span class="text-xs font-bold text-gray-500">خلفية غامقة</span>
-                </label>
-              </div>
-            </div>
-          }
-        </div>
-
-        <!-- Preview Panel -->
-        <div class="lg:col-span-5 flex flex-col gap-6 print:block print:col-span-12">
-          <!-- Preview Card -->
-          <div [ngClass]="labelConfig.dark ? 'bg-[#2c1810] text-white' : 'bg-white text-[#2c1810] border border-[#7a4e2d10]'" 
-            class="rounded-[32px] p-8 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center min-h-[400px] print:shadow-none print:border-none print:p-0 print:min-h-0">
-            
-            <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-30 mb-8 print:hidden">Live Digital Preview / معاينة</p>
-            
-            <!-- Label Paper Surface -->
-            <div id="print-area" [ngClass]="labelConfig.size" 
-              class="bg-white p-4 rounded-xl shadow-inner inline-flex flex-col items-center justify-center gap-2 print:shadow-none print:p-0">
+          <!-- Configuration Panel -->
+          <div class="lg:col-span-7 space-y-8 animate-fade-in">
+            <div class="glass-card rounded-[3rem] p-10 border border-white/40 shadow-2xl relative overflow-hidden group">
+              <div class="absolute top-0 right-0 w-32 h-32 bg-wushai-sand/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
               
-              @if (mode() === 'product' && labelConfig.showName) {
-                <h3 class="text-center font-bold text-[#2c1810] text-sm truncate max-w-[200px]">{{labelConfig.name}}</h3>
-              }
-
-              <canvas #barcodeCanvas class="mx-auto"></canvas>
-
-              @if (mode() === 'product' && (labelConfig.showSku || labelConfig.showPrice)) {
-                <div class="flex flex-col items-center gap-0.5">
-                   @if (labelConfig.showSku) {
-                     <span class="text-[10px] font-mono text-gray-400">{{labelConfig.sku}}</span>
-                   }
-                   @if (labelConfig.showPrice) {
-                     <span class="text-lg font-black text-[#7A4E2D]">{{labelConfig.price}} ر.س</span>
-                   }
+              <h2 class="text-xl font-black mb-8 flex items-center gap-4 text-wushai-cocoa">
+                <div class="p-2.5 bg-wushai-cocoa/5 rounded-xl">
+                  <span [innerHTML]="getIcon('Edit')" class="w-5 h-5"></span>
                 </div>
-              }
+                تخصيص البيانات
+              </h2>
 
               @if (mode() === 'invoice') {
-                <div class="text-center mt-2 flex flex-col items-center gap-1">
-                  <div class="px-2 py-0.5 bg-green-500/10 border border-green-500/20 rounded-full flex items-center gap-1 mb-1">
-                    <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                    <span class="text-[8px] font-bold text-green-700 uppercase tracking-tighter">ZATCA Compliant</span>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-up">
+                  <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">اسم المورد</label>
+                    <input type="text" [(ngModel)]="fields.sellerName" (input)="updateBarcode()" 
+                      class="glass-input block" placeholder="WUSHA BRANCH" />
                   </div>
-                  <p class="text-[10px] font-bold text-[#2c1810]">{{fields.sellerName}}</p>
-                  <p class="text-[8px] text-gray-400 font-mono">{{fields.vatNumber}}</p>
+                  <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">الرقم الضريبي</label>
+                    <input type="text" [(ngModel)]="fields.vatNumber" (input)="updateBarcode()" 
+                      class="glass-input block" />
+                  </div>
+                  <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">التاريخ</label>
+                    <input type="datetime-local" [(ngModel)]="timestampDate" (input)="updateQrFromDate()" 
+                      class="glass-input block" />
+                  </div>
+                  <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">الإجمالي</label>
+                    <div class="relative">
+                      <input type="number" [(ngModel)]="fields.totalAmount" (input)="calculateVatAndSubmit()" 
+                        class="glass-input block w-full pr-4" />
+                      <span class="absolute left-4 top-1/2 -translate-y-1/2 font-black text-xs text-gray-400">ر.س</span>
+                    </div>
+                  </div>
+                </div>
+              }
+
+              @if (mode() === 'product') {
+                <div class="space-y-8 animate-slide-up">
+                  <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">استيراد من المخزون</label>
+                    <select (change)="onProductSelect($event)" class="glass-input block w-full appearance-none">
+                      <option value="">— اختر منتج لإدراج بياناته فورا —</option>
+                      @for (p of products(); track p.id) {
+                        <option [value]="p.id">{{p.name}} ({{p.sku}})</option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                      <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">اسم المنتج</label>
+                      <input type="text" [(ngModel)]="labelConfig.name" (input)="updateBarcode()" class="glass-input block" />
+                    </div>
+                    <div class="space-y-2">
+                      <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">الرمز (SKU)</label>
+                      <input type="text" [(ngModel)]="labelConfig.sku" (input)="updateBarcode()" class="glass-input block" />
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="space-y-2">
+                      <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">السعر</label>
+                      <input type="number" [(ngModel)]="labelConfig.price" (input)="updateBarcode()" class="glass-input block" />
+                    </div>
+                    <div class="space-y-2">
+                      <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">نوع الكود</label>
+                      <select [(ngModel)]="labelConfig.type" (change)="updateBarcode()" class="glass-input block appearance-none">
+                        <option value="code128">Barcode (Code 128)</option>
+                        <option value="qrcode">QR Code</option>
+                        <option value="ean13">EAN-13 Standard</option>
+                      </select>
+                    </div>
+                    <div class="space-y-2">
+                      <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">حجم الملصق</label>
+                      <select [(ngModel)]="labelConfig.size" (change)="updateBarcode()" class="glass-input block appearance-none">
+                        <option value="small">Small (30x20mm)</option>
+                        <option value="medium">Medium (50x30mm)</option>
+                        <option value="large">Large (100x50mm)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="flex flex-wrap gap-5 p-6 bg-white/5 rounded-3xl border border-wushai-cocoa/5 shadow-inner">
+                    @for (opt of [
+                      {label: 'إظهار الاسم', key: 'showName'},
+                      {label: 'إظهار السعر', key: 'showPrice'},
+                      {label: 'إظهار الرمز', key: 'showSku'},
+                      {label: 'مظهر داكن', key: 'dark'}
+                    ]; track opt.key) {
+                      <label class="flex items-center gap-3 cursor-pointer group">
+                        <div class="relative">
+                          <input type="checkbox" [(ngModel)]="(labelConfig as any)[opt.key]" (change)="updateBarcode()" class="peer sr-only">
+                          <div class="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-wushai-cocoa"></div>
+                        </div>
+                        <span class="text-xs font-black text-gray-600 group-hover:text-wushai-cocoa transition-colors">{{opt.label}}</span>
+                      </label>
+                    }
+                  </div>
                 </div>
               }
             </div>
+          </div>
 
-            <!-- Print Dimensions Helper (Hidden on Print) -->
-            <div class="mt-8 text-center print:hidden">
-               <p class="text-[10px] opacity-40 italic">دقة الطباعة 300 DPI - تدعم جميع الطابعات الحرارية</p>
+          <!-- Preview & Actions -->
+          <div class="lg:col-span-5 space-y-8 sticky top-8">
+            <div [class]="labelConfig.dark ? 'bg-[#1a0f0a] shadow-[0_40px_80px_rgba(0,0,0,0.3)]' : 'bg-white shadow-[0_40px_80px_rgba(122,78,45,0.1)]'"
+              class="rounded-[3rem] p-12 flex flex-col items-center justify-center min-h-[500px] border border-white/40 relative overflow-hidden transition-all duration-700">
+              
+              <div class="absolute top-8 left-8 flex items-center gap-2 opacity-30 select-none">
+                <div class="w-2 h-2 rounded-full bg-wushai-sand animate-pulse"></div>
+                <span class="text-[8px] font-black uppercase tracking-[0.4em]">Ready Phase</span>
+              </div>
+
+              <!-- Digital Asset Surface -->
+              <div id="print-area" [ngClass]="labelConfig.size" 
+                class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center justify-center gap-4 transition-transform hover:scale-[1.02] border border-gray-100">
+                
+                @if (mode() === 'product' && labelConfig.showName) {
+                  <h3 class="text-center font-black text-wushai-cocoa text-base leading-tight max-w-[220px]">{{labelConfig.name}}</h3>
+                }
+
+                <div class="p-4 bg-[#f8f6f2] rounded-xl border border-gray-50 flex items-center justify-center">
+                  <canvas #barcodeCanvas class="max-w-full"></canvas>
+                </div>
+
+                @if (mode() === 'product' && (labelConfig.showSku || labelConfig.showPrice)) {
+                  <div class="flex flex-col items-center gap-1.5 w-full">
+                    @if (labelConfig.showSku) {
+                      <span class="text-[10px] font-mono font-black text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100 uppercase tracking-widest">#{{labelConfig.sku}}</span>
+                    }
+                    @if (labelConfig.showPrice) {
+                      <div class="flex items-baseline gap-1 mt-1">
+                        <span class="text-3xl font-black text-wushai-cocoa tracking-tighter">{{labelConfig.price}}</span>
+                        <span class="text-[10px] font-black text-gray-400">ر.س</span>
+                      </div>
+                    }
+                  </div>
+                }
+
+                @if (mode() === 'invoice') {
+                  <div class="text-center mt-2 flex flex-col items-center gap-2">
+                    <div class="px-4 py-1.5 bg-emerald-50 border border-emerald-100 rounded-full flex items-center gap-2 mb-1">
+                      <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                      <span class="text-[9px] font-black text-emerald-700 uppercase tracking-widest">Audit Ready</span>
+                    </div>
+                    <div>
+                      <p class="text-sm font-black text-wushai-cocoa">{{fields.sellerName}}</p>
+                      <p class="text-[9px] text-gray-400 font-bold tracking-widest mt-1">VAT: {{fields.vatNumber}}</p>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <div class="mt-12 text-center max-w-xs">
+                <p class="text-[10px] text-gray-400 font-bold leading-relaxed opacity-60">تأكد من ضبط مقاس الورق في الطابعة ليتطابق مع المقاس المختار ({{labelConfig.size}})</p>
+              </div>
+            </div>
+
+            <!-- Enhanced Actions -->
+            <div class="grid grid-cols-2 gap-5">
+              <button (click)="printLabel()"
+                class="flex flex-col items-center justify-center gap-4 bg-white/80 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white hover:border-wushai-sand/50 hover:bg-white hover:shadow-2xl transition-all group active:scale-95 shadow-xl shadow-wushai-cocoa/5 relative overflow-hidden">
+                <div class="p-4 bg-wushai-sand/10 text-wushai-cocoa rounded-2xl group-hover:bg-wushai-cocoa group-hover:text-white transition-all duration-500 relative z-10">
+                  <span [innerHTML]="getIcon('Printer')" class="w-8 h-8"></span>
+                </div>
+                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-wushai-cocoa relative z-10">تبدأ الطباعة</span>
+                <div class="absolute inset-0 bg-gradient-to-br from-wushai-sand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              </button>
+              
+              <button (click)="downloadLabel()"
+                class="flex flex-col items-center justify-center gap-4 bg-white/80 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white hover:border-wushai-sand/50 hover:bg-white hover:shadow-2xl transition-all group active:scale-95 shadow-xl shadow-wushai-cocoa/5 relative overflow-hidden">
+                <div class="p-4 bg-wushai-sand/10 text-wushai-bitter rounded-2xl group-hover:bg-wushai-bitter group-hover:text-white transition-all duration-500 relative z-10">
+                  <span [innerHTML]="getIcon('Download')" class="w-8 h-8"></span>
+                </div>
+                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-wushai-cocoa relative z-10">تحميل الأصل</span>
+                <div class="absolute inset-0 bg-gradient-to-br from-wushai-sand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              </button>
             </div>
           </div>
-
-          <!-- Actions (Hidden on Print) -->
-          <div class="grid grid-cols-2 gap-4 print:hidden">
-            <button (click)="printLabel()"
-              class="flex flex-col items-center justify-center gap-3 bg-white p-6 rounded-3xl border border-[#7a4e2d10] hover:border-[#7A4E2D] hover:shadow-xl transition-all group active:scale-95 shadow-sm">
-              <div class="p-3 bg-[#fdfaf6] text-[#7A4E2D] rounded-xl group-hover:bg-[#7A4E2D] group-hover:text-white transition-colors">
-                <div [innerHTML]="getIcon('Printer')" class="w-6 h-6"></div>
-              </div>
-              <span class="text-xs font-black uppercase tracking-tighter">طباعة الملصق</span>
-            </button>
-            <button (click)="downloadLabel()"
-              class="flex flex-col items-center justify-center gap-3 bg-white p-6 rounded-3xl border border-[#7a4e2d10] hover:border-[#7A4E2D] hover:shadow-xl transition-all group active:scale-95 shadow-sm">
-              <div class="p-3 bg-[#fdfaf6] text-[#7A4E2D] rounded-xl group-hover:bg-[#7A4E2D] group-hover:text-white transition-colors">
-                <div [innerHTML]="getIcon('Download')" class="w-6 h-6"></div>
-              </div>
-              <span class="text-xs font-black uppercase tracking-tighter">حفظ كصورة</span>
-            </button>
-          </div>
         </div>
-      </div>
+      </main>
     </div>
   `,
   styles: [`
-    :host { display: block; }
-    #print-area.small { width: 30mm; min-height: 20mm; }
-    #print-area.medium { width: 50mm; min-height: 30mm; }
-    #print-area.large { width: 100mm; min-height: 50mm; }
+    .glass-input {
+      @apply w-full bg-white/50 backdrop-blur-md border border-wushai-cocoa/10 focus:border-wushai-sand focus:bg-white rounded-2xl py-4 px-5 outline-none transition-all font-black text-sm text-wushai-cocoa placeholder:text-gray-300;
+    }
+    #print-area.small { width: 30mm; height: 20mm; }
+    #print-area.medium { width: 50mm; height: 30mm; }
+    #print-area.large { width: 100mm; height: 50mm; }
+    
+    .animate-fade-in { animation: fadeIn 0.8s ease-out forwards; }
+    .animate-slide-up { animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+    
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+    .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #7A4E2D15; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #7A4E2D30; }
+
     @media print {
       body * { visibility: hidden; }
       #print-area, #print-area * { visibility: visible; }
       #print-area { 
-        position: fixed; 
-        left: 0; 
-        top: 0; 
-        margin: 0; 
-        padding: 0; 
-        box-shadow: none;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+        position: fixed; left: 0; top: 0; margin: 0; padding: 0; 
+        box-shadow: none; width: 100%; border: none;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
       }
     }
   `]

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Product, Order, InventoryService } from '../domain/inventory.service';
 import { QrService } from './qr.service';
+import { SupabaseService } from '../infra/supabase.service';
 
 declare var QRious: any;
 declare var html2pdf: any;
@@ -11,34 +12,21 @@ declare var html2pdf: any;
 export class PrintService {
   private qrService = inject(QrService);
   private inventoryService = inject(InventoryService);
+  private supabaseService = inject(SupabaseService);
+
+  WHATSAPP_TEMPLATES = [
+    { id: 'professional', name: 'رسمي', text: (order: Order, url: string) => `عزيزي العميل، شكراً لتعاملك مع وشّى. تجد مرفقاً فاتورتك برقم ${order.orderNumber} بمبلغ ${order.total.toFixed(2)} ر.س. %0A%0Aرابط الفاتورة: ${url} %0A%0Aنسعد بزيارتك مرة أخرى!` },
+    { id: 'friendly', name: 'ودي', text: (order: Order, url: string) => `أهلاً بك! فاتورتك من وشّى جاهزة للإطلاع. رقم الطلب ${order.orderNumber}. %0A%0Aيمكنك تحميلها من هنا: ${url} %0A%0Aيومك سعيد ✨` },
+    { id: 'brief', name: 'مختصر', text: (order: Order, url: string) => `فاتورتك من وشّى: ${url}` }
+  ];
 
   async downloadInvoiceAsPdf(order: Order) {
     const html = this.generatePdfHtml(order);
+    const element = this.createTempElement(html);
     
-    // Create a temporary hidden container
-    const element = document.createElement('div');
-    element.innerHTML = html;
-    element.style.position = 'fixed';
-    element.style.left = '-9999px';
-    element.style.top = '0';
-    element.style.width = '210mm'; // A4 width
-    document.body.appendChild(element);
-
-    const opt = {
-      margin:       0,
-      filename:     `invoice-${order.orderNumber}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { 
-        scale: 2, 
-        useCORS: true,
-        letterRendering: true,
-        logging: false
-      },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+    const opt = this.getPdfOptions(order.orderNumber);
 
     try {
-      // Wait for fonts/images to potentially settle (though data-urls are immediate)
       await new Promise(resolve => setTimeout(resolve, 500));
       await html2pdf().set(opt).from(element).save();
     } catch (error) {
@@ -46,6 +34,52 @@ export class PrintService {
     } finally {
       document.body.removeChild(element);
     }
+  }
+
+  async uploadInvoiceAndGetUrl(order: Order): Promise<string | null> {
+    const html = this.generatePdfHtml(order);
+    const element = this.createTempElement(html);
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const blob = await html2pdf().set(this.getPdfOptions(order.orderNumber)).from(element).output('blob');
+      const fileName = `${order.id}.pdf`;
+      const file = new File([blob], fileName, { type: 'application/pdf' });
+      return await this.supabaseService.uploadFile('invoices', fileName, file);
+    } catch (error) {
+      console.error('PDF Upload Error:', error);
+      return null;
+    } finally {
+      document.body.removeChild(element);
+    }
+  }
+
+  shareViaWhatsApp(order: Order, templateId: string = 'professional', url?: string) {
+    const template = this.WHATSAPP_TEMPLATES.find(t => t.id === templateId) || this.WHATSAPP_TEMPLATES[0];
+    const finalUrl = url || '';
+    const text = template.text(order, finalUrl);
+    window.open(`https://wa.me/${order.customerPhone || ''}?text=${text}`, '_blank');
+  }
+
+  private createTempElement(html: string): HTMLElement {
+    const element = document.createElement('div');
+    element.innerHTML = html;
+    element.style.position = 'fixed';
+    element.style.left = '-9999px';
+    element.style.top = '0';
+    element.style.width = '210mm';
+    document.body.appendChild(element);
+    return element;
+  }
+
+  private getPdfOptions(orderNumber: string) {
+    return {
+      margin:       0,
+      filename:     `invoice-${orderNumber}.pdf`,
+      image:        { type: 'jpeg', quality: 1 },
+      html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
   }
 
   private getBranding() {
@@ -520,17 +554,6 @@ export class PrintService {
     `;
   }
 
-  shareViaWhatsApp(order: Order) {
-    const text = `*WASHA CONTROL - فاتورة جديدة* %0A%0A` +
-      `رقم الطلب: ${order.orderNumber}%0A` +
-      `التاريخ: ${new Date(order.createdAt).toLocaleDateString('ar-SA')}%0A%0A` +
-      `*المنتجات:*%0A` +
-      order.items.map(i => `- ${i.productName} (x${i.quantity}): ${i.total} ر.س`).join('%0A') +
-      `%0A%0A*الإجمالي: ${order.total.toFixed(2)} ر.س*%0A%0A` +
-      `شكراً لزيارتكم!`;
-    
-    window.open(`https://wa.me/?text=${text}`, '_blank');
-  }
 
   print(html: string) {
     const win = window.open('', '_blank', 'width=800,height=600');
