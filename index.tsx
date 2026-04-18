@@ -31,6 +31,11 @@ bootstrapApplication(AppComponent, {
         canActivate: [AuthGuard]
       },
       {
+        path: 'qr-maker',
+        loadComponent: () => import('./src/app/features/admin/qr-maker.component').then(m => m.QrMakerComponent),
+        canActivate: [AuthGuard]
+      },
+      {
         path: 'traceability',
         loadComponent: () => import('./src/app/features/intelligence/traceability.component').then(m => m.TraceabilityComponent),
         canActivate: [AuthGuard]

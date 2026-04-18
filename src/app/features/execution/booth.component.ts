@@ -488,7 +488,7 @@ export class BoothComponent {
         }
     }
 
-    completeOrder(type: 'thermal' | 'pdf' | 'whatsapp') {
+    async completeOrder(type: 'thermal' | 'pdf' | 'whatsapp') {
         if (this.cart().length === 0) return;
 
         // Map to InventoryService OrderItem model
@@ -501,11 +501,16 @@ export class BoothComponent {
         }));
 
         // Use InventoryService to create order and deduct stock
-        const order = this.inventoryService.createOrder({
+        const order = await this.inventoryService.createOrder({
             items: orderItems,
+            subtotal: this.subtotal(),
+            tax: this.tax(),
+            total: this.total(),
             customerName: 'عميل البوث',
             notes: `تم البيع عبر واجهة البوث (${type})`
         });
+
+        if (!order) return;
 
         this.lastOrder.set(order);
 

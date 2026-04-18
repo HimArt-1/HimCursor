@@ -134,6 +134,11 @@ import { ToastService } from '../core/services/state/toast.service';
            <span class="font-medium text-sm">الفريق والترتيب</span>
         </a>
         @if(isAdmin()) {
+          <a (click)="closeMobileMenu()" routerLink="/qr-maker" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
+             class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
+             <span [innerHTML]="getIcon('Barcode')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>
+             <span class="font-medium text-sm">صانع QR</span>
+          </a>
           <a (click)="closeMobileMenu()" routerLink="/admin-users" routerLinkActive="bg-wushai-olive/50 text-white dark:bg-wushai-lilac/10 dark:text-white dark:border dark:border-wushai-lilac/20"
              class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all hover:bg-wushai-olive/30 dark:hover:bg-wushai-lilac/5 group">
              <span [innerHTML]="getIcon('Users')" class="w-5 h-5 opacity-80 group-hover:opacity-100"></span>

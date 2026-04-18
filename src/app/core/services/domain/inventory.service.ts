@@ -75,10 +75,22 @@ export class InventoryService {
     private authService = inject(AuthService);
     private toastService = inject(ToastService);
 
-    readonly products = signal<Product[]>(this.loadProducts());
-    readonly orders = signal<Order[]>(this.loadOrders());
-    readonly stockMovements = signal<StockMovement[]>(this.loadMovements());
-    private orderCounter = this.orders().length + 1;
+    readonly products = signal<Product[]>([]);
+    readonly orders = signal<Order[]>([]);
+    readonly stockMovements = signal<StockMovement[]>([]);
+    readonly settings = signal<any>(null);
+
+    constructor() {
+      this.init();
+    }
+
+    private async init() {
+      await Promise.all([
+        this.fetchProducts(),
+        this.fetchOrders(),
+        this.fetchSettings()
+      ]);
+    }
 
     // ===== EXISTING COMPUTED =====
     readonly totalProducts = computed(() => this.products().length);
@@ -170,38 +182,51 @@ export class InventoryService {
 
     // ===== PRODUCTS =====
 
-    addProduct(product: Partial<Product>): Product {
-        const p: Product = {
-            id: crypto.randomUUID(),
-            name: product.name || '',
-            sku: product.sku || `SKU-${Date.now().toString(36).toUpperCase()}`,
-            category: product.category || 'عام',
-            price: product.price || 0,
-            cost: product.cost || 0,
-            stock: product.stock || 0,
-            minStock: product.minStock || 5,
-            imageUrl: product.imageUrl || '',
-            description: product.description || '',
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            ...(product.size && { size: product.size }),
-            ...(product.color && { color: product.color }),
-            ...(product.gender && { gender: product.gender }),
-        };
-        this.products.update(list => [p, ...list]);
-        this.persistProducts();
+    async addProduct(product: Partial<Product>): Promise<Product | null> {
+        const { data, error } = await this.supabaseService.client
+            .from('products')
+            .insert([{
+                name: product.name,
+                sku: product.sku || `SKU-${Date.now().toString(36).toUpperCase()}`,
+                description: product.description,
+                price: product.price,
+                current_stock: product.stock,
+                min_stock: product.minStock,
+                image_url: product.imageUrl,
+                is_active: true
+            }])
+            .select()
+            .single();
 
-        // Log movement
-        if (p.stock > 0) {
-            this.logMovement(p.id, p.name, 'in', p.stock, 'رصيد افتتاحي');
+        if (error) {
+            this.toastService.show('خطأ في إضافة المنتج', 'error');
+            return null;
         }
 
-        return p;
+        const newProduct = this.mapProduct(data);
+        this.products.update(list => [newProduct, ...list]);
+        return newProduct;
     }
 
-    updateProduct(id: string, updates: Partial<Product>) {
+    async updateProduct(id: string, updates: Partial<Product>) {
+        const { error } = await this.supabaseService.client
+            .from('products')
+            .update({
+                name: updates.name,
+                price: updates.price,
+                current_stock: updates.stock,
+                min_stock: updates.minStock,
+                image_url: updates.imageUrl,
+                is_active: updates.isActive
+            })
+            .eq('id', id);
+
+        if (error) {
+            this.toastService.show('خطأ في تحديث المنتج', 'error');
+            return;
+        }
+        
         this.products.update(list => list.map(p => p.id === id ? { ...p, ...updates } : p));
-        this.persistProducts();
     }
 
     getProductBySku(sku: string): Product | undefined {
@@ -234,29 +259,55 @@ export class InventoryService {
 
     // ===== ORDERS =====
 
-    createOrder(order: Partial<Order>): Order {
-        const o: Order = {
-            id: crypto.randomUUID(),
-            orderNumber: `ORD-${String(this.orderCounter++).padStart(4, '0')}`,
-            customerName: order.customerName || '',
-            customerPhone: order.customerPhone || '',
-            items: order.items || [],
-            subtotal: 0, tax: 0, total: 0,
-            status: 'pending',
-            paymentStatus: 'unpaid',
-            notes: order.notes || '',
-            createdAt: new Date().toISOString()
-        };
-        this.recalcOrder(o);
+    async createOrder(order: Partial<Order>): Promise<Order | null> {
+        const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
+        
+        // 1. Core Order
+        const { data: orderData, error: orderError } = await this.supabaseService.client
+            .from('pos_orders')
+            .insert([{
+                order_number: orderNumber,
+                customer_name: order.customerName,
+                customer_phone: order.customerPhone,
+                subtotal: order.subtotal,
+                tax_amount: order.tax,
+                total_amount: order.total,
+                payment_method: 'cash',
+                status: 'completed'
+            }])
+            .select()
+            .single();
 
-        // Deduct stock
-        for (const item of o.items) {
-            this.adjustStock(item.productId, -item.quantity, `طلب ${o.orderNumber}`);
+        if (orderError) {
+            this.toastService.show('خطأ في إنشاء الطلب', 'error');
+            return null;
         }
 
-        this.orders.update(list => [o, ...list]);
-        this.persistOrders();
-        return o;
+        // 2. Order Items
+        const itemsToInsert = (order.items || []).map(item => ({
+            order_id: orderData.id,
+            product_id: item.productId,
+            product_name: item.productName,
+            quantity: item.quantity,
+            unit_price: item.unitPrice,
+            total_price: item.total
+        }));
+
+        const { error: itemsError } = await this.supabaseService.client
+            .from('pos_order_items')
+            .insert(itemsToInsert);
+
+        if (itemsError) {
+            console.error('Error inserting items:', itemsError);
+        }
+
+        const newOrder = this.mapOrder(orderData, order.items || []);
+        this.orders.update(list => [newOrder, ...list]);
+        
+        // Refresh products to show updated stock
+        this.fetchProducts();
+        
+        return newOrder;
     }
 
     updateOrderStatus(id: string, status: Order['status']) {
@@ -302,19 +353,72 @@ export class InventoryService {
         return this.stockMovements().filter(m => m.productId === productId);
     }
 
-    // ===== PERSISTENCE =====
+    // ===== HELPERS =====
 
-    private readonly storageKeys = {
-        products: 'washa_control_products',
-        orders: 'washa_control_orders',
-        movements: 'washa_control_stock_movements'
-    };
+    private async fetchProducts() {
+        const { data } = await this.supabaseService.client
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (data) this.products.set(data.map(d => this.mapProduct(d)));
+    }
 
-    private persistProducts() { localStorage.setItem(this.storageKeys.products, JSON.stringify(this.products())); }
-    private persistOrders() { localStorage.setItem(this.storageKeys.orders, JSON.stringify(this.orders())); }
-    private persistMovements() { localStorage.setItem(this.storageKeys.movements, JSON.stringify(this.stockMovements())); }
-    private loadProducts(): Product[] { try { return JSON.parse(localStorage.getItem(this.storageKeys.products) || '[]'); } catch { return []; } }
-    private loadOrders(): Order[] { try { return JSON.parse(localStorage.getItem(this.storageKeys.orders) || '[]'); } catch { return []; } }
-    private loadMovements(): StockMovement[] { try { return JSON.parse(localStorage.getItem(this.storageKeys.movements) || '[]'); } catch { return []; } }
+    private async fetchOrders() {
+        const { data } = await this.supabaseService.client
+            .from('pos_orders')
+            .select('*, pos_order_items(*)')
+            .order('created_at', { ascending: false });
+        if (data) this.orders.set(data.map(d => this.mapOrder(d, d.pos_order_items)));
+    }
+
+    private async fetchSettings() {
+        const { data } = await this.supabaseService.client
+            .from('app_settings')
+            .select('*');
+        if (data) {
+            const branding = data.find(d => d.key === 'branding');
+            if (branding) this.settings.set(branding.value);
+        }
+    }
+
+    private mapProduct(d: any): Product {
+        return {
+            id: d.id,
+            sku: d.sku,
+            name: d.name,
+            description: d.description,
+            price: Number(d.price),
+            cost: Number(d.cost || 0),
+            stock: d.current_stock,
+            minStock: d.min_stock,
+            imageUrl: d.image_url,
+            isActive: d.is_active,
+            createdAt: d.created_at,
+            category: d.category_id || 'عام'
+        };
+    }
+
+    private mapOrder(d: any, items: any[]): Order {
+        return {
+            id: d.id,
+            orderNumber: d.order_number,
+            customerName: d.customer_name,
+            customerPhone: d.customer_phone,
+            subtotal: Number(d.subtotal),
+            tax: Number(d.tax_amount),
+            total: Number(d.total_amount),
+            status: d.status as any,
+            paymentStatus: 'paid', // Default for POS
+            notes: d.metadata?.notes || '',
+            createdAt: d.created_at,
+            items: items.map(i => ({
+                productId: i.product_id,
+                productName: i.product_name,
+                quantity: i.quantity,
+                unitPrice: Number(i.unit_price),
+                total: Number(i.total_price)
+            }))
+        };
+    }
 }
 
