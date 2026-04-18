@@ -112,7 +112,7 @@ export class AuthService {
     if (!this.supabase || !isSupabaseConfigured) return;
     const { data, error } = await this.supabase
       .from('profiles')
-      .select('id,name,email,role,is_active,avatar_url,avatar_color,role_id')
+      .select('id,name,email,role,is_active,avatar_url,avatar_color')
       .eq('id', userId)
       .single();
     if (error) {
@@ -138,36 +138,20 @@ export class AuthService {
         this.adminUser.set(null);
       }
 
-      // Load role permissions
-      if (data.role_id) {
-        const { data: roleData } = await this.supabase
-          .from('roles')
-          .select('permissions')
-          .eq('id', data.role_id)
-          .single();
-        if (roleData) {
-          try {
-            const perms = typeof roleData.permissions === 'string'
-              ? JSON.parse(roleData.permissions)
-              : (roleData.permissions || []);
-            this.userPermissions.set(perms);
-          } catch { this.userPermissions.set([]); }
-        }
-      } else {
-        // Fallback by role name
-        const { data: roleData } = await this.supabase
-          .from('roles')
-          .select('permissions')
-          .eq('name', (data.role || 'member').toLowerCase())
-          .single();
-        if (roleData) {
-          try {
-            const perms = typeof roleData.permissions === 'string'
-              ? JSON.parse(roleData.permissions)
-              : (roleData.permissions || []);
-            this.userPermissions.set(perms);
-          } catch { this.userPermissions.set([]); }
-        }
+      // Load role permissions by role name
+      const { data: roleData } = await this.supabase
+        .from('roles')
+        .select('permissions')
+        .eq('name', (data.role || 'member').toLowerCase())
+        .single();
+      
+      if (roleData) {
+        try {
+          const perms = typeof roleData.permissions === 'string'
+            ? JSON.parse(roleData.permissions)
+            : (roleData.permissions || []);
+          this.userPermissions.set(perms);
+        } catch { this.userPermissions.set([]); }
       }
     }
   }

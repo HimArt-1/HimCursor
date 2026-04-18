@@ -82,27 +82,13 @@ export class RbacService {
         const profile = this.authService.activeProfile();
         if (!profile) return;
 
-        // Try to load role by role_id from profile
+        // Load by role name (the 'role' column in profiles)
         const { data: profileData } = await this.supabase
             .from('profiles')
-            .select('role_id, role')
+            .select('role')
             .eq('id', profile.id)
             .single();
 
-        if (profileData?.role_id) {
-            const { data: roleData } = await this.supabase
-                .from('roles')
-                .select('*')
-                .eq('id', profileData.role_id)
-                .single();
-
-            if (roleData) {
-                this.userRole.set(this.mapDbToRole(roleData));
-                return;
-            }
-        }
-
-        // Fallback: match by role name
         if (profileData?.role) {
             const { data: roleData } = await this.supabase
                 .from('roles')
@@ -190,11 +176,11 @@ export class RbacService {
         return true;
     }
 
-    async assignRole(userId: string, roleId: string): Promise<boolean> {
+    async assignRole(userId: string, roleName: string): Promise<boolean> {
         if (!isSupabaseConfigured || !this.supabase) return false;
         const { error } = await this.supabase
             .from('profiles')
-            .update({ role_id: roleId })
+            .update({ role: roleName })
             .eq('id', userId);
 
         if (error) {

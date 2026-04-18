@@ -242,10 +242,12 @@ export class BarcodeScannerComponent implements OnInit, OnDestroy {
   }
 
   stopScanner() {
-    if (this.scanner) {
+    if (this.scanner && this.scanner.isScanning) {
       this.scanner.stop().catch(() => {}).then(() => {
         this.scanner.clear();
       });
+    } else if (this.scanner) {
+      this.scanner.clear();
     }
   }
 
