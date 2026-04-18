@@ -39,7 +39,10 @@ export class RequestService {
             this.loading.set(false);
         }
     }
-
+    async createRequest(
+        title: string,
+        description: string,
+        type: string,
         notes: string,
         files: File[],
         isRelay: boolean = false,

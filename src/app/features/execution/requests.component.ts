@@ -4,7 +4,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { DataService } from '../../core/services/state/data.service';
 import { RequestService } from '../../core/services/domain/request.service';
 import { Icons } from '../../shared/ui/icons';
-import { SharedRequest, RequestType, RequestStatus } from '../../core/types';
+import { SharedRequest, RequestType, RequestStatus, RelayStep } from '../../core/types';
 import { ConfettiService } from '../../core/services/state/confetti.service';
 
 const REQUEST_TYPES: RequestType[] = ['تصميم', 'برمجة', 'محتوى', 'تسويق', 'إداري', 'أخرى'];

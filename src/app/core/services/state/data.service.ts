@@ -139,7 +139,7 @@ export class DataService {
     if (otherData) {
       try {
         const parsed = JSON.parse(otherData);
-        if (parsed.filters) this.task.activeFilters.set(parsed.filters);
+        if (parsed.filters && (this.task as any).activeFilters) (this.task as any).activeFilters.set(parsed.filters);
       } catch (e) {
         console.error('Failed to load other dashboard data', e);
       }
@@ -148,7 +148,7 @@ export class DataService {
     // Auto-save periodically
     setInterval(() => {
       localStorage.setItem('washa_control_other_data', JSON.stringify({
-        filters: this.task.activeFilters()
+        filters: (this.task as any).activeFilters ? (this.task as any).activeFilters() : null
       }));
     }, 10000);
 
