@@ -24,6 +24,10 @@ import { Icons } from '../../shared/ui/icons';
           </div>
         </div>
         <div class="flex gap-2">
+          <button routerLink="/qr-maker" class="px-4 py-2.5 bg-wushai-sand/20 dark:bg-wushai-lilac/10 hover:bg-wushai-sand/30 text-wushai-cocoa dark:text-wushai-sand rounded-xl text-sm font-bold flex items-center gap-1.5 transition-all">
+            <span [innerHTML]="getIcon('Barcode')" class="w-4 h-4"></span>
+            صانع الباركود
+          </button>
           <button (click)="openAddProduct()" class="btn-primary px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-1.5">
             <span [innerHTML]="getIcon('Plus')" class="w-4 h-4"></span>
             منتج جديد
