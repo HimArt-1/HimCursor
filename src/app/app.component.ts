@@ -41,7 +41,7 @@ import { Icons } from './shared/ui/icons';
             <button (click)="toggleMobileMenu()" class="text-wushai-dark dark:text-wushai-sand p-2 -ml-2">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
             </button>
-            <h1 class="text-lg font-bold text-wushai-dark dark:text-wushai-sand">HimControl</h1>
+            <h1 class="text-lg font-bold text-wushai-dark dark:text-wushai-sand">Washa Control</h1>
             <div class="w-6"></div>
           </header>
         }
@@ -87,7 +87,7 @@ import { Icons } from './shared/ui/icons';
               <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-bold">تثبيت HimControl</p>
+              <p class="text-sm font-bold">تثبيت Washa Control</p>
               <p class="text-xs text-white/70">أضف التطبيق للشاشة الرئيسية</p>
             </div>
             <button (click)="installApp()" class="px-3 py-1.5 bg-white text-wushai-cocoa font-bold text-sm rounded-lg flex-shrink-0 active:scale-95 transition-transform">

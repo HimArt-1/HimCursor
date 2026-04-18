@@ -1,4 +1,4 @@
-// Development environment - HimControl
+// Development environment - Washa Control
 export const environment = {
   production: false,
   supabaseUrl: 'https://mesqtdrjjhdlmwrsojyd.supabase.co',

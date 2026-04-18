@@ -46,10 +46,10 @@ import { ToastService } from '../../core/services/state/toast.service';
                       <p class="text-3xl font-mono font-bold tracking-tight">\${{ balance().toFixed(2) }}</p>
                    </div>
                    <div class="flex justify-between items-end">
-                      <div class="font-mono text-sm space-x-2">
-                         <span>****</span> <span>****</span> <span>****</span> <span>4242</span>
+                      <div class="text-sm space-x-4">
+                         <span class="text-green-300">دخل: {{ totalIncome() | currency }}</span>
                       </div>
-                      <span class="text-xs opacity-70">VALID THRU 12/26</span>
+                      <span class="text-sm text-red-300">مصروف: {{ totalExpense() | currency }}</span>
                    </div>
                    <!-- Chip -->
                    <div class="absolute top-20 left-8 w-12 h-10 bg-yellow-500/80 rounded-lg flex items-center justify-center border border-yellow-600/50">
@@ -63,12 +63,12 @@ import { ToastService } from '../../core/services/state/toast.service';
                 <div class="absolute inset-0 bg-gray-800 text-white rounded-2xl p-8 flex flex-col justify-between rotate-y-180 backface-hidden shadow-inner">
                     <div class="w-full h-10 bg-black -mx-8 mt-4"></div>
                     <div class="flex items-center gap-4">
-                       <div class="flex-1 h-8 bg-white/20 rounded flex items-center justify-end px-2 font-mono text-black text-sm font-bold bg-white">123</div>
-                       <p class="text-xs opacity-60">CVV</p>
+                       <div class="flex-1 text-xs text-gray-300"><span class="font-bold text-white">{{ transactions().length }}</span> عملية مالية</div>
+                       <p class="text-xs text-gray-400">إجمالي العمليات</p>
                     </div>
                     <div class="text-center">
-                       <p class="text-xs text-gray-400">Issued by HimControl Treasury Dept.</p>
-                       <p class="text-xs text-gray-500 mt-1">Authorized Signature Only</p>
+                       <p class="text-xs text-gray-400">Washa Control Treasury</p>
+                       <p class="text-xs text-gray-500 mt-1">الخزنة الإلكترونية</p>
                     </div>
                 </div>
             </div>
@@ -252,6 +252,14 @@ export class FinanceComponent implements AfterViewInit, OnDestroy {
       return this.transactions().reduce((acc, tx) => {
          return tx.type === 'Income' ? acc + tx.amount : acc - tx.amount;
       }, 0);
+   });
+
+   totalIncome = computed(() => {
+      return this.transactions().filter(t => t.type === 'Income').reduce((acc, t) => acc + t.amount, 0);
+   });
+
+   totalExpense = computed(() => {
+      return this.transactions().filter(t => t.type === 'Expense').reduce((acc, t) => acc + t.amount, 0);
    });
 
    getCategorySpend(category: string) {

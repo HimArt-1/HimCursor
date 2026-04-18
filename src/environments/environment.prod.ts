@@ -1,4 +1,4 @@
-// Production environment - HimControl
+// Production environment - Washa Control
 // For deployment: Replace these values or use CI/CD environment variables
 export const environment = {
   production: true,

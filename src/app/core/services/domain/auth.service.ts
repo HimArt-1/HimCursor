@@ -15,7 +15,7 @@ export interface ActiveProfile {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private supabase = supabaseClient;
-  private readonly activeProfileKey = 'himcontrol_active_profile';
+  private readonly activeProfileKey = 'washa_control_active_profile';
 
   readonly session = signal<Session | null>(null);
   readonly sessionReady = signal<boolean>(false);

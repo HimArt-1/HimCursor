@@ -300,11 +300,17 @@ export class InventoryService {
 
     // ===== PERSISTENCE =====
 
-    private persistProducts() { localStorage.setItem('himcontrol_products', JSON.stringify(this.products())); }
-    private persistOrders() { localStorage.setItem('himcontrol_orders', JSON.stringify(this.orders())); }
-    private persistMovements() { localStorage.setItem('himcontrol_stock_movements', JSON.stringify(this.stockMovements())); }
-    private loadProducts(): Product[] { try { return JSON.parse(localStorage.getItem('himcontrol_products') || '[]'); } catch { return []; } }
-    private loadOrders(): Order[] { try { return JSON.parse(localStorage.getItem('himcontrol_orders') || '[]'); } catch { return []; } }
-    private loadMovements(): StockMovement[] { try { return JSON.parse(localStorage.getItem('himcontrol_stock_movements') || '[]'); } catch { return []; } }
+    private readonly storageKeys = {
+        products: 'washa_control_products',
+        orders: 'washa_control_orders',
+        movements: 'washa_control_stock_movements'
+    };
+
+    private persistProducts() { localStorage.setItem(this.storageKeys.products, JSON.stringify(this.products())); }
+    private persistOrders() { localStorage.setItem(this.storageKeys.orders, JSON.stringify(this.orders())); }
+    private persistMovements() { localStorage.setItem(this.storageKeys.movements, JSON.stringify(this.stockMovements())); }
+    private loadProducts(): Product[] { try { return JSON.parse(localStorage.getItem(this.storageKeys.products) || '[]'); } catch { return []; } }
+    private loadOrders(): Order[] { try { return JSON.parse(localStorage.getItem(this.storageKeys.orders) || '[]'); } catch { return []; } }
+    private loadMovements(): StockMovement[] { try { return JSON.parse(localStorage.getItem(this.storageKeys.movements) || '[]'); } catch { return []; } }
 }
 

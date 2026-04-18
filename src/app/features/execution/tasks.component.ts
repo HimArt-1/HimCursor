@@ -547,7 +547,7 @@ export class TasksComponent {
   private confettiService = inject(ConfettiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private readonly filterStorageKey = 'himcontrol_task_filters';
+  private readonly filterStorageKey = 'washa_control_task_filters';
 
   tasks = this.dataService.tasks;
   viewMode = signal<'Kanban' | 'List'>('Kanban');

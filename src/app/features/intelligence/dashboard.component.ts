@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DataService } from '../../core/services/state/data.service';
 import { AnalyticsService } from '../../core/services/domain/analytics.service';
+import { WashaIntelligenceService } from '../../core/services/domain/intelligence.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
 
@@ -110,6 +111,67 @@ import { Icons } from '../../shared/ui/icons';
           إصلاح التتبع
         </a>
       </div>
+
+      <!-- Washa AI Insights -->
+      <section class="space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="p-2 bg-gradient-to-tr from-wushai-cocoa to-wushai-sand rounded-lg text-white" [innerHTML]="getIcon('Zap')"></span>
+          <h3 class="text-xl font-extrabold text-wushai-dark dark:text-wushai-sand">رؤى "وشّاي" الذكية</h3>
+          <span class="px-2 py-0.5 rounded-full bg-wushai-sand/30 text-[10px] font-bold text-wushai-dark uppercase animate-pulse">Live AI</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          @for (insight of intelligence.insights(); track insight.id) {
+            <div class="relative overflow-hidden group p-5 rounded-2xl border transition-all hover:shadow-xl hover:-translate-y-1"
+                 [class.bg-white/40]="true"
+                 [class.dark:bg-wushai-surface/40]="true"
+                 [class.backdrop-blur-xl]="true"
+                 [class.border-red-200]="insight.type === 'critical'"
+                 [class.dark:border-red-900/30]="insight.type === 'critical'"
+                 [class.border-amber-200]="insight.type === 'warning'"
+                 [class.dark:border-amber-900/30]="insight.type === 'warning'"
+                 [class.border-green-200]="insight.type === 'success'"
+                 [class.dark:border-green-900/30]="insight.type === 'success'"
+                 [class.border-wushai-sand]="insight.type === 'info'"
+                 [class.dark:border-wushai-lilac/10]="insight.type === 'info'">
+              
+              <!-- Subtle Background Icon -->
+              <div class="absolute -right-4 -bottom-4 opacity-[0.05] group-hover:opacity-[0.1] transition-opacity w-24 h-24" 
+                   [innerHTML]="getIcon(getInsightIcon(insight.type))"></div>
+
+              <div class="flex items-start gap-3 relative z-10">
+                <div class="p-2 rounded-lg" 
+                     [class.bg-red-100]="insight.type === 'critical'" 
+                     [class.text-red-600]="insight.type === 'critical'"
+                     [class.bg-amber-100]="insight.type === 'warning'" 
+                     [class.text-amber-600]="insight.type === 'warning'"
+                     [class.bg-green-100]="insight.type === 'success'"
+                     [class.text-green-600]="insight.type === 'success'"
+                     [class.bg-wushai-lavender/30]="insight.type === 'info'"
+                     [class.text-wushai-olive]="insight.type === 'info'"
+                     [innerHTML]="getIcon(getInsightIcon(insight.type))">
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-bold text-sm text-wushai-dark dark:text-wushai-sand">{{ insight.title }}</h4>
+                  <p class="text-xs text-wushai-olive dark:text-wushai-lilac/70 mt-1 leading-relaxed">{{ insight.message }}</p>
+                  @if (insight.actionLabel) {
+                    <a [routerLink]="insight.actionLink" class="inline-flex items-center gap-1 mt-3 text-[10px] font-bold uppercase tracking-wider text-wushai-cocoa dark:text-wushai-sand hover:underline">
+                      {{ insight.actionLabel }}
+                      <span [innerHTML]="getIcon('ArrowRight')" class="w-3 h-3"></span>
+                    </a>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+          @if (intelligence.insights().length === 0) {
+            <div class="lg:col-span-3 p-8 flex flex-col items-center justify-center bg-wushai-sand/10 dark:bg-wushai-surface/10 rounded-2xl border border-dashed border-wushai-sand dark:border-wushai-lilac/20">
+               <span class="w-12 h-12 text-wushai-sand opacity-50 mb-3" [innerHTML]="getIcon('Zap')"></span>
+               <p class="text-sm font-bold text-wushai-olive dark:text-wushai-lilac/50">لا توجد توصيات حالياً، "وشّاي" يراقب الوضع...</p>
+            </div>
+          }
+        </div>
+      </section>
 
       <!-- Daily Brief -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -307,6 +369,7 @@ import { Icons } from '../../shared/ui/icons';
 export class DashboardComponent {
   private dataService = inject(DataService);
   analytics = inject(AnalyticsService);
+  intelligence = inject(WashaIntelligenceService);
   private sanitizer = inject(DomSanitizer);
 
   todayDate = new Date();
@@ -347,6 +410,15 @@ export class DashboardComponent {
     if (action.toLowerCase().includes('delete')) icon = 'Trash';
     if (action.toLowerCase().includes('login')) icon = 'Lock';
     return this.getIcon(icon);
+  }
+
+  getInsightIcon(type: string): keyof typeof Icons {
+    switch (type) {
+      case 'critical': return 'Alert';
+      case 'warning': return 'Shield';
+      case 'success': return 'Check';
+      default: return 'Zap';
+    }
   }
 
   getCoveragePercent() {

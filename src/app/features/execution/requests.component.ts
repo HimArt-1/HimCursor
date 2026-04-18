@@ -168,6 +168,68 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
                 </div>
               </div>
 
+              <!-- Relay Toggle -->
+              <div class="flex items-center justify-between p-4 bg-wushai-cocoa/5 dark:bg-wushai-cocoa/10 rounded-2xl border border-wushai-cocoa/20">
+                <div>
+                  <h4 class="text-sm font-bold text-wushai-cocoa dark:text-wushai-sand">تفعيل التتابع (Relay)</h4>
+                  <p class="text-[11px] text-gray-500 dark:text-gray-400">تحويل الطلب تلقائياً بين الفريق حسب المراحل</p>
+                </div>
+                <button (click)="isRelayMode.set(!isRelayMode())" [class]="isRelayMode() ? 'bg-wushai-cocoa' : 'bg-gray-300 dark:bg-gray-700'" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none">
+                  <span [class]="isRelayMode() ? 'translate-x-6' : 'translate-x-1'" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"></span>
+                </button>
+              </div>
+
+              <!-- Relay Stage Builder -->
+              @if (isRelayMode()) {
+                <div class="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300">مراحل التتابع</h4>
+                    <button (click)="addRelayStep()" class="text-xs font-bold text-wushai-cocoa hover:text-wushai-cocoa/80 flex items-center gap-1">
+                      <span [innerHTML]="getIcon('Plus')" class="w-3.5 h-3.5"></span>
+                      إضافة مرحلة
+                    </button>
+                  </div>
+
+                  @for (step of newRelaySteps(); track $index; let i = $index) {
+                    <div class="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 space-y-3">
+                      <div class="flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-full bg-wushai-cocoa text-white text-[10px] font-bold flex items-center justify-center">{{ i + 1 }}</span>
+                        <input [value]="step.label" (input)="updateRelayStep(i, { label: $any($event.target).value })" type="text" placeholder="اسم المرحلة (مثال: تصميم الشعار)" class="flex-1 bg-transparent border-none text-sm font-bold text-gray-800 dark:text-white placeholder:text-gray-400 focus:ring-0 outline-none">
+                        <button (click)="removeRelayStep(i)" class="text-red-400 hover:text-red-500">
+                          <span [innerHTML]="getIcon('Trash')" class="w-4 h-4"></span>
+                        </button>
+                      </div>
+                      
+                      <div class="grid grid-cols-2 gap-3">
+                        <div>
+                          <label class="block text-[10px] font-bold text-gray-500 mb-1">الدور المسؤول</label>
+                          <select (change)="updateRelayStep(i, { role: $any($event.target).value })" [value]="step.role" class="w-full text-xs bg-white dark:bg-[#1c1612] border border-gray-200 dark:border-white/10 rounded-lg p-2 outline-none">
+                            @for (role of availableRoles; track role) {
+                              <option [value]="role">{{ role }}</option>
+                            }
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-[10px] font-bold text-gray-500 mb-1">الشخص (اختياري)</label>
+                          <select (change)="updateRelayStep(i, { assigneeId: $any($event.target).value })" [value]="step.assigneeId || ''" class="w-full text-xs bg-white dark:bg-[#1c1612] border border-gray-200 dark:border-white/10 rounded-lg p-2 outline-none">
+                            <option value="">أي شخص متاح</option>
+                            @for (user of availableUsers(); track user.id) {
+                              <option [value]="user.id">{{ user.name }}</option>
+                            }
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  }
+
+                  @if (newRelaySteps().length === 0) {
+                    <div class="py-10 text-center border-2 border-dashed border-gray-100 dark:border-white/5 rounded-2xl">
+                        <p class="text-xs text-gray-400">لا توجد مراحل مضافة بعد</p>
+                    </div>
+                  }
+                </div>
+              }
+
               <!-- Notes -->
               <div>
                 <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">ملاحظات</label>
@@ -255,6 +317,65 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
             </div>
 
             <div class="p-6 space-y-6">
+              <!-- Relay Stepper -->
+              @if (selectedRequest()!.isRelay && selectedRequest()!.relaySteps?.length) {
+                <div class="bg-gray-50 dark:bg-white/5 rounded-2xl p-5 border border-gray-100 dark:border-white/5">
+                  <h4 class="text-sm font-bold text-gray-500 dark:text-gray-400 mb-4 flex items-center gap-2">
+                    <span [innerHTML]="getIcon('Zap')" class="w-4 h-4 text-wushai-cocoa"></span>
+                    مراحل التتابع
+                  </h4>
+                  
+                  <div class="relative space-y-4">
+                    @for (step of selectedRequest()!.relaySteps; track $index; let i = $index) {
+                      <div class="flex items-start gap-4">
+                        <!-- Step Indicator -->
+                        <div class="relative flex flex-col items-center">
+                          <div class="w-8 h-8 rounded-full flex items-center justify-center z-10" [class]="step.status === 'done' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25' : step.status === 'active' ? 'bg-wushai-cocoa text-white animate-pulse' : 'bg-gray-200 dark:bg-gray-700 text-gray-400'">
+                             @if (step.status === 'done') {
+                               <span [innerHTML]="getIcon('Check')" class="w-4 h-4"></span>
+                             } @else {
+                               <span class="text-xs font-bold">{{ i + 1 }}</span>
+                             }
+                          </div>
+                          @if (i < selectedRequest()!.relaySteps!.length - 1) {
+                            <div class="w-0.5 h-10 -my-1" [class]="step.status === 'done' ? 'bg-emerald-400' : 'bg-gray-200 dark:bg-gray-700'"></div>
+                          }
+                        </div>
+
+                        <!-- Step Content -->
+                        <div class="flex-1 min-w-0 pb-2">
+                          <div class="flex items-center justify-between gap-2">
+                            <h5 class="text-sm font-bold" [class]="step.status === 'active' ? 'text-wushai-cocoa dark:text-wushai-sand' : step.status === 'done' ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'">
+                                {{ step.label }}
+                            </h5>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md border" [class]="step.status === 'done' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : step.status === 'active' ? 'bg-wushai-cocoa/10 border-wushai-cocoa/20 text-wushai-cocoa' : 'bg-gray-100 border-gray-200 text-gray-400'">
+                                {{ step.role }}
+                            </span>
+                          </div>
+                          
+                          @if (step.assigneeName) {
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1">
+                                <span [innerHTML]="getIcon('User')" class="w-3 h-3"></span>
+                                {{ step.assigneeName }}
+                            </p>
+                          }
+
+                          @if (step.completedAt) {
+                            <p class="text-[10px] text-emerald-500 mt-1">✓ اكتمل {{ requestService.formatTimeAgo(step.completedAt) }}</p>
+                          }
+                          
+                          @if (step.outputNotes) {
+                            <div class="mt-2 text-[11px] text-gray-500 bg-white/50 dark:bg-black/20 p-2 rounded-lg italic border-r-2 border-emerald-500 whitespace-pre-wrap">
+                                {{ step.outputNotes }}
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
               <!-- Description -->
               @if (selectedRequest()!.description) {
                 <div>
@@ -364,12 +485,14 @@ const REQUEST_STATUSES: RequestStatus[] = ['جديد', 'قيد التنفيذ', 
                     }
                   </div>
 
-                  <button (click)="submitComplete(outputNotes.value, outputLink.value)" [disabled]="submitting()" class="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50">
+                  <button (click)="submitCompleteRelay(outputNotes.value, outputLink.value)" [disabled]="submitting()" class="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50">
                     @if (submitting()) {
                       <span class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                       جاري الإكمال...
+                    } @else if (selectedRequest()!.isRelay && (selectedRequest()!.currentStepIndex || 0) < (selectedRequest()!.relaySteps?.length || 0) - 1) {
+                      🚚 إكمال المرحلة وتسليمها للتالي
                     } @else {
-                      ✅ تم الإنجاز
+                      ✅ تم الإنجاز النهائي
                     }
                   </button>
                 </div>
@@ -466,6 +589,12 @@ export class RequestsComponent {
     readonly outputFiles = signal<File[]>([]);
     readonly submitting = signal(false);
 
+    // Relay State
+    readonly isRelayMode = signal(false);
+    readonly newRelaySteps = signal<RelayStep[]>([]);
+    readonly availableRoles = ['مصمم جرافيك', 'مبرمج', 'تسويق', 'إدارة', 'مراجعة ختامية'];
+    readonly availableUsers = computed(() => this.dataService.availableUsers());
+
     readonly currentUserId = computed(() => this.dataService.currentUser()?.id || '');
 
     readonly filteredRequests = computed(() => {
@@ -492,6 +621,24 @@ export class RequestsComponent {
         this.showCreateModal.set(true);
         this.selectedType.set('أخرى');
         this.selectedFiles.set([]);
+        this.isRelayMode.set(false);
+        this.newRelaySteps.set([]);
+    }
+
+    // --- Relay Stage Methods ---
+    addRelayStep() {
+        this.newRelaySteps.update(steps => [
+            ...steps, 
+            { label: '', role: this.availableRoles[0], status: 'pending' }
+        ]);
+    }
+
+    removeRelayStep(index: number) {
+        this.newRelaySteps.update(steps => steps.filter((_, i) => i !== index));
+    }
+
+    updateRelayStep(index: number, updates: Partial<RelayStep>) {
+        this.newRelaySteps.update(steps => steps.map((s, i) => i === index ? { ...s, ...updates } : s));
     }
 
     closeCreateModal() {
@@ -521,8 +668,21 @@ export class RequestsComponent {
         if (!title.trim() || !description.trim()) return;
         this.submitting.set(true);
         try {
+            // Prepare relay steps if enabled
+            let relaySteps = this.newRelaySteps();
+            if (this.isRelayMode() && relaySteps.length > 0) {
+                // First step is always active
+                relaySteps[0].status = 'active';
+            }
+
             await this.requestService.createRequest(
-                title.trim(), description.trim(), this.selectedType(), notes.trim(), this.selectedFiles()
+                title.trim(), 
+                description.trim(), 
+                this.selectedType(), 
+                notes.trim(), 
+                this.selectedFiles(),
+                this.isRelayMode(),
+                relaySteps
             );
             this.closeCreateModal();
         } finally {
@@ -582,16 +742,26 @@ export class RequestsComponent {
         this.outputFiles.update(files => files.filter((_, i) => i !== index));
     }
 
-    async submitComplete(outputNotes: string, outputLink: string) {
+    async submitCompleteRelay(outputNotes: string, outputLink: string) {
         if (!this.selectedRequest()) return;
         this.submitting.set(true);
         try {
-            const success = await this.requestService.completeRequest(
-                this.selectedRequest()!.id, outputNotes.trim(), outputLink.trim(), this.outputFiles()
-            );
+            const req = this.selectedRequest()!;
+            let success = false;
+            
+            if (req.isRelay) {
+                success = await this.requestService.completeRelayStep(
+                    req.id, outputNotes.trim(), outputLink.trim(), this.outputFiles()
+                );
+            } else {
+                success = await this.requestService.completeRequest(
+                    req.id, outputNotes.trim(), outputLink.trim(), this.outputFiles()
+                );
+            }
+
             if (success) {
                 this.confettiService.launch(80);
-                const updated = this.requestService.requests().find(r => r.id === this.selectedRequest()!.id);
+                const updated = this.requestService.requests().find(r => r.id === req.id);
                 if (updated) this.selectedRequest.set(updated);
             }
         } finally {

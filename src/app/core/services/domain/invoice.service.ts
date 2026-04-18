@@ -78,12 +78,12 @@ export class InvoiceService {
     }
 
     private persist() {
-        localStorage.setItem('himcontrol_invoices', JSON.stringify(this.invoices()));
+        localStorage.setItem('washa_control_invoices', JSON.stringify(this.invoices()));
     }
 
     private loadFromStorage(): Invoice[] {
         try {
-            return JSON.parse(localStorage.getItem('himcontrol_invoices') || '[]');
+            return JSON.parse(localStorage.getItem('washa_control_invoices') || '[]');
         } catch { return []; }
     }
 }

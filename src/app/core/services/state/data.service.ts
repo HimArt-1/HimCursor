@@ -135,9 +135,26 @@ export class DataService {
   // --- Legacy Methods / Entities ---
 
   private loadOtherData() {
-    const otherData = localStorage.getItem('himcontrol_other_data');
+    const otherData = localStorage.getItem('washa_control_other_data');
     if (otherData) {
-      const p = JSON.parse(otherData);
+      try {
+        const parsed = JSON.parse(otherData);
+        if (parsed.filters) this.task.activeFilters.set(parsed.filters);
+      } catch (e) {
+        console.error('Failed to load other dashboard data', e);
+      }
+    }
+    
+    // Auto-save periodically
+    setInterval(() => {
+      localStorage.setItem('washa_control_other_data', JSON.stringify({
+        filters: this.task.activeFilters()
+      }));
+    }, 10000);
+
+    const legacyData = localStorage.getItem('washa_control_other_data');
+    if (legacyData) {
+      const p = JSON.parse(legacyData);
       // objectives handled by StrategyService
       this.requirements.set(p.requirements || []);
       this.comments.set(p.comments || []);

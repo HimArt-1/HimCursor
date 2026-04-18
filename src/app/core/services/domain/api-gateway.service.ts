@@ -167,8 +167,8 @@ export class ApiGatewayService {
 
     // ===== PERSISTENCE =====
 
-    private persistKeys() { localStorage.setItem('himcontrol_api_keys', JSON.stringify(this.apiKeys())); }
-    private persistLogs() { localStorage.setItem('himcontrol_api_logs', JSON.stringify(this.requestLogs())); }
-    private loadKeys(): ApiKey[] { try { return JSON.parse(localStorage.getItem('himcontrol_api_keys') || '[]'); } catch { return []; } }
-    private loadLogs(): ApiRequestLog[] { try { return JSON.parse(localStorage.getItem('himcontrol_api_logs') || '[]'); } catch { return []; } }
+    private persistKeys() { localStorage.setItem('washa_control_api_keys', JSON.stringify(this.apiKeys())); }
+    private persistLogs() { localStorage.setItem('washa_control_api_logs', JSON.stringify(this.requestLogs())); }
+    private loadKeys(): ApiKey[] { try { return JSON.parse(localStorage.getItem('washa_control_api_keys') || '[]'); } catch { return []; } }
+    private loadLogs(): ApiRequestLog[] { try { return JSON.parse(localStorage.getItem('washa_control_api_logs') || '[]'); } catch { return []; } }
 }

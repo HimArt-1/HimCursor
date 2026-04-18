@@ -24,7 +24,7 @@ export class StrategyService {
 
     async loadObjectives() {
         if (!isSupabaseConfigured || !this.supabase) {
-            const stored = localStorage.getItem('himcontrol_strategy_objectives');
+            const stored = localStorage.getItem('washa_control_strategy_objectives');
             if (stored) {
                 try {
                     this.objectives.set(JSON.parse(stored));
@@ -112,7 +112,7 @@ export class StrategyService {
 
     async loadMilestones() {
         if (!isSupabaseConfigured || !this.supabase) {
-            const stored = localStorage.getItem('himcontrol_strategy_milestones');
+            const stored = localStorage.getItem('washa_control_strategy_milestones');
             if (stored) {
                 try {
                     this.milestones.set(JSON.parse(stored));
@@ -176,8 +176,8 @@ export class StrategyService {
     }
 
     private saveLocal() {
-        localStorage.setItem('himcontrol_strategy_objectives', JSON.stringify(this.objectives()));
-        localStorage.setItem('himcontrol_strategy_milestones', JSON.stringify(this.milestones()));
+        localStorage.setItem('washa_control_strategy_objectives', JSON.stringify(this.objectives()));
+        localStorage.setItem('washa_control_strategy_milestones', JSON.stringify(this.milestones()));
     }
 
     private formatError(error: any): string {

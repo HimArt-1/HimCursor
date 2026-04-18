@@ -14,7 +14,7 @@ export class FinancialService {
 
     async loadTransactions() {
         if (!isSupabaseConfigured || !this.supabase) {
-            const stored = localStorage.getItem('himcontrol_finance_transactions');
+            const stored = localStorage.getItem('washa_control_finance_transactions');
             if (stored) {
                 try {
                     this.transactions.set(JSON.parse(stored));
@@ -90,7 +90,7 @@ export class FinancialService {
     }
 
     private saveLocal() {
-        localStorage.setItem('himcontrol_finance_transactions', JSON.stringify(this.transactions()));
+        localStorage.setItem('washa_control_finance_transactions', JSON.stringify(this.transactions()));
     }
 
     private formatError(error: any): string {

@@ -1,5 +1,5 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { SharedRequest, RequestAttachment, RequestStatus } from '../../types';
+import { SharedRequest, RequestAttachment, RequestStatus, RelayStep } from '../../types';
 import { SupabaseService } from '../infra/supabase.service';
 import { AuthService } from './auth.service';
 import { UserService } from './user.service';
@@ -40,12 +40,10 @@ export class RequestService {
         }
     }
 
-    async createRequest(
-        title: string,
-        description: string,
-        type: string,
         notes: string,
-        files: File[]
+        files: File[],
+        isRelay: boolean = false,
+        relaySteps: RelayStep[] = []
     ): Promise<SharedRequest | null> {
         if (!this.supabaseService.isConfigured) return null;
 
@@ -67,6 +65,9 @@ export class RequestService {
                 requester_id: userId,
                 requester_name: userName,
                 status: 'جديد',
+                is_relay: isRelay,
+                relay_steps: relaySteps,
+                current_step_index: 0
             }])
             .select()
             .single();
@@ -141,6 +142,86 @@ export class RequestService {
 
         await this.loadRequests();
         this.toastService.show('تم قبول الطلب', 'success');
+        return true;
+    }
+
+    async completeRelayStep(
+        requestId: string,
+        outputNotes: string,
+        outputLink: string,
+        outputFiles: File[]
+    ): Promise<boolean> {
+        if (!this.supabaseService.isConfigured) return false;
+
+        const request = this.requests().find(r => r.id === requestId);
+        if (!request || !request.relaySteps || !request.isRelay) return false;
+
+        const userId = await this.getAuthUserId();
+        if (!userId) {
+            this.toastService.show('يجب تسجيل الدخول أولاً', 'error');
+            return false;
+        }
+
+        // Upload output files
+        if (outputFiles.length > 0) {
+            await this.uploadFiles(requestId, outputFiles, 'output', userId);
+        }
+
+        const steps = [...request.relaySteps];
+        const currentIndex = request.currentStepIndex || 0;
+        const currentStep = steps[currentIndex];
+
+        // Update current step
+        currentStep.status = 'done';
+        currentStep.completedAt = new Date().toISOString();
+        currentStep.outputNotes = outputNotes;
+        currentStep.assigneeId = userId;
+        currentStep.assigneeName = this.getCurrentUserName();
+
+        let nextIndex = currentIndex + 1;
+        let finalStatus: RequestStatus = 'قيد التنفيذ';
+
+        if (nextIndex < steps.length) {
+            steps[nextIndex].status = 'active';
+            // Notify next assignee if exists
+            if (steps[nextIndex].assigneeId) {
+                this.uiService.addNotification(
+                    'مرحلة جديدة في تتابع',
+                    `تم تحويل الطلب ${request.title} إليك لمرحلة: ${steps[nextIndex].label}`,
+                    'Info'
+                );
+            }
+        } else {
+            finalStatus = 'مكتمل';
+            this.uiService.addNotification(
+                'تتابع مكتمل',
+                `تم إكمال كافة مراحل الطلب: ${request.title}`,
+                'celebrate'
+            );
+        }
+
+        const { error } = await this.supabaseService.client
+            .from('shared_requests')
+            .update({
+                relay_steps: steps,
+                current_step_index: nextIndex,
+                status: finalStatus,
+                completed_at: finalStatus === 'مكتمل' ? new Date().toISOString() : null,
+                updated_at: new Date().toISOString(),
+                // Keep the last output info in main fields too for compatibility
+                output_notes: outputNotes || null,
+                output_link: outputLink || null,
+            })
+            .eq('id', requestId);
+
+        if (error) {
+            console.error('Error advancing relay step:', error);
+            this.toastService.show('خطأ في تحديث المرحلة', 'error');
+            return false;
+        }
+
+        await this.loadRequests();
+        this.toastService.show(nextIndex < steps.length ? 'تم إنجاز المرحلة والانتقال للتالي' : 'تم إكمال الطلب بنجاح', 'success');
         return true;
     }
 
@@ -311,6 +392,9 @@ export class RequestService {
             completedAt: dbRecord.completed_at,
             outputNotes: dbRecord.output_notes,
             outputLink: dbRecord.output_link,
+            isRelay: dbRecord.is_relay,
+            relaySteps: dbRecord.relay_steps || [],
+            currentStepIndex: dbRecord.current_step_index || 0,
             attachments,
             createdAt: dbRecord.created_at,
             updatedAt: dbRecord.updated_at,

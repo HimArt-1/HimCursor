@@ -145,8 +145,8 @@ export class ProjectService {
 
     // ===== PERSISTENCE =====
 
-    private persistProjects() { localStorage.setItem('himcontrol_projects', JSON.stringify(this.projects())); }
-    private persistMilestones() { localStorage.setItem('himcontrol_project_milestones', JSON.stringify(this.milestones())); }
-    private loadProjects(): Project[] { try { return JSON.parse(localStorage.getItem('himcontrol_projects') || '[]'); } catch { return []; } }
-    private loadMilestones(): ProjectMilestone[] { try { return JSON.parse(localStorage.getItem('himcontrol_project_milestones') || '[]'); } catch { return []; } }
+    private persistProjects() { localStorage.setItem('washa_control_projects', JSON.stringify(this.projects())); }
+    private persistMilestones() { localStorage.setItem('washa_control_project_milestones', JSON.stringify(this.milestones())); }
+    private loadProjects(): Project[] { try { return JSON.parse(localStorage.getItem('washa_control_projects') || '[]'); } catch { return []; } }
+    private loadMilestones(): ProjectMilestone[] { try { return JSON.parse(localStorage.getItem('washa_control_project_milestones') || '[]'); } catch { return []; } }
 }

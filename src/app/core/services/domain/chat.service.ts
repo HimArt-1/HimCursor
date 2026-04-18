@@ -49,7 +49,7 @@ export class ChatService {
     );
 
     // Unread counts
-    private readonly LAST_SEEN_KEY = 'himcontrol_chat_last_seen';
+    private readonly LAST_SEEN_KEY = 'washa_control_chat_last_seen';
     private lastSeenByChannel = signal<Record<string, number>>({});
 
     readonly unreadCount = computed(() => {
@@ -319,7 +319,7 @@ export class ChatService {
 
     private initRealtime() {
         if (!isSupabaseConfigured || !this.supabase) {
-            const saved = localStorage.getItem('himcontrol_chat_messages');
+            const saved = localStorage.getItem('washa_control_chat_messages');
             if (saved) {
                 try { this.messages.set(JSON.parse(saved)); } catch { }
             }

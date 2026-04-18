@@ -346,7 +346,7 @@ export class InvoicesComponent {
     .total-row{font-size:18px;font-weight:bold;color:#7A4E2D}</style></head>
     <body>
       <div class="header">
-        <div><div class="logo">HimControl</div><p style="color:#999;font-size:12px">فاتورة إلكترونية</p></div>
+        <div><div class="logo">Washa Control</div><p style="color:#999;font-size:12px">فاتورة إلكترونية</p></div>
         <div style="text-align:left"><h2 style="color:#7A4E2D;margin:0">${inv.number}</h2>
         <p style="color:#999;font-size:12px">التاريخ: ${inv.date}</p>
         <p style="color:#999;font-size:12px">الاستحقاق: ${inv.dueDate || '-'}</p></div>

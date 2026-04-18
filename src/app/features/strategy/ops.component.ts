@@ -160,8 +160,8 @@ interface LogItem {
             </div>
             
             <div class="absolute bottom-4 right-4 flex gap-4 text-xs text-gray-400">
-               <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-blue-400"></div> Mobile (65%)</div>
-               <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-wushai-sand"></div> Desktop (35%)</div>
+               <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-blue-400"></div> زوار نشطين: {{ activeUsers() }}</div>
+               <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-wushai-sand"></div> طلبات اليوم: {{ ordersCount() }}</div>
             </div>
          </div>
       </div>
@@ -181,9 +181,9 @@ export class OpsComponent implements OnInit, OnDestroy {
    private sanitizer = inject(DomSanitizer);
    private confettiService = inject(ConfettiService);
 
-   revenue = signal(12450.00);
-   activeUsers = signal(42);
-   ordersCount = signal(15);
+   revenue = signal(0);
+   activeUsers = signal(0);
+   ordersCount = signal(0);
    currentTime = signal(new Date());
 
    logs = signal<LogItem[]>([]);
@@ -213,9 +213,9 @@ export class OpsComponent implements OnInit, OnDestroy {
       // 2. Random Logs & Events
       this.intervals.push(setInterval(() => {
          const rand = Math.random();
-         if (rand > 0.7) this.generateTrafficLog();
-         else if (rand > 0.9) this.generateCartLog();
-         else if (rand > 0.95) this.generateSale();
+         if (rand > 0.95) this.generateSale();
+         else if (rand > 0.85) this.generateCartLog();
+         else if (rand > 0.6) this.generateTrafficLog();
       }, 800));
 
       // 3. Server Load Pulse

@@ -84,7 +84,7 @@ interface CommandItem {
                  <span><span class="font-bold">↑↓</span> to navigate</span>
                  <span><span class="font-bold">↵</span> to select</span>
               </div>
-              <span class="font-mono">HimControl v1.0</span>
+              <span class="font-mono">Washa Control v1.0</span>
            </div>
         </div>
       </div>

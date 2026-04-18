@@ -14,8 +14,8 @@ export class TaskService {
     private userService = inject(UserService);
     private authService = inject(AuthService);
     private initialized = false;
-    private readonly dailyAlertKey = 'himcontrol_task_daily_alert';
-    private readonly dailyAlertUserKeyPrefix = 'himcontrol_task_daily_alert_user_';
+    private readonly dailyAlertKey = 'washa_control_task_daily_alert';
+    private readonly dailyAlertUserKeyPrefix = 'washa_control_task_daily_alert_user_';
 
     readonly tasks = signal<Task[]>([]);
 
@@ -46,10 +46,10 @@ export class TaskService {
 
     async initSupabase() {
         if (!this.supabaseService.isConfigured) {
-            if (!localStorage.getItem('himcontrol_tasks_migrated')) {
+            if (!localStorage.getItem('washa_control_tasks_migrated')) {
                 this.seedData();
             } else {
-                const stored = localStorage.getItem('himcontrol_tasks_local');
+                const stored = localStorage.getItem('washa_control_tasks_local');
                 if (stored) this.tasks.set(JSON.parse(stored));
             }
             return;
@@ -153,7 +153,7 @@ export class TaskService {
     }
 
     private saveLocal() {
-        localStorage.setItem('himcontrol_tasks_local', JSON.stringify(this.tasks()));
+        localStorage.setItem('washa_control_tasks_local', JSON.stringify(this.tasks()));
     }
 
     private seedData() {
@@ -166,7 +166,7 @@ export class TaskService {
         ];
         this.tasks.set(seeds);
         this.saveLocal();
-        localStorage.setItem('himcontrol_tasks_migrated', 'true');
+        localStorage.setItem('washa_control_tasks_migrated', 'true');
     }
 
     private setupDailyAlerts() {

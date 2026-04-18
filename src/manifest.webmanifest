@@ -1,6 +1,6 @@
 {
-    "name": "HimControl - Wushai",
-    "short_name": "HimControl",
+    "name": "Washa Control",
+    "short_name": "Washa Control",
     "description": "لوحة تحكم وإدارة المشاريع والمهام",
     "start_url": "/",
     "display": "standalone",

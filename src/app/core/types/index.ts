@@ -238,6 +238,16 @@ export interface KnowledgeArticle {
 export type RequestType = 'تصميم' | 'برمجة' | 'محتوى' | 'تسويق' | 'إداري' | 'أخرى';
 export type RequestStatus = 'جديد' | 'قيد التنفيذ' | 'مكتمل';
 
+export interface RelayStep {
+  label: string;
+  role: string;
+  assigneeId?: string;
+  assigneeName?: string;
+  status: 'pending' | 'active' | 'done';
+  completedAt?: string;
+  outputNotes?: string;
+}
+
 export interface SharedRequest {
   id: string;
   title: string;
@@ -252,6 +262,9 @@ export interface SharedRequest {
   completedAt?: string;
   outputNotes?: string;
   outputLink?: string;
+  isRelay?: boolean;
+  relaySteps?: RelayStep[];
+  currentStepIndex?: number;
   attachments: RequestAttachment[];
   createdAt: string;
   updatedAt: string;

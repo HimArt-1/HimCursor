@@ -31,7 +31,7 @@ type LoginState = 'idle' | 'authenticating' | 'success';
          @if (loginState() === 'idle') {
             <!-- Logo & Branding -->
             <div class="text-center mb-10 animate-fade-in-down select-none">
-                <h1 class="text-5xl font-bold tracking-tighter mb-2 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">HimControl</h1>
+                <h1 class="text-5xl font-bold tracking-tighter mb-2 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Washa Control</h1>
                 <p class="text-wushai-sand/60 text-sm uppercase tracking-[0.3em] font-mono">User Access Portal</p>
             </div>
 

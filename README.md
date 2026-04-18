@@ -1,4 +1,4 @@
-# HimControl Project
+# Washa Control Project
 
 Advanced Control System for HimArt.
 

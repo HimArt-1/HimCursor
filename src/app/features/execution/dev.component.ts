@@ -70,11 +70,11 @@ interface TerminalLine {
                  <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
                  <div class="w-3 h-3 rounded-full bg-green-500"></div>
               </div>
-              <span class="text-gray-400 text-xs ml-2">admin@himcontrol:~</span>
+              <span class="text-gray-400 text-xs ml-2">admin@washa_control:~</span>
            </div>
            
            <div class="flex-1 overflow-y-auto p-4 custom-scrollbar scroll-smooth" #terminalContainer (click)="inputField.focus()">
-              <div class="opacity-50 mb-4">Welcome to HimControl CLI v1.0. Type 'help' to start.</div>
+              <div class="opacity-50 mb-4">Welcome to Washa Control CLI v1.0. Type 'help' to start.</div>
               
               @for(line of terminalHistory(); track $index) {
                  <div class="mb-1 break-words" [ngClass]="{

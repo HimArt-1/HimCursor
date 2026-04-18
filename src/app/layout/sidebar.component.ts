@@ -15,7 +15,7 @@ import { ToastService } from '../core/services/state/toast.service';
     <aside class="h-full w-64 bg-wushai-dark dark:bg-wushai-sidebar-dark text-wushai-sand dark:text-wushai-lilac flex flex-col shadow-xl transition-colors duration-500 border-l border-transparent dark:border-wushai-surface/20">
       <div class="p-6 border-b border-wushai-olive/30 dark:border-wushai-lilac/10 flex justify-between items-center">
         <div>
-           <h1 class="text-2xl font-bold tracking-wide text-wushai-sand dark:text-wushai-lilac">HimControl</h1>
+           <h1 class="text-2xl font-bold tracking-wide text-wushai-sand dark:text-wushai-lilac">Washa Control</h1>
            <p class="text-xs text-wushai-lavender dark:text-wushai-lilac/70 mt-1 opacity-80">نظام إدارة وشّى</p>
         </div>
         <!-- AI Assistant Toggle -->
@@ -234,7 +234,7 @@ export class SidebarComponent implements OnDestroy {
    private sanitizer = inject(DomSanitizer);
    private dataService = inject(DataService);
    private toastService = inject(ToastService);
-   private readonly timerStorageKey = 'himcontrol_focus_timer';
+   private readonly timerStorageKey = 'washa_control_focus_timer';
    private timerEndsAt: number | null = null;
 
    timeLeft = signal(25 * 60); // 25 minutes

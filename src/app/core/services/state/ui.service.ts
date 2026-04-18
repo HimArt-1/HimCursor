@@ -69,11 +69,11 @@ export class UiService {
 
     // --- Persistence ---
     private loadLocalSettings() {
-        const settings = localStorage.getItem('himcontrol_settings');
+        const settings = localStorage.getItem('washa_control_settings');
         if (settings) { this.darkMode.set(JSON.parse(settings).darkMode ?? false); }
     }
 
     private saveLocalSettings() {
-        localStorage.setItem('himcontrol_settings', JSON.stringify({ darkMode: this.darkMode() }));
+        localStorage.setItem('washa_control_settings', JSON.stringify({ darkMode: this.darkMode() }));
     }
 }

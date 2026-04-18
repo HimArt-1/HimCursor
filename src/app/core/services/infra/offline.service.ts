@@ -6,7 +6,7 @@ export class OfflineService implements OnDestroy {
     readonly isOnline = signal(navigator.onLine);
 
     /** Pending messages queued while offline */
-    private readonly QUEUE_KEY = 'himcontrol_offline_queue';
+    private readonly QUEUE_KEY = 'washa_control_offline_queue';
 
     private onlineHandler = () => this.handleOnline();
     private offlineHandler = () => this.handleOffline();

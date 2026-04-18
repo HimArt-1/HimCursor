@@ -1,5 +1,5 @@
 
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, VERSION } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
@@ -21,7 +21,7 @@ import { isSupabaseConfigured } from '../../core/supabase.client';
          <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
             <h3 class="text-xl font-bold text-white flex items-center gap-3">
                <span class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span>
-               HimControl System Status
+               Washa Control System Status
             </h3>
             <span class="bg-gray-800 text-xs px-2 py-1 rounded">v1.0.0-beta</span>
          </div>
@@ -48,7 +48,7 @@ import { isSupabaseConfigured } from '../../core/supabase.client';
                </div>
                <div class="flex justify-between border-b border-gray-800 pb-2">
                   <span>Angular Version</span>
-                  <span class="text-white">v20.3.0</span>
+                   <span class="text-white">v{{ angularVersion }}</span>
                </div>
                <div class="flex justify-between border-b border-gray-800 pb-2">
                   <span>Database</span>
@@ -96,10 +96,12 @@ export class SystemComponent implements OnInit {
    private sanitizer = inject(DomSanitizer);
 
    usageInBytes = signal(0);
-   isSupabaseConfigured = computed(() => isSupabaseConfigured);
+   angularVersion = VERSION.full;
+   supabaseConfigured = isSupabaseConfigured;
+   isSupabaseConfigured = () => this.supabaseConfigured;
    isAiConfigured = computed(() => !!environment.apiKey);
    appMode = environment.production ? 'Production' : 'Development';
-  databaseLabel = computed(() => isSupabaseConfigured ? 'Supabase (Realtime)' : 'LocalStorage (Fallback)');
+   databaseLabel = computed(() => this.supabaseConfigured ? 'Supabase (Realtime)' : 'LocalStorage (Fallback)');
 
    usageInMB = computed(() => {
       return (this.usageInBytes() / (1024 * 1024)).toFixed(2);

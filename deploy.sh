@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #═══════════════════════════════════════════════════════════════════════════════
-#  HimControl - Automated Deployment Script
+#  Washa Control - Automated Deployment Script
 #  نظام إدارة وشّى - سكريبت النشر التلقائي
 #═══════════════════════════════════════════════════════════════════════════════
 
@@ -85,7 +85,7 @@ fi
 #───────────────────────────────────────────────────────────────────────────────
 
 preflight_check() {
-    print_header "${ROCKET} HimControl Deployment - Pre-flight Check"
+    print_header "${ROCKET} Washa Control Deployment - Pre-flight Check"
     
     local all_good=true
     
@@ -343,7 +343,7 @@ set_secrets() {
 #───────────────────────────────────────────────────────────────────────────────
 
 full_deploy() {
-    print_header "${ROCKET} HimControl - Full Deployment"
+    print_header "${ROCKET} Washa Control - Full Deployment"
     
     preflight_check || exit 1
     install_deps
@@ -386,7 +386,7 @@ full_deploy() {
 #───────────────────────────────────────────────────────────────────────────────
 
 show_menu() {
-    print_header "${ROCKET} HimControl Deployment Script"
+    print_header "${ROCKET} Washa Control Deployment Script"
     
     echo "Select an action:"
     echo ""

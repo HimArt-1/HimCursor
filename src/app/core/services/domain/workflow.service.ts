@@ -210,10 +210,10 @@ export class WorkflowService {
     // ===== PERSISTENCE =====
 
     private persist() {
-        localStorage.setItem('himcontrol_workflows', JSON.stringify(this.workflows()));
+        localStorage.setItem('washa_control_workflows', JSON.stringify(this.workflows()));
     }
 
     private loadWorkflows(): Workflow[] {
-        try { return JSON.parse(localStorage.getItem('himcontrol_workflows') || '[]'); } catch { return []; }
+        try { return JSON.parse(localStorage.getItem('washa_control_workflows') || '[]'); } catch { return []; }
     }
 }
