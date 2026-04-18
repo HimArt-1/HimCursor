@@ -3,6 +3,7 @@ import { Product, Order, InventoryService } from '../domain/inventory.service';
 import { QrService } from './qr.service';
 
 declare var QRious: any;
+declare var html2pdf: any;
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +11,42 @@ declare var QRious: any;
 export class PrintService {
   private qrService = inject(QrService);
   private inventoryService = inject(InventoryService);
+
+  async downloadInvoiceAsPdf(order: Order) {
+    const html = this.generatePdfHtml(order);
+    
+    // Create a temporary hidden container
+    const element = document.createElement('div');
+    element.innerHTML = html;
+    element.style.position = 'fixed';
+    element.style.left = '-9999px';
+    element.style.top = '0';
+    element.style.width = '210mm'; // A4 width
+    document.body.appendChild(element);
+
+    const opt = {
+      margin:       0,
+      filename:     `invoice-${order.orderNumber}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { 
+        scale: 2, 
+        useCORS: true,
+        letterRendering: true,
+        logging: false
+      },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    try {
+      // Wait for fonts/images to potentially settle (though data-urls are immediate)
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await html2pdf().set(opt).from(element).save();
+    } catch (error) {
+      console.error('PDF Generation Error:', error);
+    } finally {
+      document.body.removeChild(element);
+    }
+  }
 
   private getBranding() {
     return this.inventoryService.settings() || {

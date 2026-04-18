@@ -538,8 +538,7 @@ export class BoothComponent {
             const html = this.printService.generateThermalHtml(order);
             this.printService.print(html);
         } else if (type === 'pdf') {
-            const html = this.printService.generatePdfHtml(order);
-            this.printService.print(html);
+            this.printService.downloadInvoiceAsPdf(order);
         } else if (type === 'whatsapp') {
             this.printService.shareViaWhatsApp(order);
         }
@@ -553,8 +552,7 @@ export class BoothComponent {
         if (!order) return;
         
         if (type === 'pdf') {
-            const html = this.printService.generatePdfHtml(order);
-            this.printService.print(html);
+            this.printService.downloadInvoiceAsPdf(order);
         } else if (type === 'whatsapp') {
             this.printService.shareViaWhatsApp(order);
         }
