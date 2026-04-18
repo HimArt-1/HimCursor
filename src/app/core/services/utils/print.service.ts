@@ -15,9 +15,9 @@ export class PrintService {
   private supabaseService = inject(SupabaseService);
 
   WHATSAPP_TEMPLATES = [
-    { id: 'professional', name: 'رسمي', text: (order: Order, url: string) => `عزيزي العميل، شكراً لتعاملك مع وشّى. تجد مرفقاً فاتورتك برقم ${order.orderNumber} بمبلغ ${order.total.toFixed(2)} ر.س. %0A%0Aرابط الفاتورة: ${url} %0A%0Aنسعد بزيارتك مرة أخرى!` },
-    { id: 'friendly', name: 'ودي', text: (order: Order, url: string) => `أهلاً بك! فاتورتك من وشّى جاهزة للإطلاع. رقم الطلب ${order.orderNumber}. %0A%0Aيمكنك تحميلها من هنا: ${url} %0A%0Aيومك سعيد ✨` },
-    { id: 'brief', name: 'مختصر', text: (order: Order, url: string) => `فاتورتك من وشّى: ${url}` }
+    { id: 'professional', name: 'رسمي', text: (order: Order, url: string) => `عزيزي ${order.customerName || 'العميل'}، شكراً لتعاملك مع وشّى. تجد مرفقاً فاتورتك برقم ${order.orderNumber} بمبلغ ${order.total.toFixed(2)} ر.س. %0A%0Aرابط الفاتورة: ${url} %0A%0Aنسعد بزيارتك مرة أخرى!` },
+    { id: 'friendly', name: 'ودي', text: (order: Order, url: string) => `أهلاً ${order.customerName || 'بك'}! فاتورتك من وشّى جاهزة للإطلاع. رقم الطلب ${order.orderNumber}. %0A%0Aيمكنك تحميلها من هنا: ${url} %0A%0Aيومك سعيد ✨` },
+    { id: 'brief', name: 'مختصر', text: (order: Order, url: string) => `فاتورتك من وشّى للعميل ${order.customerName || ''}: ${url}` }
   ];
 
   async downloadInvoiceAsPdf(order: Order) {
@@ -157,7 +157,7 @@ export class PrintService {
             <span>${order.subtotal.toFixed(2)} ر.س</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; font-weight: normal;">
-            <span>الضريبة (15%):</span>
+            <span>الضريبة (${((order.tax / order.subtotal) * 100).toFixed(0)}%):</span>
             <span>${order.tax.toFixed(2)} ر.س</span>
           </div>
           <div style="display: flex; justify-content: space-between; color: #7A4E2D;">
@@ -492,7 +492,7 @@ export class PrintService {
                 <span>${order.subtotal.toFixed(2)} ر.س</span>
               </div>
               <div class="total-row">
-                <span>الضريبة (15%) / VAT</span>
+                <span>الضريبة (${((order.tax / order.subtotal) * 100).toFixed(0)}%) / VAT</span>
                 <span>${order.tax.toFixed(2)} ر.س</span>
               </div>
               <div class="total-row grand">

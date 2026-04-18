@@ -157,6 +157,17 @@ export class InventoryService {
           }
         })
         .subscribe();
+      
+      // Listen for settings changes
+      this.supabaseService.client
+        .channel('public:app_settings')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, (payload: any) => {
+          console.log('Settings change received:', payload);
+          if (payload.new && payload.new.key === 'branding') {
+            this.settings.set(payload.new.value);
+          }
+        })
+        .subscribe();
     }
 
     // ===== EXISTING COMPUTED =====
@@ -525,5 +536,25 @@ export class InventoryService {
 
     async uploadProductImage(path: string, file: File): Promise<string | null> {
       return this.supabaseService.uploadFile('product-images', path, file);
+    }
+
+    async uploadBrandingFile(path: string, file: File): Promise<string | null> {
+      return this.supabaseService.uploadFile('branding', path, file);
+    }
+
+    async updateSettings(key: string, value: any) {
+      const { error } = await this.supabaseService.client
+        .from('app_settings')
+        .upsert({ key, value, updated_at: new Date().toISOString() });
+
+      if (error) {
+        console.error('Update settings error:', error);
+        this.toastService.show('خطأ في تحديث الإعدادات', 'error');
+        return false;
+      }
+      
+      this.settings.set(value);
+      this.toastService.show('تم تحديث الإعدادات بنجاح', 'success');
+      return true;
     }
 }

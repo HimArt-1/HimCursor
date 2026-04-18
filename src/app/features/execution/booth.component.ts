@@ -248,6 +248,35 @@ import { BarcodeScannerComponent } from '../../shared/ui/barcode-scanner.compone
                     }
                 </div>
 
+                <!-- Customer Identity Selection -->
+                <div class="px-8 py-6 border-b border-[#7A4E2D08] bg-[#fdfaf6]/30 backdrop-blur-sm relative z-10">
+                    <p class="text-[9px] text-[#a09c94] font-black uppercase tracking-[0.3em] mb-4 opacity-70">Identity & Contact</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="relative group/input">
+                            <input 
+                                type="text"
+                                [(ngModel)]="customerName"
+                                placeholder="اسم العميل..."
+                                class="w-full bg-white border border-[#7A4E2D10] focus:border-[#7A4E2D] rounded-2xl py-3.5 pr-11 pl-4 outline-none transition-all text-sm font-bold shadow-sm placeholder:text-[#a09c94/40]"
+                            />
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 text-[#7A4E2D] opacity-40 group-focus-within/input:opacity-100 transition-opacity">
+                                <div [innerHTML]="getIcon('User')" class="w-5 h-5"></div>
+                            </div>
+                        </div>
+                        <div class="relative group/input">
+                            <input 
+                                type="tel"
+                                [(ngModel)]="customerPhone"
+                                placeholder="رقم الهاتف..."
+                                class="w-full bg-white border border-[#7A4E2D10] focus:border-[#7A4E2D] rounded-2xl py-3.5 pr-11 pl-4 outline-none transition-all text-sm font-bold shadow-sm placeholder:text-[#a09c94/40]"
+                            />
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 text-[#7A4E2D] opacity-40 group-focus-within/input:opacity-100 transition-opacity">
+                                <div [innerHTML]="getIcon('Smartphone')" class="w-5 h-5"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar relative z-10">
                     @if (cart().length === 0) {
                         <div class="h-full flex flex-col items-center justify-center text-center opacity-40 grayscale group">
@@ -300,7 +329,7 @@ import { BarcodeScannerComponent } from '../../shared/ui/barcode-scanner.compone
                                 <span class="font-bold tracking-tighter">{{subtotal().toFixed(2)}} <small class="text-[10px]">ر.س</small></span>
                             </div>
                             <div class="flex justify-between items-center opacity-60">
-                                <span class="text-xs font-black uppercase tracking-[0.2em]">VAT (15%)</span>
+                                <span class="text-xs font-black uppercase tracking-[0.2em]">VAT ({{taxRate()}}%)</span>
                                 <span class="font-bold tracking-tighter">{{tax().toFixed(2)}} <small class="text-[10px]">ر.س</small></span>
                             </div>
                             <div class="h-px bg-white/10 my-4"></div>
@@ -343,10 +372,135 @@ import { BarcodeScannerComponent } from '../../shared/ui/barcode-scanner.compone
                         <div [innerHTML]="getIcon('WhatsApp')" class="w-7 h-7 fill-white group-hover:scale-125 transition-transform duration-500"></div>
                         <span class="tracking-widest uppercase text-sm">Send to WhatsApp</span>
                     </button>
+
+                    <!-- Advanced Settings Button -->
+                    <button 
+                        (click)="showSettings.set(true)"
+                        class="w-full mt-6 py-4 flex items-center justify-center gap-2 text-[#a09c94] hover:text-[#7A4E2D] transition-all group font-black uppercase tracking-[0.2em] text-[10px] opacity-60 hover:opacity-100 border-t border-[#7A4E2D08] pt-8"
+                    >
+                        <div [innerHTML]="getIcon('Settings')" class="w-4 h-4 group-hover:rotate-90 transition-transform duration-700"></div>
+                        Advanced Settings
+                    </button>
                 </div>
             </aside>
         </main>
-        
+
+        <!-- Advanced Settings Modal -->
+        @if (showSettings()) {
+            <div class="fixed inset-0 bg-[#2c1810]/60 backdrop-blur-xl z-[150] flex items-center justify-center p-8 animate-in fade-in duration-500">
+                <div class="bg-white rounded-[48px] p-10 max-w-2xl w-full shadow-[0_40px_120px_rgba(0,0,0,0.3)] relative overflow-hidden animate-in zoom-in-95 duration-500 flex flex-col max-h-[90vh]">
+                    <!-- Modal Header -->
+                    <div class="flex items-center justify-between mb-8">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 bg-[#7A4E2D] rounded-2xl flex items-center justify-center text-white shadow-lg">
+                                <div [innerHTML]="getIcon('Settings')" class="w-7 h-7"></div>
+                            </div>
+                            <div>
+                                <h2 class="text-3xl font-black text-[#2c1810]">إعدادات البوث</h2>
+                                <p class="text-[10px] text-[#a09c94] font-bold uppercase tracking-widest mt-0.5">Customization & POS Engine</p>
+                            </div>
+                        </div>
+                        <button (click)="showSettings.set(false)" class="w-12 h-12 flex items-center justify-center hover:bg-red-50 text-red-400 rounded-2xl transition-all active:scale-90">
+                            <div [innerHTML]="getIcon('X')" class="w-6 h-6"></div>
+                        </button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-10">
+                        <!-- Branding Section -->
+                        <section>
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-1.5 h-6 bg-[#7A4E2D] rounded-full"></div>
+                                <h3 class="font-black text-xl text-[#2c1810]">هوية المتجر</h3>
+                            </div>
+                            
+                            <div class="flex gap-8 items-start mb-8">
+                                <div class="relative group cursor-pointer" (click)="logoInput.click()">
+                                    <div class="w-32 h-32 bg-[#fdfaf6] rounded-[32px] border-2 border-dashed border-[#7A4E2D20] flex items-center justify-center overflow-hidden transition-all group-hover:border-[#7A4E2D] group-hover:shadow-inner">
+                                        @if (branding()?.logo_url) {
+                                            <img [src]="branding().logo_url" class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform" />
+                                        } @else {
+                                            <div [innerHTML]="getIcon('Image')" class="w-10 h-10 text-[#7A4E2D] opacity-20"></div>
+                                        }
+                                        <div class="absolute inset-0 bg-[#2c1810]/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                                            <div [innerHTML]="getIcon('Upload')" class="w-8 h-8 text-white"></div>
+                                        </div>
+                                    </div>
+                                    <input #logoInput type="file" class="hidden" (change)="handleLogoUpload($event)" accept="image/*" />
+                                    <p class="text-[10px] text-center mt-3 font-black text-[#7A4E2D] opacity-60">تغيير الشعار</p>
+                                </div>
+
+                                <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-[#a09c94] uppercase tracking-widest block pr-2">اسم المتجر</label>
+                                        <input type="text" #brandName [value]="branding()?.brand_name || ''" class="w-full bg-[#fdfaf6] border border-[#7A4E2D08] focus:border-[#7A4E2D] rounded-2xl py-3 px-4 outline-none transition-all font-bold" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black text-[#a09c94] uppercase tracking-widest block pr-2">الرقم الضريبي</label>
+                                        <input type="text" #vatNum [value]="branding()?.vat_number || ''" class="w-full bg-[#fdfaf6] border border-[#7A4E2D08] focus:border-[#7A4E2D] rounded-2xl py-3 px-4 outline-none transition-all font-bold" />
+                                    </div>
+                                    <div class="col-span-full space-y-2">
+                                        <label class="text-[10px] font-black text-[#a09c94] uppercase tracking-widest block pr-2">الشعار اللفظي (Tagline)</label>
+                                        <input type="text" #tagline [value]="branding()?.tagline || ''" class="w-full bg-[#fdfaf6] border border-[#7A4E2D08] focus:border-[#7A4E2D] rounded-2xl py-3 px-4 outline-none transition-all font-bold" />
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Financial Settings -->
+                        <section>
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-1.5 h-6 bg-[#7A4E2D] rounded-full"></div>
+                                    <h3 class="font-black text-xl text-[#2c1810]">الإعدادات المالية</h3>
+                                </div>
+                                <div class="flex items-center gap-3 bg-[#fdfaf6] p-1.5 rounded-2xl border border-[#7A4E2D08]">
+                                    <span class="text-xs font-black text-[#2c1810b3] pr-2">تفعيل الضريبة</span>
+                                    <button 
+                                        (click)="toggleTax()"
+                                        [class]="isTaxEnabled() ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white text-[#a09c94]'"
+                                        class="w-14 h-8 rounded-xl flex items-center justify-center transition-all active:scale-95"
+                                    >
+                                        <span class="text-[10px] font-black uppercase tracking-tighter">{{ isTaxEnabled() ? 'ON' : 'OFF' }}</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-8 items-center bg-[#fdfaf6] p-8 rounded-[32px] border border-[#7A4E2D08]">
+                                <div>
+                                    <h4 class="font-black text-base text-[#2c1810] mb-2">نسبة ضريبة القيمة المضافة</h4>
+                                    <p class="text-xs text-[#a09c94] font-medium leading-relaxed">تطبق هذه النسبة تلقائياً على كافة المبيعات في حال تفعيل الضريبة.</p>
+                                </div>
+                                <div class="relative group">
+                                    <input 
+                                        type="number" 
+                                        [value]="taxRate()"
+                                        (change)="updateTaxRate(+rateInput.value)"
+                                        #rateInput
+                                        class="w-full bg-white border-2 border-[#7A4E2D10] focus:border-[#7A4E2D] rounded-[24px] py-6 px-8 text-center text-4xl font-black text-[#7A4E2D] outline-none shadow-sm transition-all"
+                                    />
+                                    <span class="absolute right-6 top-1/2 -translate-y-1/2 text-2xl font-black text-[#7A4E2D20] group-focus-within:text-[#7A4E2D40] transition-colors">%</span>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- Modal Actions -->
+                    <div class="mt-10 flex gap-4">
+                        <button 
+                            (click)="saveBranding({
+                                brand_name: brandName.value,
+                                tagline: tagline.value,
+                                vat_number: vatNum.value
+                            })"
+                            class="flex-1 bg-[#7A4E2D] text-white py-6 rounded-[32px] font-black hover:shadow-2xl hover:scale-[1.02] transition-all active:scale-95"
+                        >
+                            حفظ كافة التغييرات
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
         <!-- Premium Success Modal with Sharing Intelligence -->
         @if (lastOrder()) {
             <div class="fixed inset-0 bg-[#2c1810]/40 backdrop-blur-[20px] z-[100] flex items-center justify-center p-8 animate-in fade-in duration-500">
@@ -376,7 +530,7 @@ import { BarcodeScannerComponent } from '../../shared/ui/barcode-scanner.compone
                              </div>
                              <div [innerHTML]="getIcon('ChevronLeft')" class="w-5 h-5 opacity-40 group-hover:translate-x-[-4px] transition-transform"></div>
                         </button>
-
+ 
                         <!-- Template Selector & WhatsApp Action -->
                         <div class="bg-emerald-50/50 p-6 rounded-[40px] border border-emerald-100/50">
                             <p class="text-[9px] text-emerald-600 font-black uppercase tracking-[0.2em] mb-4 text-right pr-2">اختر قالب الرسالة</p>
@@ -408,7 +562,7 @@ import { BarcodeScannerComponent } from '../../shared/ui/barcode-scanner.compone
                             </button>
                         </div>
                     </div>
-
+ 
                     <button (click)="closeOrderModal()" class="w-full py-2 text-[#a09c94] font-black hover:text-[#7A4E2D] transition-all uppercase tracking-[0.4em] text-[10px] opacity-40 hover:opacity-100">
                         Dismiss and proceed
                     </button>
@@ -477,13 +631,40 @@ export class BoothComponent {
     cart = signal<any[]>([]);
     lastOrder = signal<Order | null>(null);
     showScanner = signal(false);
+    showSettings = signal(false);
     
+    // Customer Info
+    customerName = signal('');
+    customerPhone = signal('');
+
+    // Tax Settings
+    isTaxEnabled = signal(true);
+    taxRate = signal(15);
+    
+    // Branding settings from service
+    branding = this.inventoryService.settings;
+
     // Sharing state
     sharingStatus = signal<'idle' | 'uploading' | 'success'>('idle');
     selectedTemplate = signal<string>('professional');
     whatsappTemplates = this.printService.WHATSAPP_TEMPLATES;
+    
+    constructor() {
+        // Load initial settings
+        effect(() => {
+            const settings = this.branding();
+            if (settings) {
+                if (settings.tax_rate !== undefined) this.taxRate.set(settings.tax_rate);
+                if (settings.tax_enabled !== undefined) this.isTaxEnabled.set(settings.tax_enabled);
+            }
+        }, { allowSignalWrites: true });
 
-    // Computed values omitted for brevity as they remain mostly same, but I'll ensure they are clean
+        effect(() => {
+            if (this.skuInput) this.skuInput.nativeElement.focus();
+        });
+    }
+
+    // Computed values
     availableCategories = computed(() => {
         const prodCategories = this.inventoryService.products()
             .map(p => p.category)
@@ -507,14 +688,10 @@ export class BoothComponent {
     });
 
     subtotal = computed(() => this.cart().reduce((acc, item) => acc + (item.price * item.quantity), 0));
-    tax = computed(() => this.subtotal() * 0.15);
+    tax = computed(() => this.isTaxEnabled() ? (this.subtotal() * (this.taxRate() / 100)) : 0);
     total = computed(() => this.subtotal() + this.tax());
 
-    constructor() {
-        effect(() => {
-            if (this.skuInput) this.skuInput.nativeElement.focus();
-        });
-    }
+
 
     getIcon(name: keyof typeof Icons): SafeHtml {
         return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
@@ -599,7 +776,8 @@ export class BoothComponent {
             subtotal: this.subtotal(),
             tax: this.tax(),
             total: this.total(),
-            customerName: 'عميل البوث',
+            customerName: this.customerName() || 'عميل البوث',
+            customerPhone: this.customerPhone(),
             notes: `تم البيع عبر واجهة البوث (${type})`
         });
 
@@ -617,6 +795,54 @@ export class BoothComponent {
         }
 
         this.cart.set([]);
+        this.customerName.set('');
+        this.customerPhone.set('');
+    }
+
+    // Settings Methods
+    async handleLogoUpload(event: any) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const path = `logo_${Date.now()}.${file.name.split('.').pop()}`;
+        const url = await this.inventoryService.uploadBrandingFile(path, file);
+        
+        if (url) {
+            const currentBranding = this.branding() || {};
+            await this.inventoryService.updateSettings('branding', {
+                ...currentBranding,
+                logo_url: url
+            });
+        }
+    }
+
+    async saveBranding(data: any) {
+        const currentBranding = this.branding() || {};
+        const success = await this.inventoryService.updateSettings('branding', {
+            ...currentBranding,
+            ...data,
+            tax_rate: this.taxRate(),
+            tax_enabled: this.isTaxEnabled()
+        });
+        if (success) this.showSettings.set(false);
+    }
+
+    async toggleTax() {
+        this.isTaxEnabled.update(v => !v);
+        const currentBranding = this.branding() || {};
+        await this.inventoryService.updateSettings('branding', {
+            ...currentBranding,
+            tax_enabled: this.isTaxEnabled()
+        });
+    }
+
+    async updateTaxRate(rate: number) {
+        this.taxRate.set(rate);
+        const currentBranding = this.branding() || {};
+        await this.inventoryService.updateSettings('branding', {
+            ...currentBranding,
+            tax_rate: rate
+        });
     }
 
     async shareWithTemplate() {
