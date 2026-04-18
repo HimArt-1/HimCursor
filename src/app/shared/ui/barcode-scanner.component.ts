@@ -52,6 +52,11 @@ declare var Html5Qrcode: any;
              </div>
           </div>
 
+          <!-- Success Flash -->
+          @if(showSuccessFlash()) {
+            <div class="absolute inset-0 z-20 scan-success-flash pointer-events-none"></div>
+          }
+
           <!-- Error/Loading State -->
           @if(isLoading()) {
             <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-10">
@@ -94,9 +99,17 @@ declare var Html5Qrcode: any;
       90% { opacity: 1; }
       100% { top: 100%; opacity: 0; }
     }
+    @keyframes success-flash {
+      0% { background: rgba(34, 197, 94, 0); }
+      50% { background: rgba(34, 197, 94, 0.4); }
+      100% { background: rgba(34, 197, 94, 0); }
+    }
     .animate-scan-line {
       position: absolute;
       animation: scan-line 2.5s ease-in-out infinite;
+    }
+    .scan-success-flash {
+      animation: success-flash 0.5s ease-out forwards;
     }
     .animate-scale-in {
       animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -120,6 +133,7 @@ export class BarcodeScannerComponent implements OnInit, OnDestroy {
 
   private scanner: any = null;
   isLoading = signal(true);
+  showSuccessFlash = signal(false);
   cameras = signal<any[]>([]);
   currentCameraId = signal<string | null>(null);
   torchEnabled = signal(false);
@@ -188,6 +202,8 @@ export class BarcodeScannerComponent implements OnInit, OnDestroy {
       config, 
       (decodedText: string) => {
         this.playBeep();
+        this.showSuccessFlash.set(true);
+        setTimeout(() => this.showSuccessFlash.set(false), 500);
         this.scanSuccess.emit(decodedText);
       },
       (errorMessage: string) => {

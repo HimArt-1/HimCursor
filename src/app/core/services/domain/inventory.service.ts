@@ -78,18 +78,65 @@ export class InventoryService {
     readonly products = signal<Product[]>([]);
     readonly orders = signal<Order[]>([]);
     readonly stockMovements = signal<StockMovement[]>([]);
-    readonly settings = signal<any>(null);
-
-    constructor() {
-      this.init();
-    }
-
-    private async init() {
+    readonl    private async init() {
       await Promise.all([
         this.fetchProducts(),
         this.fetchOrders(),
         this.fetchSettings()
       ]);
+      this.listenToChanges();
+    }
+
+    private listenToChanges() {
+      if (!this.supabaseService.isConfigured) return;
+
+      // Listen for product changes
+      this.supabaseService.client
+        .channel('public:products')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+          console.log('Product change received:', payload);
+          if (payload.event === 'INSERT') {
+            const newP = this.mapProduct(payload.new);
+            this.products.update(list => [newP, ...list.filter(p => p.id !== newP.id)]);
+          } else if (payload.event === 'UPDATE') {
+            const updatedP = this.mapProduct(payload.new);
+            this.products.update(list => list.map(p => p.id === updatedP.id ? updatedP : p));
+          } else if (payload.event === 'DELETE') {
+            this.products.update(list => list.filter(p => p.id !== payload.old.id));
+          }
+        })
+        .subscribe();
+
+      // Listen for order changes
+      this.supabaseService.client
+        .channel('public:pos_orders')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pos_orders' }, async (payload) => {
+          console.log('Order change received:', payload);
+          if (payload.event === 'INSERT') {
+            // Fetch items for the new order
+            const { data: items } = await this.supabaseService.client
+              .from('pos_order_items')
+              .select('*')
+              .eq('order_id', payload.new.id);
+            const newO = this.mapOrder(payload.new, items || []);
+            this.orders.update(list => [newO, ...list.filter(o => o.id !== newO.id)]);
+          } else if (payload.event === 'UPDATE') {
+            // Update order status/payment in existing list
+            this.orders.update(orders => orders.map(o => {
+              if (o.id === payload.new.id) {
+                return { 
+                  ...o, 
+                  status: payload.new.status,
+                  paymentStatus: payload.new.payment_status || o.paymentStatus
+                };
+              }
+              return o;
+            }));
+          } else if (payload.event === 'DELETE') {
+            this.orders.update(list => list.filter(o => o.id !== payload.old.id));
+          }
+        })
+        .subscribe();
     }
 
     // ===== EXISTING COMPUTED =====
@@ -193,7 +240,8 @@ export class InventoryService {
                 current_stock: product.stock,
                 min_stock: product.minStock,
                 image_url: product.imageUrl,
-                is_active: true
+                is_active: true,
+                category_id: product.category === 'عام' ? null : product.category
             }])
             .select()
             .single();
@@ -204,7 +252,6 @@ export class InventoryService {
         }
 
         const newProduct = this.mapProduct(data);
-        this.products.update(list => [newProduct, ...list]);
         return newProduct;
     }
 
@@ -217,7 +264,9 @@ export class InventoryService {
                 current_stock: updates.stock,
                 min_stock: updates.minStock,
                 image_url: updates.imageUrl,
-                is_active: updates.isActive
+                is_active: updates.isActive,
+                description: updates.description,
+                category_id: updates.category === 'عام' ? null : updates.category
             })
             .eq('id', id);
 
@@ -225,32 +274,44 @@ export class InventoryService {
             this.toastService.show('خطأ في تحديث المنتج', 'error');
             return;
         }
-        
-        this.products.update(list => list.map(p => p.id === id ? { ...p, ...updates } : p));
     }
 
     getProductBySku(sku: string): Product | undefined {
         return this.products().find(p => p.sku === sku && p.isActive);
     }
 
-    deleteProduct(id: string) {
-        this.products.update(list => list.filter(p => p.id !== id));
+    async deleteProduct(id: string) {
+        const { error } = await this.supabaseService.client
+            .from('products')
+            .delete()
+            .eq('id', id);
+        
+        if (error) {
+            this.toastService.show('خطأ في حذف المنتج', 'error');
+        }
     }
 
-    adjustStock(productId: string, delta: number, reason: string = 'تعديل يدوي') {
+    async adjustStock(productId: string, delta: number, reason: string = 'تعديل يدوي') {
         const product = this.products().find(p => p.id === productId);
-        this.products.update(list => list.map(p => {
-            if (p.id !== productId) return p;
-            return { ...p, stock: Math.max(0, p.stock + delta) };
-        }));
+        if (!product) return;
 
-        // Log stock movement
-        if (product) {
-            this.logMovement(productId, product.name, delta > 0 ? 'in' : 'out', Math.abs(delta), reason);
+        const newStock = Math.max(0, product.stock + delta);
+        
+        const { error } = await this.supabaseService.client
+            .from('products')
+            .update({ current_stock: newStock })
+            .eq('id', productId);
+
+        if (error) {
+            this.toastService.show('خطأ في تحديث المخزون', 'error');
+            return;
         }
 
+        // Log movement locally (or via DB if we have a table for it)
+        this.logMovement(productId, product.name, delta > 0 ? 'in' : 'out', Math.abs(delta), reason);
+
         // Alert on low stock
-        if (product && product.stock + delta <= product.minStock) {
+        if (newStock <= product.minStock) {
             this.toastService.show(`⚠️ المنتج "${product.name}" وصل لحد المخزون الأدنى`, 'info');
         }
     }
@@ -300,20 +361,36 @@ export class InventoryService {
         }
 
         const newOrder = this.mapOrder(orderData, order.items || []);
-        this.orders.update(list => [newOrder, ...list]);
         
-        // Refresh products to show updated stock
-        this.fetchProducts();
-        
+        // Stock reduction is handled by DB triggers ideally, but if not:
+        order.items?.forEach(item => {
+            this.adjustStock(item.productId, -item.quantity, `طلب رقم ${orderNumber}`);
+        });
+
         return newOrder;
     }
 
-    updateOrderStatus(id: string, status: Order['status']) {
-        this.orders.update(list => list.map(o => o.id === id ? { ...o, status } : o));
+    async updateOrderStatus(id: string, status: Order['status']) {
+        const { error } = await this.supabaseService.client
+            .from('pos_orders')
+            .update({ status })
+            .eq('id', id);
+        
+        if (error) {
+            this.toastService.show('خطأ في تحديث حالة الطلب', 'error');
+        }
     }
 
-    updatePaymentStatus(id: string, paymentStatus: Order['paymentStatus']) {
-        this.orders.update(list => list.map(o => o.id === id ? { ...o, paymentStatus } : o));
+    async updatePaymentStatus(id: string, paymentStatus: Order['paymentStatus']) {
+        // Assuming there's a payment_status column in DB, if not we add to metadata or separate table
+        const { error } = await this.supabaseService.client
+            .from('pos_orders')
+            .update({ metadata: { payment_status: paymentStatus } })
+            .eq('id', id);
+
+        if (error) {
+            this.toastService.show('خطأ في تحديث حالة الدفع', 'error');
+        }
     }
 
     recalcOrder(o: Order) {
@@ -403,7 +480,7 @@ export class InventoryService {
             tax: Number(d.tax_amount),
             total: Number(d.total_amount),
             status: d.status as any,
-            paymentStatus: 'paid', // Default for POS
+            paymentStatus: d.metadata?.payment_status || 'paid',
             notes: d.metadata?.notes || '',
             createdAt: d.created_at,
             items: items.map(i => ({
@@ -416,4 +493,3 @@ export class InventoryService {
         };
     }
 }
-

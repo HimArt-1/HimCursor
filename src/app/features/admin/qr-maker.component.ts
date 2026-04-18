@@ -1,155 +1,223 @@
-import { Component, signal, effect, inject, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, signal, inject, ElementRef, ViewChild, AfterViewInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
 import { QrService, ZatcaQrFields } from '../../core/services/utils/qr.service';
+import { InventoryService, Product } from '../../core/services/domain/inventory.service';
 
-declare var QRious: any;
+declare var bwipjs: any;
 
 @Component({
   selector: 'app-qr-maker',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="min-h-screen bg-[#fdfaf6] p-8 text-[#2c1810]">
-      <!-- Header -->
-      <header class="max-w-6xl mx-auto mb-12 flex items-center justify-between">
+    <div class="min-h-screen bg-[#fdfaf6] p-4 md:p-8 text-[#2c1810] print:p-0 print:bg-white overflow-x-hidden">
+      <!-- Header (Hidden on Print) -->
+      <header class="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4 print:hidden">
         <div class="flex items-center gap-4">
-          <div class="w-14 h-14 bg-[#7A4E2D] rounded-2xl flex items-center justify-center text-white shadow-2xl rotate-3">
-            <div [innerHTML]="getIcon('Barcode')" class="w-8 h-8"></div>
+          <div class="w-12 h-12 bg-[#7A4E2D] rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3">
+            <div [innerHTML]="getIcon('Barcode')" class="w-6 h-6"></div>
           </div>
           <div>
-            <h1 class="text-3xl font-black tracking-tight">صانع الباركود الاحترافي</h1>
-            <p class="text-xs text-[#a09c94] uppercase tracking-widest font-bold">ZATCA COMPLIANT QR STUDIO</p>
+            <h1 class="text-2xl font-black tracking-tight">استوديو الملصقات والباركود</h1>
+            <p class="text-[10px] text-[#a09c94] uppercase tracking-widest font-bold">PROFESSIONAL LABEL ENGINE</p>
           </div>
         </div>
-        <div class="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-full border border-green-100 shadow-sm animate-pulse">
-          <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span class="text-[10px] font-black uppercase tracking-tighter">Phase 1 Compliant</span>
+        
+        <div class="flex bg-white p-1 rounded-2xl shadow-sm border border-[#7a4e2d10]">
+          <button (click)="mode.set('invoice')" 
+            class="px-6 py-2 rounded-xl text-xs font-black transition-all"
+            [ngClass]="mode() === 'invoice' ? 'bg-[#7A4E2D] text-white shadow-lg' : 'text-[#a09c94]'">
+            فاتورة ضريبية (QR)
+          </button>
+          <button (click)="mode.set('product')" 
+            class="px-6 py-2 rounded-xl text-xs font-black transition-all"
+            [ngClass]="mode() === 'product' ? 'bg-[#7A4E2D] text-white shadow-lg' : 'text-[#a09c94]'">
+            ملصق منتج (Barcode/QR)
+          </button>
         </div>
       </header>
 
-      <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
-        <!-- Input Panel -->
-        <div class="lg:col-span-7 bg-white rounded-[40px] p-10 shadow-xl border border-[#7a4e2d10] relative overflow-hidden">
-          <div class="absolute top-0 right-0 w-32 h-32 bg-[#7A4E2D] opacity-[0.02] rounded-bl-full"></div>
+      <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 print:block">
+        <!-- Controls Panel (Hidden on Print) -->
+        <div class="lg:col-span-7 bg-white rounded-[32px] p-8 shadow-xl border border-[#7a4e2d10] print:hidden">
           
-          <h2 class="text-xl font-bold mb-8 flex items-center gap-3">
-            <div [innerHTML]="getIcon('Edit')" class="w-5 h-5 text-[#7A4E2D]"></div>
-            بيانات الفاتورة الضريبية
-          </h2>
-
-          <div class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-[#a09c94] uppercase tracking-widest px-2">اسم المورد / Seller</label>
-                <input 
-                  type="text" 
-                  [(ngModel)]="fields.sellerName" 
-                  (input)="updateQr()"
-                  placeholder="شركة وشّى للأنظمة"
-                  class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-2xl py-4 px-6 outline-none transition-all font-bold"
-                />
+          <!-- Mode 1: Invoice QR -->
+          @if (mode() === 'invoice') {
+            <h2 class="text-lg font-bold mb-6 flex items-center gap-3">
+              <div [innerHTML]="getIcon('Edit')" class="w-4 h-4 text-[#7A4E2D]"></div>
+              بيانات الفاتورة الضريبية (ZATCA)
+            </h2>
+            <div class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-1">
+                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">اسم المورد</label>
+                  <input type="text" [(ngModel)]="fields.sellerName" (input)="updateBarcode()" 
+                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm" />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">الرقم الضريبي</label>
+                  <input type="text" [(ngModel)]="fields.vatNumber" (input)="updateBarcode()" 
+                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm" />
+                </div>
               </div>
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-[#a09c94] uppercase tracking-widest px-2 Russian">الرقم الضريبي / VAT No.</label>
-                <input 
-                  type="text" 
-                  [(ngModel)]="fields.vatNumber" 
-                  (input)="updateQr()"
-                  placeholder="300000000000003"
-                  class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-2xl py-4 px-6 outline-none transition-all font-bold"
-                />
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-[#a09c94] uppercase tracking-widest px-2">التاريخ والوقت / Timestamp</label>
-                <input 
-                  type="datetime-local" 
-                  [(ngModel)]="timestampDate" 
-                  (input)="updateQrFromDate()"
-                  class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-2xl py-4 px-6 outline-none transition-all font-bold"
-                />
-              </div>
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-[#a09c94] uppercase tracking-widest px-2">الإجمالي / Total</label>
-                <div class="relative">
-                  <input 
-                    type="number" 
-                    [(ngModel)]="fields.totalAmount" 
-                    (input)="calculateVatAndSubmit()"
-                    placeholder="100.00"
-                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-2xl py-4 px-6 outline-none transition-all font-bold"
-                  />
-                  <span class="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-[#a09c94]">ر.س</span>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-1">
+                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">التاريخ</label>
+                  <input type="datetime-local" [(ngModel)]="timestampDate" (input)="updateQrFromDate()" 
+                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm" />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">الإجمالي (مع الضريبة)</label>
+                  <input type="number" [(ngModel)]="fields.totalAmount" (input)="calculateVatAndSubmit()" 
+                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm" />
                 </div>
               </div>
             </div>
+          }
 
-            <div class="pt-6 border-t border-[#fdfaf6]">
-              <div class="bg-[#fdfaf6] p-6 rounded-3xl border border-[#7a4e2d05]">
-                <div class="flex justify-between items-center mb-4">
-                  <span class="text-xs font-bold text-[#a09c94] uppercase">ضريبة القيمة المضافة (15%)</span>
-                  <span class="text-xl font-black text-[#7A4E2D]">{{fields.vatAmount}} ر.س</span>
+          <!-- Mode 2: Product Label -->
+          @if (mode() === 'product') {
+            <h2 class="text-lg font-bold mb-6 flex items-center gap-3">
+              <div [innerHTML]="getIcon('Edit')" class="w-4 h-4 text-[#7A4E2D]"></div>
+              تخصيص ملصق المنتج
+            </h2>
+            
+            <div class="space-y-6">
+              <!-- Select Product -->
+              <div class="space-y-2">
+                <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">اختر المنتج من المخزون</label>
+                <select (change)="onProductSelect($event)" 
+                  class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm">
+                  <option value="">— اختر منتج لإدراج بياناته فورا —</option>
+                  @for (p of products(); track p.id) {
+                    <option [value]="p.id">{{p.name}} ({{p.sku}})</option>
+                  }
+                </select>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-1">
+                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">اسم المنتج</label>
+                  <input type="text" [(ngModel)]="labelConfig.name" (input)="updateBarcode()" 
+                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm" />
                 </div>
-                <div class="h-2 bg-white rounded-full overflow-hidden border border-[#7a4e2d10]">
-                  <div class="h-full bg-[#7A4E2D] transition-all duration-700" [style.width]="'15%'"></div>
+                <div class="space-y-1">
+                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">الرمز (SKU/Barcode)</label>
+                  <input type="text" [(ngModel)]="labelConfig.sku" (input)="updateBarcode()" 
+                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm" />
                 </div>
               </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="space-y-1">
+                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">السعر</label>
+                  <input type="number" [(ngModel)]="labelConfig.price" (input)="updateBarcode()" 
+                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm" />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">نوع الكود</label>
+                  <select [(ngModel)]="labelConfig.type" (change)="updateBarcode()" 
+                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm">
+                    <option value="code128">Code 128 (Barcode)</option>
+                    <option value="qrcode">QR Code</option>
+                    <option value="ean13">EAN-13</option>
+                  </select>
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[10px] font-black text-[#a09c94] uppercase px-2">المقاس</label>
+                  <select [(ngModel)]="labelConfig.size" (change)="updateBarcode()" 
+                    class="w-full bg-[#fdfaf6] border-2 border-transparent focus:border-[#7A4E2D] rounded-xl py-3 px-4 outline-none transition-all font-bold text-sm">
+                    <option value="small">صغير (30x20mm)</option>
+                    <option value="medium">متوسط (50x30mm)</option>
+                    <option value="large">كبير (100x50mm)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Toggles -->
+              <div class="flex flex-wrap gap-4 pt-2">
+                <label class="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" [(ngModel)]="labelConfig.showName" (change)="updateBarcode()" class="w-4 h-4 accent-[#7A4E2D]">
+                  <span class="text-xs font-bold text-gray-500">إظهار الاسم</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" [(ngModel)]="labelConfig.showPrice" (change)="updateBarcode()" class="w-4 h-4 accent-[#7A4E2D]">
+                  <span class="text-xs font-bold text-gray-500">إظهار السعر</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" [(ngModel)]="labelConfig.showSku" (change)="updateBarcode()" class="w-4 h-4 accent-[#7A4E2D]">
+                  <span class="text-xs font-bold text-gray-500">إظهار الرمز</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" [(ngModel)]="labelConfig.dark" (change)="updateBarcode()" class="w-4 h-4 accent-[#7A4E2D]">
+                  <span class="text-xs font-bold text-gray-500">خلفية غامقة</span>
+                </label>
+              </div>
             </div>
-          </div>
-          
-          <!-- Helper -->
-          <div class="mt-10 p-4 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100 flex items-start gap-4">
-            <div [innerHTML]="getIcon('Search')" class="w-5 h-5 flex-shrink-0 mt-0.5"></div>
-            <p class="text-[11px] leading-relaxed font-bold">
-              يتم توليد الـ QR وفقاً لترميز TLV (Tag-Length-Value) المعتمد من هيئة الزكاة والضريبة والجمارك بالمملكة العربية السعودية.
-            </p>
-          </div>
+          }
         </div>
 
         <!-- Preview Panel -->
-        <div class="lg:col-span-5 flex flex-col gap-6">
-          <!-- QR Card -->
-          <div class="bg-[#7A4E2D] rounded-[40px] p-10 text-white shadow-2xl relative overflow-hidden group">
-            <div class="absolute -top-10 -left-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+        <div class="lg:col-span-5 flex flex-col gap-6 print:block print:col-span-12">
+          <!-- Preview Card -->
+          <div [ngClass]="labelConfig.dark ? 'bg-[#2c1810] text-white' : 'bg-white text-[#2c1810] border border-[#7a4e2d10]'" 
+            class="rounded-[32px] p-8 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center min-h-[400px] print:shadow-none print:border-none print:p-0 print:min-h-0">
             
-            <div class="relative z-10 text-center">
-              <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 mb-8">Generated Result / معاينة</p>
+            <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-30 mb-8 print:hidden">Live Digital Preview / معاينة</p>
+            
+            <!-- Label Paper Surface -->
+            <div id="print-area" [ngClass]="labelConfig.size" 
+              class="bg-white p-4 rounded-xl shadow-inner inline-flex flex-col items-center justify-center gap-2 print:shadow-none print:p-0">
               
-              <div class="bg-white p-6 rounded-[32px] inline-block shadow-inner mb-8 transform group-hover:scale-[1.02] transition-transform duration-500">
-                <canvas #qrCanvas class="mx-auto rounded-lg"></canvas>
-              </div>
+              @if (mode() === 'product' && labelConfig.showName) {
+                <h3 class="text-center font-bold text-[#2c1810] text-sm truncate max-w-[200px]">{{labelConfig.name}}</h3>
+              }
 
-              <div class="space-y-4">
-                <h3 class="font-black text-xl tracking-tight">{{fields.sellerName || 'اسم المنشأة'}}</h3>
-                <p class="text-sm opacity-80 font-mono">{{fields.vatNumber || 'رقم التسجيل الضريبي'}}</p>
-              </div>
+              <canvas #barcodeCanvas class="mx-auto"></canvas>
+
+              @if (mode() === 'product' && (labelConfig.showSku || labelConfig.showPrice)) {
+                <div class="flex flex-col items-center gap-0.5">
+                   @if (labelConfig.showSku) {
+                     <span class="text-[10px] font-mono text-gray-400">{{labelConfig.sku}}</span>
+                   }
+                   @if (labelConfig.showPrice) {
+                     <span class="text-lg font-black text-[#7A4E2D]">{{labelConfig.price}} ر.س</span>
+                   }
+                </div>
+              }
+
+              @if (mode() === 'invoice') {
+                <div class="text-center mt-2">
+                  <p class="text-[10px] font-bold text-[#2c1810]">{{fields.sellerName}}</p>
+                  <p class="text-[8px] text-gray-400 font-mono">{{fields.vatNumber}}</p>
+                </div>
+              }
+            </div>
+
+            <!-- Print Dimensions Helper (Hidden on Print) -->
+            <div class="mt-8 text-center print:hidden">
+               <p class="text-[10px] opacity-40 italic">دقة الطباعة 300 DPI - تدعم جميع الطابعات الحرارية</p>
             </div>
           </div>
 
-          <!-- Actions -->
-          <div class="grid grid-cols-2 gap-4">
-            <button 
-              (click)="downloadQr()"
-              class="flex flex-col items-center justify-center gap-3 bg-white p-6 rounded-[32px] border border-[#7a4e2d10] hover:border-[#7A4E2D] hover:shadow-xl transition-all group active:scale-95 shadow-sm"
-            >
-              <div class="p-3 bg-[#fdfaf6] text-[#7A4E2D] rounded-2xl group-hover:bg-[#7A4E2D] group-hover:text-white transition-colors">
+          <!-- Actions (Hidden on Print) -->
+          <div class="grid grid-cols-2 gap-4 print:hidden">
+            <button (click)="printLabel()"
+              class="flex flex-col items-center justify-center gap-3 bg-white p-6 rounded-3xl border border-[#7a4e2d10] hover:border-[#7A4E2D] hover:shadow-xl transition-all group active:scale-95 shadow-sm">
+              <div class="p-3 bg-[#fdfaf6] text-[#7A4E2D] rounded-xl group-hover:bg-[#7A4E2D] group-hover:text-white transition-colors">
+                <div [innerHTML]="getIcon('Printer')" class="w-6 h-6"></div>
+              </div>
+              <span class="text-xs font-black uppercase tracking-tighter">طباعة الملصق</span>
+            </button>
+            <button (click)="downloadLabel()"
+              class="flex flex-col items-center justify-center gap-3 bg-white p-6 rounded-3xl border border-[#7a4e2d10] hover:border-[#7A4E2D] hover:shadow-xl transition-all group active:scale-95 shadow-sm">
+              <div class="p-3 bg-[#fdfaf6] text-[#7A4E2D] rounded-xl group-hover:bg-[#7A4E2D] group-hover:text-white transition-colors">
                 <div [innerHTML]="getIcon('Download')" class="w-6 h-6"></div>
               </div>
               <span class="text-xs font-black uppercase tracking-tighter">حفظ كصورة</span>
-            </button>
-            <button 
-              (click)="copyBase64()"
-              class="flex flex-col items-center justify-center gap-3 bg-white p-6 rounded-[32px] border border-[#7a4e2d10] hover:border-[#7A4E2D] hover:shadow-xl transition-all group active:scale-95 shadow-sm"
-            >
-              <div class="p-3 bg-[#fdfaf6] text-[#7A4E2D] rounded-2xl group-hover:bg-[#7A4E2D] group-hover:text-white transition-colors">
-                <div [innerHTML]="getIcon('Code')" class="w-6 h-6"></div>
-              </div>
-              <span class="text-xs font-black uppercase tracking-tighter">نسخ الـ Base64</span>
             </button>
           </div>
         </div>
@@ -158,15 +226,37 @@ declare var QRious: any;
   `,
   styles: [`
     :host { display: block; }
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    #print-area.small { width: 30mm; min-height: 20mm; }
+    #print-area.medium { width: 50mm; min-height: 30mm; }
+    #print-area.large { width: 100mm; min-height: 50mm; }
+    @media print {
+      body * { visibility: hidden; }
+      #print-area, #print-area * { visibility: visible; }
+      #print-area { 
+        position: fixed; 
+        left: 0; 
+        top: 0; 
+        margin: 0; 
+        padding: 0; 
+        box-shadow: none;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+    }
   `]
 })
 export class QrMakerComponent implements AfterViewInit {
   private qrService = inject(QrService);
+  private inventoryService = inject(InventoryService);
   private sanitizer = inject(DomSanitizer);
 
-  @ViewChild('qrCanvas') qrCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('barcodeCanvas') barcodeCanvas!: ElementRef<HTMLCanvasElement>;
+
+  mode = signal<'invoice' | 'product'>('product');
+  products = this.inventoryService.products;
 
   fields: ZatcaQrFields = {
     sellerName: 'WUSHA CONTROL',
@@ -176,42 +266,43 @@ export class QrMakerComponent implements AfterViewInit {
     vatAmount: '15.00'
   };
 
-  timestampDate: string = new Date().toISOString().slice(0, 16);
-  qr: any;
+  labelConfig = {
+    name: 'منتج تجريبي',
+    sku: 'WSHA-TEST-001',
+    price: 99.00,
+    type: 'code128',
+    size: 'medium',
+    showName: true,
+    showPrice: true,
+    showSku: true,
+    dark: false
+  };
 
-  constructor() {
-    effect(() => {
-      // Re-generate QR when fields change (if effect needed, but we use manual triggers for performance)
-    });
-  }
+  timestampDate: string = new Date().toISOString().slice(0, 16);
 
   ngAfterViewInit() {
-    this.initQr();
-    this.updateQr();
-  }
-
-  initQr() {
-    if (typeof QRious === 'undefined') {
-        console.error('QRious not loaded yet');
-        return;
-    }
-    this.qr = new QRious({
-      element: this.qrCanvas.nativeElement,
-      size: 200,
-      level: 'H',
-      background: 'white',
-      foreground: '#7A4E2D'
-    });
+    setTimeout(() => this.updateBarcode(), 500);
   }
 
   getIcon(name: keyof typeof Icons): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
   }
 
+  onProductSelect(event: any) {
+    const productId = event.target.value;
+    const product = this.products().find(p => p.id === productId);
+    if (product) {
+      this.labelConfig.name = product.name;
+      this.labelConfig.sku = product.sku;
+      this.labelConfig.price = product.price;
+      this.updateBarcode();
+    }
+  }
+
   updateQrFromDate() {
     const date = new Date(this.timestampDate);
     this.fields.timestamp = date.toISOString();
-    this.updateQr();
+    this.updateBarcode();
   }
 
   calculateVatAndSubmit() {
@@ -219,26 +310,54 @@ export class QrMakerComponent implements AfterViewInit {
     const vat = total * 0.15;
     this.fields.vatAmount = vat.toFixed(2);
     this.fields.totalAmount = total.toFixed(2);
-    this.updateQr();
+    this.updateBarcode();
   }
 
-  updateQr() {
-    if (!this.qr) return;
-    const base64Data = this.qrService.generateZatcaQr(this.fields);
-    this.qr.value = base64Data;
+  updateBarcode() {
+    if (!this.barcodeCanvas || typeof bwipjs === 'undefined') return;
+
+    const canvas = this.barcodeCanvas.nativeElement;
+    const isProduct = this.mode() === 'product';
+    
+    let text = '';
+    let bcId = '';
+    let scale = 2;
+
+    if (!isProduct) {
+      // ZATCA QR Mode
+      text = this.qrService.generateZatcaQr(this.fields);
+      bcId = 'qrcode';
+      scale = 3;
+    } else {
+      // Product Label Mode
+      text = this.labelConfig.sku;
+      bcId = this.labelConfig.type;
+      scale = this.labelConfig.size === 'small' ? 2 : this.labelConfig.size === 'large' ? 4 : 3;
+    }
+
+    try {
+      bwipjs.toCanvas(canvas, {
+        bcid: bcId,
+        text: text,
+        scale: scale,
+        height: isProduct && bcId !== 'qrcode' ? 10 : undefined,
+        includetext: false,
+        textxalign: 'center',
+        backgroundcolor: 'ffffff'
+      });
+    } catch (e) {
+      console.error('Barcode Generation Error:', e);
+    }
   }
 
-  downloadQr() {
+  printLabel() {
+    window.print();
+  }
+
+  downloadLabel() {
     const link = document.createElement('a');
-    link.download = `Washa_QR_${this.fields.sellerName.replace(/\s+/g, '_')}.png`;
-    link.href = this.qrCanvas.nativeElement.toDataURL();
+    link.download = `Label_${this.labelConfig.sku || 'Washa'}.png`;
+    link.href = this.barcodeCanvas.nativeElement.toDataURL();
     link.click();
-  }
-
-  copyBase64() {
-    const base64Data = this.qrService.generateZatcaQr(this.fields);
-    navigator.clipboard.writeText(base64Data).then(() => {
-        alert('تم نسخ كود Base64 بنجاح!');
-    });
   }
 }

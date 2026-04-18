@@ -43,9 +43,10 @@ import { BarcodeScannerComponent } from '../../shared/ui/barcode-scanner.compone
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-[#7A4E2D] group-focus-within:scale-110 transition-transform">
                         <div [innerHTML]="getIcon('Search')" class="w-5 h-5"></div>
                     </div>
-                    <div (click)="showScanner.set(true)" class="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 cursor-pointer hover:bg-[#7A4E2D10] px-2 py-1 rounded-lg transition-colors pointer-events-auto">
-                        <div [innerHTML]="getIcon('Barcode')" class="w-6 h-6 text-[#7A4E2D]"></div>
-                        <span class="text-[10px] font-bold text-[#7A4E2D]">SCAN</span>
+                    <div (click)="showScanner.set(true)" 
+                        class="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-2 cursor-pointer bg-white shadow-sm border border-[#7A4E2D20] hover:bg-[#7A4E2D] hover:text-white group/scan px-3 py-1.5 rounded-xl transition-all active:scale-95 z-10 pointer-events-auto">
+                        <div [innerHTML]="getIcon('Barcode')" class="w-5 h-5 text-[#7A4E2D] group-hover/scan:text-white transition-colors"></div>
+                        <span class="text-[10px] font-black tracking-tighter transition-colors">ماسح الباركود</span>
                     </div>
                 </div>
             </div>
