@@ -1,3 +1,8 @@
+import { Component, inject, signal, computed } from '@angular/core';
+import { CommonModule, Location } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { InventoryService, Product, Order, OrderItem, PRODUCT_CATEGORIES, FASHION_CATEGORIES, SIZES, COLORS, GENDER_TYPES, isFashionCategory } from '../../core/services/domain/inventory.service';
+import { ToastService } from '../../core/services/state/toast.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
 import { BarcodeScannerComponent } from '../../shared/ui/barcode-scanner.component';

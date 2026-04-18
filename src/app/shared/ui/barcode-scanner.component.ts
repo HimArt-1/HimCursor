@@ -78,7 +78,7 @@ declare var Html5Qrcode: any;
           </div>
 
           <div class="flex items-center gap-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-            <span [innerHTML]="getIcon('Info')" class="w-5 h-5 text-blue-400 shrink-0"></span>
+            <span [innerHTML]="getIcon('Alert')" class="w-5 h-5 text-blue-400 shrink-0"></span>
             <p class="text-[10px] text-blue-300 leading-tight">
               سيتم التعرف على المنتج وإضافته تلقائياً فور قراءة الكود بنجاح.
             </p>
