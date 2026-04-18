@@ -85,17 +85,29 @@ export class PrintService {
     };
   }
 
-  private getZatcaQrImage(order: Order): string {
+  private getBarcodeImage(order: Order): { image: string, text: string } | null {
     const branding = this.getBranding();
-    const qrData = this.qrService.generateZatcaQr({
-      sellerName: branding.brand_name,
-      vatNumber: branding.vat_number,
-      timestamp: order.createdAt,
-      totalAmount: order.total.toFixed(2),
-      vatAmount: order.tax.toFixed(2)
-    });
+    const qrType = branding.qr_type || 'zatca';
 
-    // Use a temporary canvas to generate the QR image
+    if (qrType === 'none') return null;
+
+    let qrData = '';
+    let qrText = '';
+
+    if (qrType === 'custom' && branding.qr_custom_text) {
+      qrData = branding.qr_custom_text;
+      qrText = 'QR Link';
+    } else {
+      qrData = this.qrService.generateZatcaQr({
+        sellerName: branding.brand_name,
+        vatNumber: branding.vat_number,
+        timestamp: order.createdAt,
+        totalAmount: order.total.toFixed(2),
+        vatAmount: order.tax.toFixed(2)
+      });
+      qrText = 'ZATCA Compliant QR';
+    }
+
     const canvas = document.createElement('canvas');
     new QRious({
       element: canvas,
@@ -103,18 +115,29 @@ export class PrintService {
       size: 200,
       level: 'H'
     });
-    return canvas.toDataURL();
+    return {
+      image: canvas.toDataURL(),
+      text: qrText
+    };
   }
   generateThermalHtml(order: Order): string {
     const itemsHtml = order.items.map(item => `
-      <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px;">
-        <span>${item.productName} x${item.quantity}</span>
-        <span>${(item.quantity * item.unitPrice).toFixed(2)}</span>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; font-size: 14px; margin-bottom: 4px;">
+        <span style="flex-grow: 1; padding-left: 10px;">${item.productName} 
+            <span style="font-size: 11px; color: #666;">x${item.quantity}</span>
+        </span>
+        <span style="white-space: nowrap;">${item.total.toFixed(2)}</span>
       </div>
     `).join('');
 
     const branding = this.getBranding();
-    const qrImage = this.getZatcaQrImage(order);
+    const barcode = this.getBarcodeImage(order);
+    const qrSectionHtml = barcode ? `
+        <div class="qr">
+          <img src="${barcode.image}" />
+          <div style="font-size: 8px; color: #a09c94; margin-top: 5px;">${barcode.text}</div>
+        </div>
+    ` : '';
 
     return `
       <html dir="rtl">
@@ -165,10 +188,7 @@ export class PrintService {
             <span>${order.total.toFixed(2)} ر.س</span>
           </div>
         </div>
-        <div class="qr">
-          <img src="${qrImage}" />
-          <div style="font-size: 8px; color: #a09c94; margin-top: 5px;">ZATCA Compliant QR</div>
-        </div>
+        ${qrSectionHtml}
         <div class="footer">شكراً لزيارتكم!<br>الاستبدال والاسترجاع خلال 7 أيام</div>
       </body>
       </html>
@@ -179,15 +199,24 @@ export class PrintService {
     const itemsHtml = order.items.map((item, index) => `
       <tr style="border-bottom: 1px solid #f0f0f0;">
         <td style="padding: 15px; text-align: center; color: #a0aec0; font-size: 13px;">${index + 1}</td>
-        <td style="padding: 15px; text-align: right;">
-          <div style="font-weight: 700; color: #2d3748;">${item.productName}</div>
+        <td style="padding: 15px; text-align: right; max-width: 250px;">
+          <div style="font-weight: 700; color: #2d3748; white-space: pre-wrap; word-wrap: break-word;">${item.productName}</div>
           <div style="font-size: 11px; color: #a0aec0;">${(item.productId || '').slice(0, 8)}</div>
         </td>
         <td style="padding: 15px; text-align: center; color: #4a5568;">${item.quantity}</td>
-        <td style="padding: 15px; text-align: center; color: #4a5568;">${item.unitPrice.toFixed(2)}</td>
-        <td style="padding: 15px; text-align: center; font-weight: 700; color: #7A4E2D;">${item.total.toFixed(2)}</td>
+        <td style="padding: 15px; text-align: center; color: #4a5568;">${item.unitPrice.toFixed(2)} <small>ر.س</small></td>
+        <td style="padding: 15px; text-align: center; font-weight: 700; color: #7A4E2D;">${item.total.toFixed(2)} <small>ر.س</small></td>
       </tr>
     `).join('');
+
+    const barcode = this.getBarcodeImage(order);
+    const qrSectionHtml = barcode ? `
+            <div class="qr-box">
+              <img src="${barcode.image}" style="width: 120px; height: 120px; border-radius: 10px;" />
+              <div class="qr-text">${barcode.text}</div>
+              <div style="font-size: 7px; color: #a0aec0; margin-top: 4px;">${barcode.text === 'ZATCA Compliant QR' ? 'رقم الضريبة: ' + this.getBranding().vat_number : ''}</div>
+            </div>
+    ` : `<div></div>`;
 
     return `
       <div class="invoice-wrapper" dir="rtl" style="font-family: 'Tajawal', sans-serif; background: white; padding: 0; margin: 0;">
@@ -480,11 +509,7 @@ export class PrintService {
           </table>
 
           <div class="summary-section">
-            <div class="qr-box">
-              <img src="${this.getZatcaQrImage(order)}" style="width: 120px; height: 120px; border-radius: 10px;" />
-              <div class="qr-text">ZATCA Compliant QR</div>
-              <div style="font-size: 7px; color: #a0aec0; margin-top: 4px;">رقم الضريبة: ${this.getBranding().vat_number}</div>
-            </div>
+            ${qrSectionHtml}
             
             <div class="totals-box">
               <div class="total-row">

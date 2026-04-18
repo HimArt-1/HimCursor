@@ -442,6 +442,18 @@ import { BarcodeScannerComponent } from '../../shared/ui/barcode-scanner.compone
                                         <label class="text-[10px] font-black text-[#a09c94] uppercase tracking-widest block pr-2">الشعار اللفظي (Tagline)</label>
                                         <input type="text" #tagline [value]="branding()?.tagline || ''" class="w-full bg-[#fdfaf6] border border-[#7A4E2D08] focus:border-[#7A4E2D] rounded-2xl py-3 px-4 outline-none transition-all font-bold" />
                                     </div>
+                                    <div class="space-y-2 mt-4">
+                                        <label class="text-[10px] font-black text-[#a09c94] uppercase tracking-widest block pr-2">حالة رمز الـ QR</label>
+                                        <select #qrType [value]="branding()?.qr_type || 'none'" (change)="branding() ? branding().qr_type = qrType.value : null" class="w-full bg-[#fdfaf6] border border-[#7A4E2D08] focus:border-[#7A4E2D] rounded-2xl py-3 px-4 outline-none transition-all font-bold text-[#7A4E2D] appearance-none cursor-pointer">
+                                            <option value="none">بدون (إخفاء)</option>
+                                            <option value="custom">رابط مخصص أو نص</option>
+                                            <option value="zatca">فاتورة ضريبية ZATCA</option>
+                                        </select>
+                                    </div>
+                                    <div class="space-y-2 mt-4" [class.opacity-50]="qrType.value !== 'custom'">
+                                        <label class="text-[10px] font-black text-[#a09c94] uppercase tracking-widest block pr-2">الرابط المخصص / النص</label>
+                                        <input type="text" #qrCustom [disabled]="qrType.value !== 'custom'" [value]="branding()?.qr_custom_text || ''" placeholder="https://..." class="w-full bg-[#fdfaf6] border border-[#7A4E2D08] focus:border-[#7A4E2D] rounded-2xl py-3 px-4 outline-none transition-all font-bold disabled:bg-gray-100 disabled:cursor-not-allowed" />
+                                    </div>
                                 </div>
                             </div>
                         </section>
@@ -490,7 +502,9 @@ import { BarcodeScannerComponent } from '../../shared/ui/barcode-scanner.compone
                             (click)="saveBranding({
                                 brand_name: brandName.value,
                                 tagline: tagline.value,
-                                vat_number: vatNum.value
+                                vat_number: vatNum.value,
+                                qr_type: qrType.value,
+                                qr_custom_text: qrCustom.value
                             })"
                             class="flex-1 bg-[#7A4E2D] text-white py-6 rounded-[32px] font-black hover:shadow-2xl hover:scale-[1.02] transition-all active:scale-95"
                         >
