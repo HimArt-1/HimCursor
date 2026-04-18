@@ -218,6 +218,29 @@ import { RouterModule } from '@angular/router';
               </button>
             </div>
             <div class="p-5 space-y-4">
+              <!-- Image Upload Section -->
+              <div class="flex flex-col items-center gap-4 p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-dashed border-gray-200 dark:border-white/10 relative group">
+                @if(productForm.imageUrl) {
+                  <img [src]="productForm.imageUrl" class="w-24 h-24 object-cover rounded-xl shadow-lg group-hover:opacity-50 transition-opacity">
+                  <button (click)="productForm.imageUrl = ''" class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold">إزالة الصورة</span>
+                  </button>
+                } @else if(isUploading()) {
+                  <div class="w-24 h-24 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-white/5">
+                    <div class="w-6 h-6 border-2 border-wushai-sand border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                } @else {
+                  <div (click)="fileInput.click()" class="w-24 h-24 flex flex-col items-center justify-center gap-2 rounded-xl bg-gray-100 dark:bg-white/5 border border-dashed border-gray-300 dark:border-white/20 cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
+                    <span [innerHTML]="getIcon('Camera')" class="w-6 h-6 text-gray-400"></span>
+                    <span class="text-[10px] text-gray-400 font-bold">أضف صورة</span>
+                  </div>
+                }
+                <input #fileInput type="file" (change)="onFileSelected($event)" accept="image/*" class="hidden">
+                <div class="text-center">
+                  <p class="text-[10px] text-gray-500">دقة عالية · JPG/PNG · بحد أقصى 2MB</p>
+                </div>
+              </div>
+
               <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">اسم المنتج</label>
                 <input type="text" [(ngModel)]="productForm.name" name="pName" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:ring-2 focus:ring-wushai-cocoa">
@@ -398,6 +421,7 @@ export class InventoryComponent {
   showOrderModal = signal(false);
   showScanner = signal(false);
   editingProductId = signal<string | null>(null);
+  isUploading = signal(false);
 
   products = this.inventoryService.products;
   orders = this.inventoryService.orders;
@@ -454,6 +478,26 @@ export class InventoryComponent {
       this.toastService.show('تم إضافة المنتج', 'success');
     }
     this.showProductModal.set(false);
+  }
+
+  async onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      this.toastService.show('حجم الصورة كبير جداً (الأقصى 2 ميجابايت)', 'error');
+      return;
+    }
+
+    this.isUploading.set(true);
+    const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+    const url = await this.inventoryService.uploadProductImage(fileName, file);
+    
+    if (url) {
+      this.productForm.imageUrl = url;
+      this.toastService.show('تم رفع الصورة بنجاح', 'success');
+    }
+    this.isUploading.set(false);
   }
 
   onScanSuccess(sku: string) {
