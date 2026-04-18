@@ -497,6 +497,8 @@ export class InventoryService {
                 total: Number(i.total_price)
             }))
         };
+    }
+
     async uploadProductImage(path: string, file: File): Promise<string | null> {
       return this.supabaseService.uploadFile('product-images', path, file);
     }

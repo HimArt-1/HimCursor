@@ -201,4 +201,32 @@ export class SupabaseService {
     }
     return 'Success';
   }
+
+  // ===== STORAGE METHODS =====
+
+  async uploadFile(bucket: string, path: string, file: File): Promise<string | null> {
+    if (!this.isConfigured) return null;
+    
+    await this.authService.ensureSession();
+
+    const { data, error } = await this.supabase.storage
+      .from(bucket)
+      .upload(path, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (error) {
+      console.error('Upload error:', error);
+      this.toastService.show(`خطأ في رفع الملف: ${error.message}`, 'error');
+      return null;
+    }
+
+    return this.getPublicUrl(bucket, data.path);
+  }
+
+  getPublicUrl(bucket: string, path: string): string {
+    const { data } = this.supabase.storage.from(bucket).getPublicUrl(path);
+    return data.publicUrl;
+  }
 }
