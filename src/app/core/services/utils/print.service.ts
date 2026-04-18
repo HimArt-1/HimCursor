@@ -27,7 +27,7 @@ export class PrintService {
     const opt = this.getPdfOptions(order.orderNumber);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       await html2pdf().set(opt).from(element).save();
     } catch (error) {
       console.error('PDF Generation Error:', error);
@@ -41,7 +41,7 @@ export class PrintService {
     const element = this.createTempElement(html);
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1500));
       const blob = await html2pdf().set(this.getPdfOptions(order.orderNumber)).from(element).output('blob');
       const fileName = `${order.id}.pdf`;
       const file = new File([blob], fileName, { type: 'application/pdf' });
@@ -197,35 +197,17 @@ export class PrintService {
     `).join('');
 
     return `
-      <!DOCTYPE html>
-      <html dir="rtl" lang="ar">
-      <head>
-        <meta charset="UTF-8">
-        <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+      <div class="invoice-wrapper" dir="rtl" style="font-family: 'Tajawal', sans-serif;">
         <style>
-          @page { size: A4; margin: 0; }
-          * { box-sizing: border-box; -webkit-print-color-adjust: exact; }
-          body { 
-            font-family: 'Tajawal', 'Inter', sans-serif; 
-            margin: 0; 
-            padding: 0; 
-            background: #fdfaf6; 
-            color: #2d3748;
-            -webkit-font-smoothing: antialiased;
-          }
           .page {
             width: 210mm;
             min-height: 297mm;
             padding: 20mm;
-            margin: 10mm auto;
             background: white;
-            box-shadow: 0 0 30px rgba(122, 78, 45, 0.1);
             position: relative;
             overflow: hidden;
-          }
-          @media print {
-            body { background: white; }
-            .page { margin: 0; box-shadow: none; border: none; }
+            display: block;
+            margin: 0 auto;
           }
           
           /* Branding Elements */
@@ -254,19 +236,6 @@ export class PrintService {
             display: flex;
             align-items: center;
             gap: 15px;
-          }
-          .logo-placeholder {
-            width: 60px;
-            height: 60px;
-            background: #7A4E2D;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 900;
-            font-size: 24px;
-            box-shadow: 0 10px 20px rgba(122, 78, 45, 0.2);
           }
           .brand-text h1 {
             margin: 0;
@@ -392,15 +361,6 @@ export class PrintService {
             justify-content: center;
             padding: 10px;
           }
-          .qr-placeholder {
-            width: 100px;
-            height: 100px;
-            background: #7A4E2D;
-            mask-image: url('https://www.svgrepo.com/show/311168/qr-code.svg');
-            -webkit-mask-image: url('https://www.svgrepo.com/show/311168/qr-code.svg');
-            mask-repeat: no-repeat;
-            mask-size: contain;
-          }
           .qr-text {
             font-size: 8px;
             color: #7A4E2D;
@@ -456,8 +416,7 @@ export class PrintService {
             pointer-events: none;
           }
         </style>
-      </head>
-      <body>
+        
         <div class="page">
           <div class="bg-pattern"></div>
           <div class="w-mark">W</div>
@@ -471,7 +430,7 @@ export class PrintService {
               </div>
             </div>
             <div class="invoice-meta">
-              <h2>INVOICE</h2>
+              <h2 style="font-family: 'Inter', sans-serif;">INVOICE</h2>
               <div class="meta-grid">
                 <div class="meta-item">
                   <label>رقم الفاتورة / No.</label>
@@ -521,7 +480,7 @@ export class PrintService {
 
           <div class="summary-section">
             <div class="qr-box">
-              <img src="${this.getZatcaQrImage(order)}" style="width: 100%; height: auto; border-radius: 10px;" />
+              <img src="${this.getZatcaQrImage(order)}" style="width: 120px; height: 120px; border-radius: 10px;" />
               <div class="qr-text">ZATCA Compliant QR</div>
               <div style="font-size: 7px; color: #a0aec0; margin-top: 4px;">رقم الضريبة: ${this.getBranding().vat_number}</div>
             </div>
@@ -549,8 +508,7 @@ export class PrintService {
             </p>
           </div>
         </div>
-      </body>
-      </html>
+      </div>
     `;
   }
 
