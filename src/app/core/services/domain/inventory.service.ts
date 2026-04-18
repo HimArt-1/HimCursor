@@ -235,7 +235,6 @@ export class InventoryService {
 
     deleteProduct(id: string) {
         this.products.update(list => list.filter(p => p.id !== id));
-        this.persistProducts();
     }
 
     adjustStock(productId: string, delta: number, reason: string = 'تعديل يدوي') {
@@ -244,7 +243,6 @@ export class InventoryService {
             if (p.id !== productId) return p;
             return { ...p, stock: Math.max(0, p.stock + delta) };
         }));
-        this.persistProducts();
 
         // Log stock movement
         if (product) {
@@ -312,12 +310,10 @@ export class InventoryService {
 
     updateOrderStatus(id: string, status: Order['status']) {
         this.orders.update(list => list.map(o => o.id === id ? { ...o, status } : o));
-        this.persistOrders();
     }
 
     updatePaymentStatus(id: string, paymentStatus: Order['paymentStatus']) {
         this.orders.update(list => list.map(o => o.id === id ? { ...o, paymentStatus } : o));
-        this.persistOrders();
     }
 
     recalcOrder(o: Order) {
@@ -336,7 +332,6 @@ export class InventoryService {
             createdAt: new Date().toISOString()
         };
         this.stockMovements.update(m => [movement, ...m].slice(0, 200)); // Keep last 200
-        this.persistMovements();
     }
 
     private getAverageSalesRate(productId: string): number {
