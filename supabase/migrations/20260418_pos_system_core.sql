@@ -81,6 +81,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_products_updated_at ON public.products;
 CREATE TRIGGER update_products_updated_at
     BEFORE UPDATE ON public.products
     FOR EACH ROW
@@ -94,10 +95,19 @@ ALTER TABLE public.pos_orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pos_order_items ENABLE ROW LEVEL SECURITY;
 
 -- Policies (Allow all for Auth Users for simplicity in POS)
+DROP POLICY IF EXISTS "Enable all for authenticated users" ON public.categories;
 CREATE POLICY "Enable all for authenticated users" ON public.categories FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Enable all for authenticated users" ON public.products;
 CREATE POLICY "Enable all for authenticated users" ON public.products FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Enable all for authenticated users" ON public.app_settings;
 CREATE POLICY "Enable all for authenticated users" ON public.app_settings FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Enable all for authenticated users" ON public.pos_orders;
 CREATE POLICY "Enable all for authenticated users" ON public.pos_orders FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Enable all for authenticated users" ON public.pos_order_items;
 CREATE POLICY "Enable all for authenticated users" ON public.pos_order_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Indexes for performance
