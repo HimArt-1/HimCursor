@@ -408,10 +408,9 @@ export class InventoryService {
     }
 
     async updatePaymentStatus(id: string, paymentStatus: Order['paymentStatus']) {
-        // Assuming there's a payment_status column in DB, if not we add to metadata or separate table
         const { error } = await this.supabaseService.client
             .from('pos_orders')
-            .update({ metadata: { payment_status: paymentStatus } })
+            .update({ payment_status: paymentStatus })
             .eq('id', id);
 
         if (error) {
