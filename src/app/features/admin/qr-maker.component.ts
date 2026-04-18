@@ -1,5 +1,5 @@
 import { Component, signal, inject, ElementRef, ViewChild, AfterViewInit, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
@@ -7,6 +7,19 @@ import { QrService, ZatcaQrFields } from '../../core/services/utils/qr.service';
 import { InventoryService, Product } from '../../core/services/domain/inventory.service';
 
 declare var bwipjs: any;
+
+export interface LabelConfig {
+  name: string;
+  sku: string;
+  price: number;
+  type: string;
+  size: string;
+  showName: boolean;
+  showPrice: boolean;
+  showSku: boolean;
+  dark: boolean;
+  [key: string]: string | number | boolean;
+}
 
 @Component({
   selector: 'app-qr-maker',
@@ -149,8 +162,9 @@ declare var bwipjs: any;
                     ]; track opt.key) {
                       <label class="flex items-center gap-3 cursor-pointer group">
                         <div class="relative">
-                          <input type="checkbox" [(ngModel)]="(labelConfig as any)[opt.key]" (change)="updateBarcode()" class="peer sr-only">
-                          <div class="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-wushai-cocoa"></div>
+                          <input type="checkbox" [ngModel]="getConfigValue(opt.key)" (ngModelChange)="toggleConfig(opt.key)" class="peer sr-only">
+                          <div class="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-wushai-cocoa"
+                            [class.bg-wushai-cocoa]="getConfigValue(opt.key)"></div>
                         </div>
                         <span class="text-xs font-black text-gray-600 group-hover:text-wushai-cocoa transition-colors">{{opt.label}}</span>
                       </label>
@@ -275,6 +289,7 @@ export class QrMakerComponent implements AfterViewInit {
   private qrService = inject(QrService);
   private inventoryService = inject(InventoryService);
   private sanitizer = inject(DomSanitizer);
+  private location = inject(Location);
 
   @ViewChild('barcodeCanvas') barcodeCanvas!: ElementRef<HTMLCanvasElement>;
 
@@ -289,7 +304,7 @@ export class QrMakerComponent implements AfterViewInit {
     vatAmount: '15.00'
   };
 
-  labelConfig = {
+  labelConfig: LabelConfig = {
     name: 'منتج تجريبي',
     sku: 'WSHA-TEST-001',
     price: 99.00,
@@ -309,6 +324,19 @@ export class QrMakerComponent implements AfterViewInit {
 
   getIcon(name: keyof typeof Icons): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(Icons[name]);
+  }
+
+  goBack() {
+    this.location.back();
+  }
+
+  getConfigValue(key: string): boolean {
+    return !!this.labelConfig[key];
+  }
+
+  toggleConfig(key: string) {
+    this.labelConfig[key] = !this.labelConfig[key];
+    this.updateBarcode();
   }
 
   onProductSelect(event: any) {

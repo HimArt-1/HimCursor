@@ -52,7 +52,7 @@ import { PrintService } from '../../core/services/utils/print.service';
         <div class="glass-card rounded-[2rem] p-6 border border-white/10 hover:border-wushai-sand/30 transition-all hover:-translate-y-1">
           <div class="flex items-center gap-3 mb-3">
             <div class="p-2.5 bg-wushai-sand/10 rounded-xl text-wushai-cocoa dark:text-wushai-sand">
-              <span [innerHTML]="getIcon('Library')" class="w-5 h-5"></span>
+              <span [innerHTML]="getIcon('Archive')" class="w-5 h-5"></span>
             </div>
             <p class="text-xs font-black text-gray-400 uppercase tracking-widest">إجمالي المنتجات</p>
           </div>
@@ -702,8 +702,9 @@ export class InventoryComponent {
       if (url) {
         this.printService.shareViaWhatsApp(order, templateId, url);
         this.toastService.show('تم تجهيز الرابط للفتح في واتساب', 'success');
-      } else {
-        this.toastService.show('فشل رفع الفاتورة، سيتم المشاركة بدون رابط', 'warning');
+      }
+      if (!url) {
+        this.toastService.show('خطأ في رابط الفاتورة، سيتم المشاركة بدون رابط', 'info');
         this.printService.shareViaWhatsApp(order, templateId);
       }
     } catch (error) {
