@@ -41,7 +41,7 @@ export interface Order {
     subtotal: number;
     tax: number;
     total: number;
-    status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+    status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'completed';
     paymentStatus: 'unpaid' | 'paid' | 'refunded';
     notes: string;
     createdAt: string;
@@ -78,7 +78,13 @@ export class InventoryService {
     readonly products = signal<Product[]>([]);
     readonly orders = signal<Order[]>([]);
     readonly stockMovements = signal<StockMovement[]>([]);
-    readonl    private async init() {
+    readonly settings = signal<any>(null);
+
+    constructor() {
+      this.init();
+    }
+
+    private async init() {
       await Promise.all([
         this.fetchProducts(),
         this.fetchOrders(),
@@ -93,16 +99,16 @@ export class InventoryService {
       // Listen for product changes
       this.supabaseService.client
         .channel('public:products')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload: any) => {
           console.log('Product change received:', payload);
-          if (payload.event === 'INSERT') {
+          if (payload.eventType === 'INSERT') {
             const newP = this.mapProduct(payload.new);
             this.products.update(list => [newP, ...list.filter(p => p.id !== newP.id)]);
-          } else if (payload.event === 'UPDATE') {
+          } else if (payload.eventType === 'UPDATE') {
             const updatedP = this.mapProduct(payload.new);
             this.products.update(list => list.map(p => p.id === updatedP.id ? updatedP : p));
-          } else if (payload.event === 'DELETE') {
-            this.products.update(list => list.filter(p => p.id !== payload.old.id));
+          } else if (payload.eventType === 'DELETE') {
+            this.products.update(list => list.filter(p => p.id !== (payload.old as any).id));
           }
         })
         .subscribe();
@@ -110,9 +116,9 @@ export class InventoryService {
       // Listen for order changes
       this.supabaseService.client
         .channel('public:pos_orders')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'pos_orders' }, async (payload) => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pos_orders' }, async (payload: any) => {
           console.log('Order change received:', payload);
-          if (payload.event === 'INSERT') {
+          if (payload.eventType === 'INSERT') {
             // Fetch items for the new order
             const { data: items } = await this.supabaseService.client
               .from('pos_order_items')
@@ -120,20 +126,20 @@ export class InventoryService {
               .eq('order_id', payload.new.id);
             const newO = this.mapOrder(payload.new, items || []);
             this.orders.update(list => [newO, ...list.filter(o => o.id !== newO.id)]);
-          } else if (payload.event === 'UPDATE') {
+          } else if (payload.eventType === 'UPDATE') {
             // Update order status/payment in existing list
             this.orders.update(orders => orders.map(o => {
               if (o.id === payload.new.id) {
                 return { 
                   ...o, 
-                  status: payload.new.status,
-                  paymentStatus: payload.new.payment_status || o.paymentStatus
+                  status: payload.new.status as any,
+                  paymentStatus: (payload.new.metadata?.payment_status || o.paymentStatus) as any
                 };
               }
               return o;
             }));
-          } else if (payload.event === 'DELETE') {
-            this.orders.update(list => list.filter(o => o.id !== payload.old.id));
+          } else if (payload.eventType === 'DELETE') {
+            this.orders.update(list => list.filter(o => o.id !== (payload.old as any).id));
           }
         })
         .subscribe();
