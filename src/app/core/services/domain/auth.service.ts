@@ -139,10 +139,11 @@ export class AuthService {
       }
 
       // Load role permissions by role name
+      const roleName = (data.role || 'member').trim().toLowerCase();
       const { data: roleData } = await this.supabase
         .from('roles')
         .select('permissions')
-        .eq('name', (data.role || 'member').toLowerCase())
+        .eq('name', roleName)
         .single();
       
       if (roleData) {

@@ -461,10 +461,15 @@ export class InventoryService {
     }
 
     private async fetchOrders() {
-        const { data } = await this.supabaseService.client
+        const { data, error } = await this.supabaseService.client
             .from('pos_orders')
             .select('*, pos_order_items(*)')
             .order('created_at', { ascending: false });
+        
+        if (error) {
+            console.error('Fetch orders error:', error);
+            return;
+        }
         if (data) this.orders.set(data.map(d => this.mapOrder(d, d.pos_order_items)));
     }
 
