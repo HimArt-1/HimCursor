@@ -15,6 +15,16 @@ import { RouterModule } from '@angular/router';
   template: `
     <div class="animate-fade-in-up">
       <!-- Header -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-3">
+          <button (click)="goBack()" class="p-2 rounded-xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
+            <span [innerHTML]="getIcon('ArrowRight')" class="w-5 h-5 text-gray-600 dark:text-gray-300"></span>
+          </button>
+          <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">المخزون والمبيعات</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">إدارة المنتجات والطلبات والمبيعات</p>
+          </div>
+        </div>
         <div class="flex gap-2">
           <button (click)="showScanner.set(true)" class="px-4 py-2.5 bg-wushai-sand/20 dark:bg-wushai-lilac/10 hover:bg-wushai-sand/30 text-wushai-cocoa dark:text-wushai-sand rounded-xl text-sm font-bold flex items-center gap-1.5 transition-all">
             <span [innerHTML]="getIcon('Barcode')" class="w-4 h-4"></span>
