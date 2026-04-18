@@ -22,35 +22,28 @@ export class PrintService {
 
   async downloadInvoiceAsPdf(order: Order) {
     const html = this.generatePdfHtml(order);
-    const element = this.createTempElement(html);
-    
     const opt = this.getPdfOptions(order.orderNumber);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await html2pdf().set(opt).from(element).save();
+      // Direct string-based generation is more stable for off-screen capture
+      await html2pdf().set(opt).from(html).save();
     } catch (error) {
       console.error('PDF Generation Error:', error);
-    } finally {
-      document.body.removeChild(element);
     }
   }
 
   async uploadInvoiceAndGetUrl(order: Order): Promise<string | null> {
     const html = this.generatePdfHtml(order);
-    const element = this.createTempElement(html);
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      const blob = await html2pdf().set(this.getPdfOptions(order.orderNumber)).from(element).output('blob');
+      // Using string source for blob generation
+      const blob = await html2pdf().set(this.getPdfOptions(order.orderNumber)).from(html).output('blob');
       const fileName = `${order.id}.pdf`;
       const file = new File([blob], fileName, { type: 'application/pdf' });
       return await this.supabaseService.uploadFile('invoices', fileName, file);
     } catch (error) {
       console.error('PDF Upload Error:', error);
       return null;
-    } finally {
-      document.body.removeChild(element);
     }
   }
 
@@ -197,17 +190,25 @@ export class PrintService {
     `).join('');
 
     return `
-      <div class="invoice-wrapper" dir="rtl" style="font-family: 'Tajawal', sans-serif;">
+      <div class="invoice-wrapper" dir="rtl" style="font-family: 'Tajawal', sans-serif; background: white; padding: 0; margin: 0;">
         <style>
+          @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Inter:wght@400;700;900&display=swap');
+          
+          .invoice-wrapper {
+            background-color: white !important;
+            -webkit-print-color-adjust: exact;
+          }
+          
           .page {
             width: 210mm;
             min-height: 297mm;
             padding: 20mm;
-            background: white;
+            background: white !important;
             position: relative;
             overflow: hidden;
             display: block;
             margin: 0 auto;
+            border: 1px solid #eee;
           }
           
           /* Branding Elements */
