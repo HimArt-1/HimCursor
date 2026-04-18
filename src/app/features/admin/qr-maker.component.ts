@@ -190,7 +190,11 @@ declare var bwipjs: any;
               }
 
               @if (mode() === 'invoice') {
-                <div class="text-center mt-2">
+                <div class="text-center mt-2 flex flex-col items-center gap-1">
+                  <div class="px-2 py-0.5 bg-green-500/10 border border-green-500/20 rounded-full flex items-center gap-1 mb-1">
+                    <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                    <span class="text-[8px] font-bold text-green-700 uppercase tracking-tighter">ZATCA Compliant</span>
+                  </div>
                   <p class="text-[10px] font-bold text-[#2c1810]">{{fields.sellerName}}</p>
                   <p class="text-[8px] text-gray-400 font-mono">{{fields.vatNumber}}</p>
                 </div>
@@ -336,15 +340,24 @@ export class QrMakerComponent implements AfterViewInit {
     }
 
     try {
-      bwipjs.toCanvas(canvas, {
+      const options: any = {
         bcid: bcId,
         text: text,
         scale: scale,
-        height: isProduct && bcId !== 'qrcode' ? 10 : undefined,
         includetext: false,
         textxalign: 'center',
         backgroundcolor: 'ffffff'
-      });
+      };
+
+      // Only apply height to 1D barcodes, QR codes should be square
+      if (bcId !== 'qrcode') {
+        options.height = 10;
+        options.scale = scale;
+      } else {
+        options.scale = scale > 3 ? scale : 4; // QR codes benefit from slightly larger scale
+      }
+
+      bwipjs.toCanvas(canvas, options);
     } catch (e) {
       console.error('Barcode Generation Error:', e);
     }
