@@ -188,7 +188,7 @@ export class PrintService {
         <td style="padding: 15px; text-align: center; color: #a0aec0; font-size: 13px;">${index + 1}</td>
         <td style="padding: 15px; text-align: right;">
           <div style="font-weight: 700; color: #2d3748;">${item.productName}</div>
-          <div style="font-size: 11px; color: #a0aec0;">${item.productId.slice(0, 8)}</div>
+          <div style="font-size: 11px; color: #a0aec0;">${(item.productId || '').slice(0, 8)}</div>
         </td>
         <td style="padding: 15px; text-align: center; color: #4a5568;">${item.quantity}</td>
         <td style="padding: 15px; text-align: center; color: #4a5568;">${item.unitPrice.toFixed(2)}</td>
@@ -499,7 +499,7 @@ export class PrintService {
               <div class="info-content">
                 <p class="name">تحويل بنكي / شبكة</p>
                 <p>حالة الدفع: <span style="color: #48bb78; font-weight: 700;">مدفوعة بالكامل</span></p>
-                <p style="color: #a0aec0; font-size: 12px;">ID: ${order.id.slice(0, 12)}</p>
+                <p style="color: #a0aec0; font-size: 12px;">ID: ${(order.id || '').slice(0, 12)}</p>
               </div>
             </div>
           </div>
