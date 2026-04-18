@@ -15,9 +15,9 @@ export class PrintService {
   private supabaseService = inject(SupabaseService);
 
   WHATSAPP_TEMPLATES = [
-    { id: 'professional', name: 'رسمي', text: (order: Order, url: string) => `عزيزي ${order.customerName || 'العميل'}، شكراً لتعاملك مع وشّى. تجد مرفقاً فاتورتك برقم ${order.orderNumber} بمبلغ ${order.total.toFixed(2)} ر.س. %0A%0Aرابط الفاتورة: ${url} %0A%0Aنسعد بزيارتك مرة أخرى!` },
-    { id: 'friendly', name: 'ودي', text: (order: Order, url: string) => `أهلاً ${order.customerName || 'بك'}! فاتورتك من وشّى جاهزة للإطلاع. رقم الطلب ${order.orderNumber}. %0A%0Aيمكنك تحميلها من هنا: ${url} %0A%0Aيومك سعيد ✨` },
-    { id: 'brief', name: 'مختصر', text: (order: Order, url: string) => `فاتورتك من وشّى للعميل ${order.customerName || ''}: ${url}` }
+    { id: 'professional', name: 'رسمي', text: (order: Order, url: string) => `عزيزي ${order.customerName || 'العميل'}، شكراً لتعاملك مع وشّى. تجد مرفقاً فاتورتك برقم ${order.orderNumber} بمبلغ ${order.total.toFixed(2)} ر.س.\n\nرابط الفاتورة:\n${url || ''}\n\nنسعد بزيارتك مرة أخرى!` },
+    { id: 'friendly', name: 'ودي', text: (order: Order, url: string) => `أهلاً ${order.customerName || 'بك'}! فاتورتك من وشّى جاهزة للإطلاع. رقم الطلب ${order.orderNumber}.\n\nيمكنك تحميلها من هنا:\n${url || ''}\n\nيومك سعيد ✨` },
+    { id: 'brief', name: 'مختصر', text: (order: Order, url: string) => `فاتورتك من وشّى للعميل ${order.customerName || ''}:\n${url || ''}` }
   ];
 
   async downloadInvoiceAsPdf(order: Order) {
@@ -50,8 +50,9 @@ export class PrintService {
   shareViaWhatsApp(order: Order, templateId: string = 'professional', url?: string) {
     const template = this.WHATSAPP_TEMPLATES.find(t => t.id === templateId) || this.WHATSAPP_TEMPLATES[0];
     const finalUrl = url || '';
-    const text = template.text(order, finalUrl);
-    window.open(`https://wa.me/${order.customerPhone || ''}?text=${text}`, '_blank');
+    const rawText = template.text(order, finalUrl);
+    const encodedText = encodeURIComponent(rawText);
+    window.open(`https://wa.me/${order.customerPhone || ''}?text=${encodedText}`, '_blank');
   }
 
   private createTempElement(html: string): HTMLElement {
