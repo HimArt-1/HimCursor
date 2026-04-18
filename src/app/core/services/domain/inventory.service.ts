@@ -510,8 +510,8 @@ export class InventoryService {
             tax: Number(d.tax_amount),
             total: Number(d.total_amount),
             status: d.status as any,
-            paymentStatus: d.metadata?.payment_status || 'paid',
-            notes: d.metadata?.notes || '',
+            paymentStatus: d.payment_status || d.metadata?.payment_status || 'paid',
+            notes: d.notes || d.metadata?.notes || '',
             createdAt: d.created_at,
             items: items.map(i => ({
                 productId: i.product_id,
