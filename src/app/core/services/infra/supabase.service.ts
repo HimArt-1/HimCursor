@@ -229,4 +229,76 @@ export class SupabaseService {
     const { data } = this.supabase.storage.from(bucket).getPublicUrl(path);
     return data.publicUrl;
   }
+
+  /** فواتير التطبيق الإدارية — صف واحد لكل فاتورة (payload JSON كامل) */
+  async fetchAppInvoices(): Promise<Array<{ id: string; updated_at: string; payload: Record<string, unknown> }>> {
+    if (!this.isConfigured) return [];
+    await this.authService.ensureSession();
+    const { data: authData } = await this.supabase.auth.getUser();
+    const user = authData?.user;
+    if (!user) return [];
+
+    const { data, error } = await this.supabase
+      .from('app_invoices')
+      .select('id, updated_at, payload')
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('fetchAppInvoices:', this.formatError(error));
+      return [];
+    }
+    return (data ?? []) as Array<{ id: string; updated_at: string; payload: Record<string, unknown> }>;
+  }
+
+  /**
+   * مطابقة السحابة مع المحلي: upsert كل الفواتير الحالية وحذف ما لم يعد موجوداً محلياً.
+   */
+  async syncAppInvoicesFull(invoices: Record<string, unknown>[]): Promise<boolean> {
+    if (!this.isConfigured) return false;
+    await this.authService.ensureSession();
+    const { data: authData } = await this.supabase.auth.getUser();
+    const user = authData?.user;
+    if (!user) return false;
+
+    const uid = user.id;
+    const localIds = new Set(invoices.map(i => String(i['id'] ?? '')));
+
+    const { data: existingRows, error: selErr } = await this.supabase
+      .from('app_invoices')
+      .select('id')
+      .eq('user_id', uid);
+
+    if (selErr) {
+      console.error('syncAppInvoicesFull select:', this.formatError(selErr));
+      return false;
+    }
+
+    const remoteIds = new Set((existingRows ?? []).map((r: { id: string }) => r.id));
+    const toDelete = [...remoteIds].filter(id => !localIds.has(id));
+
+    if (toDelete.length > 0) {
+      const { error: delErr } = await this.supabase.from('app_invoices').delete().in('id', toDelete);
+      if (delErr) {
+        console.error('syncAppInvoicesFull delete:', this.formatError(delErr));
+        return false;
+      }
+    }
+
+    if (invoices.length === 0) return true;
+
+    const now = new Date().toISOString();
+    const rows = invoices.map(inv => ({
+      id: inv['id'],
+      user_id: uid,
+      payload: inv,
+      updated_at: now
+    }));
+
+    const { error: upErr } = await this.supabase.from('app_invoices').upsert(rows, { onConflict: 'id' });
+    if (upErr) {
+      console.error('syncAppInvoicesFull upsert:', this.formatError(upErr));
+      return false;
+    }
+    return true;
+  }
 }

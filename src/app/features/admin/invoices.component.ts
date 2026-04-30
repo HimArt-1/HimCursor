@@ -1,10 +1,17 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { InvoiceService, Invoice, InvoiceItem } from '../../core/services/domain/invoice.service';
+import { Router, ActivatedRoute } from '@angular/router';
+import { InvoiceService, Invoice } from '../../core/services/domain/invoice.service';
+import { AuthService } from '../../core/services/domain/auth.service';
+import { SupabaseService } from '../../core/services/infra/supabase.service';
+import { InventoryService } from '../../core/services/domain/inventory.service';
+import { QrService } from '../../core/services/utils/qr.service';
 import { ToastService } from '../../core/services/state/toast.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
+
+declare var QRious: any;
 
 @Component({
   selector: 'app-invoices',
@@ -23,10 +30,33 @@ import { Icons } from '../../shared/ui/icons';
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">إنشاء وإدارة فواتيرك بسهولة</p>
           </div>
         </div>
-        <button (click)="openCreate()" class="btn-primary px-5 py-3 rounded-xl font-bold text-sm flex items-center gap-2">
-          <span [innerHTML]="getIcon('Plus')" class="w-4 h-4"></span>
-          فاتورة جديدة
-        </button>
+        <div class="flex flex-wrap items-center gap-2">
+          <input #invBackupInput type="file" accept=".json,application/json" class="hidden" (change)="onInvoicesBackupFileSelected(invBackupInput)" />
+          <button type="button"
+            (click)="reconcileCloud()"
+            [disabled]="!cloudSyncEnabled() || syncState() === 'syncing'"
+            [attr.title]="cloudSyncHint()"
+            class="px-4 py-2.5 rounded-xl font-bold text-sm border border-sky-200 dark:border-sky-900/40 bg-sky-50 dark:bg-sky-950/30 text-sky-900 dark:text-sky-100 hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors flex items-center gap-2 disabled:opacity-45 disabled:cursor-not-allowed">
+            <span [innerHTML]="getIcon('Globe')" class="w-4 h-4 opacity-80"></span>
+            {{ syncState() === 'syncing' ? 'جاري المزامنة…' : 'مزامنة السحابة' }}
+          </button>
+          <button type="button" (click)="exportInvoicesJson()" class="px-4 py-2.5 rounded-xl font-bold text-sm border border-gray-200 dark:border-white/15 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors flex items-center gap-2">
+            <span [innerHTML]="getIcon('Cpu')" class="w-4 h-4 opacity-70"></span>
+            تصدير JSON
+          </button>
+          <button type="button" (click)="prepareImport('merge', invBackupInput)" class="px-4 py-2.5 rounded-xl font-bold text-sm border border-gray-200 dark:border-white/15 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors flex items-center gap-2">
+            <span [innerHTML]="getIcon('Plus')" class="w-4 h-4 opacity-70"></span>
+            استيراد (دمج)
+          </button>
+          <button type="button" (click)="prepareImport('replace', invBackupInput)" class="px-4 py-2.5 rounded-xl font-bold text-sm border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors flex items-center gap-2">
+            <span [innerHTML]="getIcon('Alert')" class="w-4 h-4 opacity-80"></span>
+            استيراد (استبدال)
+          </button>
+          <button (click)="openCreate()" class="btn-primary px-5 py-3 rounded-xl font-bold text-sm flex items-center gap-2">
+            <span [innerHTML]="getIcon('Plus')" class="w-4 h-4"></span>
+            فاتورة جديدة
+          </button>
+        </div>
       </div>
 
       <!-- Stats -->
@@ -49,10 +79,19 @@ import { Icons } from '../../shared/ui/icons';
         </div>
       </div>
 
+      @if (!showEditor() && listView()) {
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-wushai-cocoa/20 dark:border-white/10 bg-wushai-cocoa/5 dark:bg-white/5 px-4 py-3">
+          <p class="text-sm font-bold text-wushai-cocoa dark:text-wushai-sand">{{ listViewBanner() }}</p>
+          <button type="button" (click)="clearListView()" class="text-sm font-bold text-wushai-cocoa dark:text-wushai-sand underline-offset-2 hover:underline">
+            عرض كل الفواتير
+          </button>
+        </div>
+      }
+
       <!-- Invoice List -->
       @if(!showEditor()) {
         <div class="space-y-3">
-          @for(inv of invoices(); track inv.id) {
+          @for(inv of displayedInvoices(); track inv.id) {
             <div class="glass-card rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-3 hover:shadow-lg transition-shadow cursor-pointer" (click)="editInvoice(inv)">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
@@ -75,8 +114,13 @@ import { Icons } from '../../shared/ui/icons';
           } @empty {
             <div class="text-center py-16 text-gray-400">
               <span [innerHTML]="getIcon('CreditCard')" class="w-12 h-12 mx-auto opacity-30 mb-3 block"></span>
-              <p>لا توجد فواتير بعد</p>
-              <p class="text-xs mt-1">أنشئ فاتورتك الأولى</p>
+              @if (listView()) {
+                <p>لا توجد فواتير ضمن هذا العرض</p>
+                <p class="text-xs mt-2"><button type="button" (click)="clearListView()" class="font-bold text-wushai-cocoa dark:text-wushai-sand underline-offset-2 hover:underline">عرض كل الفواتير</button></p>
+              } @else {
+                <p>لا توجد فواتير بعد</p>
+                <p class="text-xs mt-1">أنشئ فاتورتك الأولى</p>
+              }
             </div>
           }
         </div>
@@ -86,19 +130,25 @@ import { Icons } from '../../shared/ui/icons';
       @if(showEditor()) {
         <div class="glass-card rounded-2xl overflow-hidden">
           <!-- Editor Header -->
-          <div class="p-5 bg-gradient-to-r from-wushai-cocoa to-wushai-cocoa text-white flex justify-between items-center">
-            <div class="flex items-center gap-3">
+          <div class="p-5 bg-gradient-to-r from-wushai-cocoa to-wushai-cocoa text-white flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3 min-w-0">
               <button (click)="closeEditor()" class="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-colors" title="عودة">
                 <span [innerHTML]="getIcon('ArrowRight')" class="w-5 h-5"></span>
               </button>
-              <div>
+              <div class="min-w-0">
                 <h2 class="font-bold text-lg">{{ editingId() ? 'تعديل فاتورة' : 'فاتورة جديدة' }}</h2>
                 @if(editingId()) {
                   <span class="text-xs text-white/60">{{ currentInvoice.number }}</span>
                 }
               </div>
             </div>
-            <div class="flex gap-2">
+            <div class="flex items-center gap-3 shrink-0">
+              @if (getInvoiceQrDataUrl()) {
+                <div class="flex flex-col items-center gap-1 rounded-xl bg-white/10 border border-white/20 px-2 py-2">
+                  <img [src]="getInvoiceQrDataUrl()!" width="72" height="72" alt="رمز ZATCA" class="rounded-lg bg-white p-1 shadow-sm" />
+                  <span class="text-[9px] text-white/75 text-center leading-tight">ZATCA TLV</span>
+                </div>
+              }
               @if(editingId()) {
                 <button (click)="printInvoice()" class="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-bold transition-colors flex items-center gap-1">
                   <span [innerHTML]="getIcon('Download')" class="w-4 h-4"></span>
@@ -246,17 +296,177 @@ import { Icons } from '../../shared/ui/icons';
     </div>
   `
 })
-export class InvoicesComponent {
+export class InvoicesComponent implements OnInit {
   private invoiceService = inject(InvoiceService);
+  private inventoryService = inject(InventoryService);
+  private qrService = inject(QrService);
   private toastService = inject(ToastService);
   private sanitizer = inject(DomSanitizer);
   private location = inject(Location);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private authService = inject(AuthService);
+  private supabaseService = inject(SupabaseService);
+
+  syncState = signal<'idle' | 'syncing'>('idle');
+
+  cloudSyncEnabled = computed(() => {
+    if (!this.supabaseService.isConfigured) return false;
+    const u = this.authService.session()?.user;
+    return !!u && !(u as { is_anonymous?: boolean }).is_anonymous;
+  });
+
+  cloudSyncHint = computed(() => {
+    if (!this.supabaseService.isConfigured) return 'أضف مفاتيح Supabase في البيئة لتفعيل المزامنة';
+    if (!this.authService.session()?.user) return 'سجّل الدخول لمزامنة الفواتير مع السحابة';
+    return 'دمج أحدث البيانات من جدول app_invoices ثم رفع القائمة الموحّدة';
+  });
+
+  ngOnInit(): void {
+    this.route.queryParamMap.subscribe(params => {
+      const view = params.get('view');
+      if (view === 'paid' || view === 'expected' || view === 'delinquent') {
+        this.listView.set(view);
+      } else {
+        this.listView.set(null);
+      }
+
+      if (params.get('new') === '1') {
+        this.openCreate();
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { new: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true
+        });
+      } else if (view === 'paid' || view === 'expected' || view === 'delinquent') {
+        this.closeEditor();
+      }
+    });
+  }
+
+  async reconcileCloud(): Promise<void> {
+    if (!this.cloudSyncEnabled() || this.syncState() === 'syncing') return;
+    this.syncState.set('syncing');
+    const r = await this.invoiceService.reconcileWithCloud();
+    this.syncState.set('idle');
+    if (!r.ok) {
+      this.toastService.show(r.message ?? 'فشلت المزامنة', 'error');
+    } else {
+      this.toastService.show('تمت مزامنة الفواتير مع السحابة', 'success');
+    }
+  }
+
+  private sellerBranding(): { brand_name: string; vat_number: string } {
+    const s = this.inventoryService.settings();
+    return {
+      brand_name: s?.brand_name || 'Washa Control',
+      vat_number: s?.vat_number || '310000000000003'
+    };
+  }
+
+  /** TLV payload rendered as QR image (ZATCA Phase 1), same pattern as PrintService orders */
+  private zatcaQrDataUrl(inv: Invoice): string | null {
+    try {
+      this.invoiceService.recalculate(inv);
+      if (typeof QRious === 'undefined') return null;
+      const b = this.sellerBranding();
+      const ts = inv.createdAt
+        ? new Date(inv.createdAt).toISOString()
+        : `${inv.date}T12:00:00.000+03:00`;
+      const tlvBase64 = this.qrService.generateZatcaQr({
+        sellerName: b.brand_name,
+        vatNumber: b.vat_number,
+        timestamp: ts,
+        totalAmount: inv.total.toFixed(2),
+        vatAmount: inv.taxAmount.toFixed(2)
+      });
+      const canvas = document.createElement('canvas');
+      new QRious({ element: canvas, value: tlvBase64, size: 200, level: 'H' });
+      return canvas.toDataURL();
+    } catch {
+      return null;
+    }
+  }
+
+  getInvoiceQrDataUrl(): string | null {
+    return this.zatcaQrDataUrl(this.currentInvoice);
+  }
 
   invoices = this.invoiceService.invoices;
   showEditor = signal(false);
   editingId = signal<string | null>(null);
+  listView = signal<'paid' | 'expected' | 'delinquent' | null>(null);
+
+  displayedInvoices = computed(() => {
+    const all = this.invoices();
+    const v = this.listView();
+    if (!v) return all;
+    if (v === 'paid') return all.filter(i => i.status === 'paid');
+    if (v === 'expected') return all.filter(i => i.status === 'draft' || i.status === 'sent');
+    return all.filter(i => this.invoiceService.isDelinquent(i));
+  });
+
+  listViewBanner = computed(() => {
+    const v = this.listView();
+    if (v === 'paid') return 'التصفية النشطة: فواتير مسددة فقط';
+    if (v === 'expected') return 'التصفية النشطة: مسودات ومُرسلة (إيراد متوقع)';
+    if (v === 'delinquent') return 'التصفية النشطة: متأخرة أو تجاوزت تاريخ الاستحقاق';
+    return '';
+  });
+
+  clearListView(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { view: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+  }
 
   currentInvoice: Invoice = this.emptyInvoice();
+
+  pendingImportMode: 'merge' | 'replace' | null = null;
+
+  exportInvoicesJson(): void {
+    const json = this.invoiceService.exportBackupJson();
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `washa-invoices-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    this.toastService.show('تم تصدير النسخة الاحتياطية', 'success');
+  }
+
+  prepareImport(mode: 'merge' | 'replace', input: HTMLInputElement): void {
+    if (mode === 'replace' && !window.confirm('سيتم استبدال جميع الفواتير المحفوظة محلياً بمحتوى الملف. هل تريد المتابعة؟')) {
+      return;
+    }
+    this.pendingImportMode = mode;
+    input.click();
+  }
+
+  onInvoicesBackupFileSelected(input: HTMLInputElement): void {
+    const mode = this.pendingImportMode;
+    this.pendingImportMode = null;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || !mode) return;
+    file.text().then(text => {
+      try {
+        const n = this.invoiceService.importBackupJson(text, mode);
+        const msg = mode === 'merge'
+          ? `تم دمج ${n} فاتورة من الملف`
+          : `تم استبدال القائمة (${n} فاتورة)`;
+        this.toastService.show(msg, 'success');
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : 'فشل الاستيراد';
+        this.toastService.show(msg, 'error');
+      }
+    }).catch(() => this.toastService.show('تعذّر قراءة الملف', 'error'));
+  }
 
   openCreate() {
     this.currentInvoice = this.emptyInvoice();
@@ -336,18 +546,33 @@ export class InvoicesComponent {
       </tr>
     `).join('');
 
+    const qrBlock = (() => {
+      const dataUrl = this.zatcaQrDataUrl(inv);
+      if (!dataUrl) return '';
+      const vat = this.sellerBranding().vat_number;
+      return `
+      <div style="text-align:center;margin:12px 0 0;padding-top:12px;border-top:1px dashed #e5e5e5">
+        <img src="${dataUrl}" width="120" height="120" style="border-radius:10px;border:1px solid #eee;padding:6px" alt="ZATCA QR" />
+        <div style="font-size:10px;color:#888;margin-top:8px">فاتورة إلكترونية — ZATCA (مرحلة أولى)</div>
+        <div style="font-size:9px;color:#aaa">الرقم الضريبي: ${vat}</div>
+      </div>`;
+    })();
+
     const html = `
     <html dir="rtl"><head><title>فاتورة ${inv.number}</title>
     <style>body{font-family:Tajawal,sans-serif;padding:40px;color:#333}
-    .header{display:flex;justify-content:space-between;margin-bottom:30px}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:30px}
     .logo{font-size:24px;font-weight:bold;color:#7A4E2D}
     table{width:100%;border-collapse:collapse;margin:20px 0}
     th{background:#f8f6f1;padding:10px;text-align:right;font-size:13px;color:#666}
     .total-row{font-size:18px;font-weight:bold;color:#7A4E2D}</style></head>
     <body>
       <div class="header">
-        <div><div class="logo">Washa Control</div><p style="color:#999;font-size:12px">فاتورة إلكترونية</p></div>
-        <div style="text-align:left"><h2 style="color:#7A4E2D;margin:0">${inv.number}</h2>
+        <div style="flex:1"><div class="logo">${this.sellerBranding().brand_name}</div><p style="color:#999;font-size:12px">فاتورة إلكترونية</p></div>
+        <div style="text-align:center">
+          ${qrBlock || ''}
+        </div>
+        <div style="text-align:left;min-width:140px"><h2 style="color:#7A4E2D;margin:0">${inv.number}</h2>
         <p style="color:#999;font-size:12px">التاريخ: ${inv.date}</p>
         <p style="color:#999;font-size:12px">الاستحقاق: ${inv.dueDate || '-'}</p></div>
       </div>
@@ -391,12 +616,13 @@ export class InvoicesComponent {
   }
 
   private emptyInvoice(): Invoice {
+    const now = new Date().toISOString();
     return {
       id: '', number: '', clientName: '', clientEmail: '', clientPhone: '',
       date: new Date().toISOString().split('T')[0], dueDate: '',
       items: [{ id: crypto.randomUUID(), description: '', quantity: 1, unitPrice: 0, total: 0 }],
       notes: '', taxRate: 15, discount: 0, status: 'draft',
-      subtotal: 0, taxAmount: 0, total: 0, createdAt: ''
+      subtotal: 0, taxAmount: 0, total: 0, createdAt: now, updatedAt: now
     };
   }
 

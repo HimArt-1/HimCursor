@@ -14,6 +14,8 @@ export interface WashaInsight {
     domain: 'inventory' | 'finance' | 'tasks' | 'general';
     actionLabel?: string;
     actionLink?: string;
+    /** يُدمَج مع routerLink عبر [queryParams] */
+    actionQueryParams?: Record<string, string>;
     timestamp: string;
 }
 
@@ -64,17 +66,18 @@ export class WashaIntelligenceService {
         }
 
         // 2. Financial Insights (Overdue Invoices)
-        const overdueInvoices = this.invoiceService.invoices().filter(inv => inv.status === 'overdue');
-        if (overdueInvoices.length > 0) {
-            const totalAtRisk = overdueInvoices.reduce((sum, inv) => sum + inv.total, 0);
+        const delinquentInvoices = this.invoiceService.invoices().filter(inv => this.invoiceService.isDelinquent(inv));
+        if (delinquentInvoices.length > 0) {
+            const totalAtRisk = delinquentInvoices.reduce((sum, inv) => sum + inv.total, 0);
             insights.push({
                 id: 'fin-overdue',
                 type: 'warning',
                 title: 'مخاطر تدفق نقدي',
-                message: `لديك ${overdueInvoices.length} فواتير متأخرة بقيمة إجمالية ${totalAtRisk.toLocaleString()} ريال.`,
+                message: `لديك ${delinquentInvoices.length} فواتير تحتاج متابعة (متأخرة أو تجاوزت الاستحقاق) بقيمة إجمالية ${totalAtRisk.toLocaleString('ar-SA')} ريال.`,
                 domain: 'finance',
                 actionLabel: 'متابعة الفواتير',
-                actionLink: '/admin/invoices',
+                actionLink: '/invoices',
+                actionQueryParams: { view: 'delinquent' },
                 timestamp: now.toISOString()
             });
         }

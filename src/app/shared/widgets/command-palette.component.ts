@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DataService } from '../../core/services/state/data.service';
 import { ToastService } from '../../core/services/state/toast.service';
+import { InvoiceService } from '../../core/services/domain/invoice.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../ui/icons';
 
@@ -14,6 +15,8 @@ interface CommandItem {
   icon: keyof typeof Icons;
   action: () => void;
   group: 'Navigation' | 'Action' | 'System';
+  /** Arabic / alternate tokens so search finds localized intents */
+  keywords?: string[];
 }
 
 @Component({
@@ -36,7 +39,7 @@ interface CommandItem {
               <input #cmdInput type="text" 
                      [value]="query()"
                      (input)="query.set(cmdInput.value); selectedIndex.set(0)"
-                     placeholder="Type a command or search..."
+                     placeholder="اكتب أمراً أو ابحث… / Type a command…"
                      class="flex-1 bg-transparent border-none outline-none text-lg text-wushai-dark dark:text-white placeholder-gray-400"
                      autofocus>
               <div class="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">ESC</div>
@@ -73,16 +76,17 @@ interface CommandItem {
                  }
               } @else {
                  <div class="p-8 text-center text-gray-400">
-                    <p>No results found for "{{ query() }}"</p>
+                    <p>لا توجد نتائج لـ "{{ query() }}"</p>
                  </div>
               }
            </div>
 
            <!-- Footer -->
            <div class="p-2 border-t border-wushai-sand dark:border-wushai-olive bg-gray-50 dark:bg-wushai-deep/30 flex justify-between items-center text-xs text-gray-500">
-              <div class="flex gap-4">
-                 <span><span class="font-bold">↑↓</span> to navigate</span>
-                 <span><span class="font-bold">↵</span> to select</span>
+              <div class="flex gap-4 flex-wrap">
+                 <span><span class="font-bold">⌘K</span> فتح / إغلاق</span>
+                 <span><span class="font-bold">↑↓</span> تنقل</span>
+                 <span><span class="font-bold">↵</span> تنفيذ</span>
               </div>
               <span class="font-mono">Washa Control v1.0</span>
            </div>
@@ -102,6 +106,7 @@ export class CommandPaletteComponent {
   private router: Router = inject(Router);
   private dataService = inject(DataService);
   private toastService = inject(ToastService);
+  private invoiceService = inject(InvoiceService);
   private sanitizer = inject(DomSanitizer);
 
   isOpen = signal(false);
@@ -111,68 +116,121 @@ export class CommandPaletteComponent {
   // All Commands Definition
   allCommands: CommandItem[] = [
     // Navigation
-    { id: 'nav-home', title: 'Go to Dashboard', icon: 'Home', group: 'Navigation', action: () => this.router.navigate(['/']) },
-    { id: 'nav-tasks', title: 'Go to Tasks', icon: 'List', group: 'Navigation', action: () => this.router.navigate(['/tasks']) },
-    { id: 'nav-assets', title: 'Go to Assets', icon: 'Image', group: 'Navigation', action: () => this.router.navigate(['/assets']) },
-    { id: 'nav-trace', title: 'Go to Traceability Matrix', icon: 'Shield', group: 'Navigation', action: () => this.router.navigate(['/traceability']) },
-    { id: 'nav-reports', title: 'Go to Reports', icon: 'BarChart', group: 'Navigation', action: () => this.router.navigate(['/reports']) },
-    { id: 'nav-strategy', title: 'Go to Strategy', icon: 'Map', group: 'Navigation', action: () => this.router.navigate(['/strategy']) },
-    { id: 'nav-finance', title: 'Go to Finance', icon: 'Briefcase', group: 'Navigation', action: () => this.router.navigate(['/finance']) },
-    { id: 'nav-admin-users', title: 'Go to Admin Users', icon: 'Users', group: 'Navigation', action: () => this.router.navigate(['/admin-users']) },
+    {
+      id: 'nav-home',
+      title: 'لوحة القيادة',
+      description: 'Dashboard',
+      icon: 'Home',
+      group: 'Navigation',
+      keywords: ['dashboard', 'go to dashboard', 'home', 'رئيسية', 'لوحة', 'ذكاء', 'تحكم'],
+      action: () => this.router.navigate(['/'])
+    },
+    { id: 'nav-tasks', title: 'المهام', description: 'Tasks', icon: 'List', group: 'Navigation', keywords: ['tasks', 'go to tasks'], action: () => this.router.navigate(['/tasks']) },
+    { id: 'nav-assets', title: 'الأصول', description: 'Assets', icon: 'Image', group: 'Navigation', keywords: ['assets'], action: () => this.router.navigate(['/assets']) },
+    { id: 'nav-trace', title: 'مصفوفة التتبع', description: 'Traceability', icon: 'Shield', group: 'Navigation', keywords: ['trace'], action: () => this.router.navigate(['/traceability']) },
+    { id: 'nav-reports', title: 'التقارير', description: 'Reports', icon: 'BarChart', group: 'Navigation', keywords: ['reports'], action: () => this.router.navigate(['/reports']) },
+    { id: 'nav-strategy', title: 'الاستراتيجية', description: 'Strategy', icon: 'Map', group: 'Navigation', keywords: ['strategy'], action: () => this.router.navigate(['/strategy']) },
+    {
+      id: 'nav-finance',
+      title: 'الإدارة المالية',
+      description: 'Finance workspace',
+      icon: 'Briefcase',
+      group: 'Navigation',
+      keywords: ['finance', 'مالية', 'مالي', 'go to finance'],
+      action: () => this.router.navigate(['/finance'])
+    },
+    {
+      id: 'nav-invoices',
+      title: 'الفواتير الإلكترونية',
+      description: 'Invoices & ZATCA',
+      icon: 'CreditCard',
+      group: 'Navigation',
+      keywords: ['invoices', 'فاتورة', 'فواتير', 'zatca'],
+      action: () => this.router.navigate(['/invoices'])
+    },
+    { id: 'nav-admin-users', title: 'مستخدمي النظام', description: 'Admin users', icon: 'Users', group: 'Navigation', keywords: ['admin'], action: () => this.router.navigate(['/admin-users']) },
 
     // Actions
-    { id: 'act-dark', title: 'Toggle Dark Mode', description: 'Switch visual theme', icon: 'Settings', group: 'Action', action: () => { this.dataService.toggleDarkMode(); this.toastService.show('Theme toggled', 'success'); } },
-    { id: 'act-new-task', title: 'Create New Task', description: 'Open task editor', icon: 'Plus', group: 'Action', action: () => this.router.navigate(['/tasks'], { queryParams: { new: 1 } }) },
-    { id: 'act-overdue', title: 'Show Overdue Tasks', description: 'Filter overdue tasks', icon: 'Alert', group: 'Action', action: () => this.router.navigate(['/tasks'], { queryParams: { overdue: 1 } }) },
-    { id: 'act-due-soon', title: 'Show Due in 7 Days', description: 'Upcoming deadline window', icon: 'Clock', group: 'Action', action: () => this.router.navigate(['/tasks'], { queryParams: { due: 7 } }) },
+    { id: 'act-dark', title: 'تبديل الوضع الليلي', description: 'Toggle theme', icon: 'Settings', group: 'Action', keywords: ['dark', 'theme'], action: () => { this.dataService.toggleDarkMode(); this.toastService.show('تم تبديل المظهر', 'success'); } },
+    { id: 'act-new-task', title: 'مهمة جديدة', description: 'Open task editor', icon: 'Plus', group: 'Action', keywords: ['create new task', 'task'], action: () => this.router.navigate(['/tasks'], { queryParams: { new: 1 } }) },
+    { id: 'act-new-invoice', title: 'إنشاء فاتورة جديدة', description: 'الانتقال للفواتير وفتح محرر جديد', icon: 'CreditCard', group: 'Action', keywords: ['invoice', 'فاتورة', 'زاتكا', 'zatca'], action: () => { this.router.navigate(['/invoices'], { queryParams: { new: 1 } }); this.toastService.show('افتح محرر الفاتورة وأكمل البيانات', 'success'); } },
+    {
+      id: 'act-export-invoices-json',
+      title: 'تصدير الفواتير JSON',
+      description: 'نسخة احتياطية محلية لجميع الفواتير',
+      icon: 'Cpu',
+      group: 'Action',
+      keywords: ['export', 'backup', 'json', 'تصدير', 'احتياطي', 'فواتير'],
+      action: () => {
+        const json = this.invoiceService.exportBackupJson();
+        const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `washa-invoices-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.toastService.show('تم تصدير الفواتير', 'success');
+      }
+    },
+    { id: 'act-invoices-delinquent', title: 'فواتير تحتاج متابعة', description: 'تصفية المتأخرة وتجاوز الاستحقاق', icon: 'Alert', group: 'Action', keywords: ['متأخرة', 'فاتورة', 'delinquent', 'تدفق'], action: () => this.router.navigate(['/invoices'], { queryParams: { view: 'delinquent' } }) },
+    { id: 'act-sync-invoices-cloud', title: 'مزامنة الفواتير مع السحابة', description: 'Supabase — جدول app_invoices', icon: 'Globe', group: 'Action', keywords: ['sync', 'cloud', 'مزامنة', 'سحابة', 'supabase'], action: () => { void this.invoiceService.reconcileWithCloud().then(r => { this.toastService.show(r.ok ? 'تمت مزامنة الفواتير' : (r.message || 'فشلت المزامنة'), r.ok ? 'success' : 'error'); }); } },
+    { id: 'act-overdue', title: 'مهام متأخرة', description: 'Filter overdue', icon: 'Alert', group: 'Action', keywords: ['overdue'], action: () => this.router.navigate(['/tasks'], { queryParams: { overdue: 1 } }) },
+    { id: 'act-due-soon', title: 'مواعيد خلال 7 أيام', description: 'Due soon', icon: 'Clock', group: 'Action', keywords: ['due'], action: () => this.router.navigate(['/tasks'], { queryParams: { due: 7 } }) },
     {
       id: 'act-my-tasks',
-      title: 'Show My Tasks',
-      description: 'Tasks assigned to me',
+      title: 'مهامي',
+      description: 'Assigned to me',
       icon: 'User',
       group: 'Action',
       action: () => {
         const user = this.dataService.currentUser();
         if (!user) {
-          this.toastService.show('No active user', 'error');
+          this.toastService.show('لا يوجد مستخدم نشط', 'error');
           return;
         }
         this.router.navigate(['/tasks'], { queryParams: { owner: 'me' } });
       }
     },
-    { id: 'act-ai', title: 'Toggle AI Assistant', description: 'Open Wushai assistant', icon: 'Bot', group: 'Action', action: () => this.dataService.toggleAiAssistant() },
-    { id: 'act-notif', title: 'Toggle Notifications', description: 'Open notifications panel', icon: 'Bell', group: 'Action', action: () => this.dataService.toggleNotifications() },
+    { id: 'act-ai', title: 'مساعد الذكاء', description: 'AI assistant', icon: 'Bot', group: 'Action', keywords: ['ذكاء', 'ai', 'bot', 'وشاي'], action: () => this.dataService.toggleAiAssistant() },
+    { id: 'act-notif', title: 'الإشعارات', description: 'Notifications panel', icon: 'Bell', group: 'Action', keywords: ['notifications'], action: () => this.dataService.toggleNotifications() },
     {
-      id: 'act-export', title: 'Backup Database', description: 'Download JSON backup', icon: 'Cpu', group: 'Action', action: () => {
+      id: 'act-export', title: 'نسخ احتياطي للبيانات', description: 'Download JSON', icon: 'Cpu', group: 'Action', keywords: ['backup'], action: () => {
         const data = this.dataService.exportDatabase();
         const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = 'backup.json'; a.click();
-        this.toastService.show('Backup downloaded successfully', 'success');
+        this.toastService.show('تم تنزيل النسخة الاحتياطية', 'success');
       }
     },
 
     // System
-    { id: 'sys-reload', title: 'Reload Application', icon: 'Cpu', group: 'System', action: () => window.location.reload() }
+    { id: 'sys-reload', title: 'إعادة تحميل التطبيق', description: 'Reload', icon: 'Cpu', group: 'System', keywords: ['reload'], action: () => window.location.reload() }
   ];
 
   filteredCommands = computed(() => {
-    const q = this.query().toLowerCase();
-    return this.allCommands.filter(c =>
-      c.title.toLowerCase().includes(q) ||
-      (c.description && c.description.toLowerCase().includes(q)) ||
-      c.group.toLowerCase().includes(q)
-    );
+    const q = this.query().toLowerCase().trim();
+    if (!q) return this.allCommands;
+    return this.allCommands.filter(c => {
+      const keywordHit = (c.keywords || []).some(k => k.toLowerCase().includes(q));
+      return (
+        c.title.toLowerCase().includes(q) ||
+        (c.description && c.description.toLowerCase().includes(q)) ||
+        c.group.toLowerCase().includes(q) ||
+        keywordHit
+      );
+    });
   });
 
   groupedCommands = computed(() => {
     const cmds = this.filteredCommands();
     const groups: { name: string, commands: CommandItem[] }[] = [];
+    const groupLabels: Record<string, string> = { Navigation: 'انتقال', Action: 'إجراءات', System: 'نظام' };
     const groupNames = ['Navigation', 'Action', 'System'];
 
     groupNames.forEach(name => {
       const groupCmds = cmds.filter(c => c.group === name);
-      if (groupCmds.length > 0) groups.push({ name, commands: groupCmds });
+      if (groupCmds.length > 0) groups.push({ name: groupLabels[name] || name, commands: groupCmds });
     });
     return groups;
   });

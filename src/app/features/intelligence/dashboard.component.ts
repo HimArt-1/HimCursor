@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { DataService } from '../../core/services/state/data.service';
 import { AnalyticsService } from '../../core/services/domain/analytics.service';
 import { WashaIntelligenceService } from '../../core/services/domain/intelligence.service';
+import { InvoiceService } from '../../core/services/domain/invoice.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../../shared/ui/icons';
 
@@ -112,6 +113,69 @@ import { Icons } from '../../shared/ui/icons';
         </a>
       </div>
 
+      <!-- Financial intelligence (invoices) -->
+      <section class="space-y-4">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="p-2 bg-gradient-to-tr from-emerald-600 via-teal-500 to-blue-600 rounded-xl text-white shadow-lg" [innerHTML]="getIcon('TrendingUp')"></span>
+          <h3 class="text-xl font-extrabold text-wushai-dark dark:text-wushai-sand">التحليلات المالية الذكية</h3>
+          <span class="text-xs text-wushai-olive dark:text-wushai-lilac/60">من الفواتير المحفوظة محلياً</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <a routerLink="/invoices" [queryParams]="{ view: 'paid' }"
+             class="group relative overflow-hidden rounded-2xl p-6 border border-emerald-200/60 dark:border-emerald-900/35 bg-white/50 dark:bg-wushai-surface/50 backdrop-blur-xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-gradient-to-br from-emerald-500/10 via-white/40 to-teal-500/5 dark:from-emerald-500/15 dark:via-wushai-surface/40 dark:to-teal-900/10">
+            <div class="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-gradient-to-br from-emerald-400/25 to-teal-500/10 blur-2xl group-hover:scale-110 transition-transform"></div>
+            <div class="relative z-10 flex items-start justify-between gap-3">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">الإيرادات المحققة</p>
+                <p class="text-3xl font-black text-emerald-800 dark:text-emerald-300 mt-2 tabular-nums">{{ invoicePaidTotal() | number:'1.2-2' }} <span class="text-lg font-bold text-emerald-600/80">ر.س</span></p>
+                <p class="text-xs text-wushai-olive dark:text-wushai-lilac/70 mt-1">مجموع الفواتير المسددة (Paid)</p>
+              </div>
+              <span class="p-2 rounded-xl bg-emerald-500/20 text-emerald-700 dark:text-emerald-300" [innerHTML]="getIcon('Check')"></span>
+            </div>
+          </a>
+
+          <a routerLink="/invoices" [queryParams]="{ view: 'expected' }"
+             class="group relative overflow-hidden rounded-2xl p-6 border border-blue-200/60 dark:border-blue-900/35 bg-white/50 dark:bg-wushai-surface/50 backdrop-blur-xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-gradient-to-br from-blue-500/10 via-white/40 to-indigo-500/5 dark:from-blue-500/15 dark:via-wushai-surface/40 dark:to-indigo-900/10">
+            <div class="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-gradient-to-br from-blue-400/25 to-indigo-500/10 blur-2xl group-hover:scale-110 transition-transform"></div>
+            <div class="relative z-10 flex items-start justify-between gap-3">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">الإيرادات المتوقعة</p>
+                <p class="text-3xl font-black text-blue-900 dark:text-blue-300 mt-2 tabular-nums">{{ invoiceExpectedTotal() | number:'1.2-2' }} <span class="text-lg font-bold text-blue-600/80">ر.س</span></p>
+                <p class="text-xs text-wushai-olive dark:text-wushai-lilac/70 mt-1">مسودات + فواتير مرسلة (لم تُسدد بعد)</p>
+              </div>
+              <span class="p-2 rounded-xl bg-blue-500/20 text-blue-700 dark:text-blue-300" [innerHTML]="getIcon('Send')"></span>
+            </div>
+          </a>
+
+          <a routerLink="/invoices" [queryParams]="{ view: 'delinquent' }"
+             class="group relative overflow-hidden rounded-2xl p-6 border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 backdrop-blur-xl"
+             [class.border-red-300]="invoiceDelinquentTotal() > 0"
+             [class.dark:border-red-900/40]="invoiceDelinquentTotal() > 0"
+             [class.bg-gradient-to-br]="invoiceDelinquentTotal() > 0"
+             [class.from-red-500/15]="invoiceDelinquentTotal() > 0"
+             [class.via-white/45]="invoiceDelinquentTotal() > 0"
+             [class.to-orange-500/5]="invoiceDelinquentTotal() > 0"
+             [class.dark:from-red-900/25]="invoiceDelinquentTotal() > 0"
+             [class.dark:via-wushai-surface/45]="invoiceDelinquentTotal() > 0"
+             [class.dark:to-orange-900/10]="invoiceDelinquentTotal() > 0"
+             [class.bg-white/50]="invoiceDelinquentTotal() === 0"
+             [class.dark:bg-wushai-surface/50]="invoiceDelinquentTotal() === 0"
+             [class.border-red-200/50]="invoiceDelinquentTotal() === 0"
+             [class.dark:border-red-900/20]="invoiceDelinquentTotal() === 0"
+             [class.animate-pulse]="invoiceDelinquentTotal() > 0">
+            <div class="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-gradient-to-br from-red-400/20 to-orange-500/10 blur-2xl group-hover:scale-110 transition-transform opacity-80"></div>
+            <div class="relative z-10 flex items-start justify-between gap-3">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-400">فواتير متأخرة / مستحقة</p>
+                <p class="text-3xl font-black text-red-800 dark:text-red-300 mt-2 tabular-nums">{{ invoiceDelinquentTotal() | number:'1.2-2' }} <span class="text-lg font-bold text-red-600/80">ر.س</span></p>
+                <p class="text-xs text-wushai-olive dark:text-wushai-lilac/70 mt-1">{{ invoiceDelinquentSubtitle() }}</p>
+              </div>
+              <span class="p-2 rounded-xl bg-red-500/20 text-red-700 dark:text-red-300" [innerHTML]="getIcon('Alert')"></span>
+            </div>
+          </a>
+        </div>
+      </section>
+
       <!-- Washa AI Insights -->
       <section class="space-y-4">
         <div class="flex items-center gap-2">
@@ -155,7 +219,8 @@ import { Icons } from '../../shared/ui/icons';
                   <h4 class="font-bold text-sm text-wushai-dark dark:text-wushai-sand">{{ insight.title }}</h4>
                   <p class="text-xs text-wushai-olive dark:text-wushai-lilac/70 mt-1 leading-relaxed">{{ insight.message }}</p>
                   @if (insight.actionLabel) {
-                    <a [routerLink]="insight.actionLink" class="inline-flex items-center gap-1 mt-3 text-[10px] font-bold uppercase tracking-wider text-wushai-cocoa dark:text-wushai-sand hover:underline">
+                    <a [routerLink]="insight.actionLink" [queryParams]="insight.actionQueryParams ?? {}"
+                       class="inline-flex items-center gap-1 mt-3 text-[10px] font-bold uppercase tracking-wider text-wushai-cocoa dark:text-wushai-sand hover:underline">
                       {{ insight.actionLabel }}
                       <span [innerHTML]="getIcon('ArrowRight')" class="w-3 h-3"></span>
                     </a>
@@ -370,7 +435,23 @@ export class DashboardComponent {
   private dataService = inject(DataService);
   analytics = inject(AnalyticsService);
   intelligence = inject(WashaIntelligenceService);
+  private invoiceService = inject(InvoiceService);
   private sanitizer = inject(DomSanitizer);
+
+  invoicePaidTotal = computed(() =>
+    this.invoiceService.invoices().filter(i => i.status === 'paid').reduce((s, i) => s + i.total, 0));
+
+  invoiceExpectedTotal = computed(() =>
+    this.invoiceService.invoices().filter(i => i.status === 'draft' || i.status === 'sent').reduce((s, i) => s + i.total, 0));
+
+  invoiceDelinquentTotal = computed(() =>
+    this.invoiceService.invoices().filter(i => this.invoiceService.isDelinquent(i)).reduce((s, i) => s + i.total, 0));
+
+  invoiceDelinquentSubtitle = computed(() => {
+    const n = this.invoiceService.invoices().filter(i => this.invoiceService.isDelinquent(i)).length;
+    if (n === 0) return 'لا توجد مبالغ متأخرة حالياً';
+    return `${n} فاتورة تتطلب متابعة`;
+  });
 
   todayDate = new Date();
   stats = this.dataService.stats;
