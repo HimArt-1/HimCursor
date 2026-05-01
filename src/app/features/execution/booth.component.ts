@@ -490,32 +490,13 @@ interface HeldCartSnapshot {
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <button 
-                            (click)="completeOrder('thermal')"
-                            [disabled]="cart().length === 0"
-                            class="flex flex-col items-center justify-center gap-3 bg-[#fdfaf6] border-2 border-[#7A4E2D08] py-6 rounded-[32px] hover:border-[#7A4E2D] hover:bg-white transition-all disabled:opacity-50 group hover:shadow-xl active:scale-95 text-[#2c1810]"
-                        >
-                            <div [innerHTML]="getIcon('Printer')" class="w-7 h-7 text-[#7A4E2D] group-hover:scale-110 group-hover:rotate-6 transition-transform"></div>
-                            <span class="font-black text-[11px] tracking-wide">طباعة حرارية</span>
-                        </button>
-                        <button 
-                            (click)="completeOrder('pdf')"
-                            [disabled]="cart().length === 0"
-                            class="flex flex-col items-center justify-center gap-3 bg-[#fdfaf6] border-2 border-[#7A4E2D08] py-6 rounded-[32px] hover:border-[#7A4E2D] hover:bg-white transition-all disabled:opacity-50 group hover:shadow-xl active:scale-95 text-[#2c1810]"
-                        >
-                            <div [innerHTML]="getIcon('File')" class="w-7 h-7 text-[#7A4E2D] group-hover:scale-110 group-hover:rotate-6 transition-transform"></div>
-                            <span class="font-black text-[11px] tracking-wide">تحميل PDF</span>
-                        </button>
-                    </div>
-
                     <button 
-                        (click)="completeOrder('whatsapp')"
+                        (click)="completeOrder()"
                         [disabled]="cart().length === 0"
-                        class="w-full mt-4 flex items-center justify-center gap-4 bg-[#25D366] text-white py-6 rounded-[32px] font-black hover:shadow-[0_15px_30px_rgba(37,211,102,0.3)] hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 group active:scale-95"
+                        class="w-full flex items-center justify-center gap-4 bg-[#7A4E2D] text-white py-6 rounded-[32px] font-black hover:shadow-[0_15px_30px_rgba(122,78,45,0.3)] hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 group active:scale-95"
                     >
-                        <div [innerHTML]="getIcon('WhatsApp')" class="w-7 h-7 fill-white group-hover:scale-125 transition-transform duration-500"></div>
-                        <span class="tracking-wide text-sm font-black">إرسال عبر واتساب</span>
+                        <div [innerHTML]="getIcon('Check')" class="w-7 h-7 text-white group-hover:scale-125 transition-transform duration-500"></div>
+                        <span class="tracking-wide text-lg font-black uppercase">إتمام البيع</span>
                     </button>
 
                     <!-- Advanced Settings Button -->
@@ -676,19 +657,21 @@ interface HeldCartSnapshot {
                     <p class="text-[#a09c94] mb-10 font-bold tracking-wide text-xs opacity-80">طلب رقم {{lastOrder()?.orderNumber}} · {{total().toFixed(2)}} ر.س</p>
                     
                     <div class="space-y-4 mb-10">
-                        <!-- PDF Download Action -->
-                        <button (click)="printLastOrder('pdf')" class="flex items-center justify-between gap-4 w-full bg-[#fdfaf6] p-6 rounded-[32px] font-bold text-[#7A4E2D] hover:bg-[#7A4E2D] hover:text-white transition-all group border border-[#7A4E2D10] group">
-                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-white/40 rounded-2xl flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                                    <div [innerHTML]="getIcon('File')" class="w-6 h-6"></div>
+                        <!-- Thermal & PDF Download Action -->
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <button (click)="printLastOrder('thermal')" class="flex flex-col items-center justify-center gap-3 bg-[#fdfaf6] border-2 border-[#7A4E2D08] py-5 rounded-[28px] hover:border-[#7A4E2D] hover:bg-white transition-all group hover:shadow-lg active:scale-95 text-[#2c1810]">
+                                <div class="w-10 h-10 bg-white border border-[#7A4E2D10] rounded-2xl flex items-center justify-center group-hover:bg-[#7A4E2D] group-hover:text-white text-[#7A4E2D] transition-colors shadow-sm">
+                                    <div [innerHTML]="getIcon('Printer')" class="w-5 h-5"></div>
                                 </div>
-                                <div class="text-right">
-                                    <p class="text-sm font-black">تحميل الفاتورة</p>
-                                    <p class="text-[9px] opacity-70 tracking-wide">ملف PDF جاهز للطباعة</p>
+                                <span class="font-black text-[11px] tracking-wide">طباعة حرارية</span>
+                            </button>
+                            <button (click)="printLastOrder('pdf')" class="flex flex-col items-center justify-center gap-3 bg-[#fdfaf6] border-2 border-[#7A4E2D08] py-5 rounded-[28px] hover:border-[#7A4E2D] hover:bg-white transition-all group hover:shadow-lg active:scale-95 text-[#2c1810]">
+                                <div class="w-10 h-10 bg-white border border-[#7A4E2D10] rounded-2xl flex items-center justify-center group-hover:bg-[#7A4E2D] group-hover:text-white text-[#7A4E2D] transition-colors shadow-sm">
+                                    <div [innerHTML]="getIcon('File')" class="w-5 h-5"></div>
                                 </div>
-                             </div>
-                             <div [innerHTML]="getIcon('ChevronLeft')" class="w-5 h-5 opacity-40 group-hover:translate-x-[-4px] transition-transform"></div>
-                        </button>
+                                <span class="font-black text-[11px] tracking-wide">تحميل PDF</span>
+                            </button>
+                        </div>
  
                         <!-- Template Selector & WhatsApp Action -->
                         <div class="bg-emerald-50/50 p-6 rounded-[40px] border border-emerald-100/50">
@@ -1154,7 +1137,7 @@ export class BoothComponent implements OnInit, OnDestroy {
         }
     }
 
-    async completeOrder(type: 'thermal' | 'pdf' | 'whatsapp') {
+    async completeOrder() {
         if (this.cart().length === 0) return;
         if (!this.validateSplitPayment()) return;
 
@@ -1167,7 +1150,7 @@ export class BoothComponent implements OnInit, OnDestroy {
         }));
 
         const paymentMethod = this.useSplitPayment() ? 'mixed' : 'cash';
-        const notes = this.buildOrderNotes(type);
+        const notes = this.buildOrderNotes();
 
         const order = await this.inventoryService.createOrder({
             items: orderItems,
@@ -1182,16 +1165,6 @@ export class BoothComponent implements OnInit, OnDestroy {
 
         if (!order) return;
         this.lastOrder.set(order);
-
-        if (type === 'thermal') {
-            const html = this.printService.generateThermalHtml(order);
-            this.printService.print(html);
-        } else if (type === 'pdf') {
-            this.printService.downloadInvoiceAsPdf(order);
-        } else if (type === 'whatsapp') {
-            // Special handling for legacy direct WhatsApp button
-            this.printService.shareViaWhatsApp(order);
-        }
 
         this.cart.set([]);
         this.customerName = '';
@@ -1269,11 +1242,14 @@ export class BoothComponent implements OnInit, OnDestroy {
         }
     }
 
-    printLastOrder(type: 'pdf' | 'whatsapp') {
+    printLastOrder(type: 'thermal' | 'pdf' | 'whatsapp') {
         const order = this.lastOrder();
         if (!order) return;
         
-        if (type === 'pdf') {
+        if (type === 'thermal') {
+            const html = this.printService.generateThermalHtml(order);
+            this.printService.print(html);
+        } else if (type === 'pdf') {
             this.printService.downloadInvoiceAsPdf(order);
         } else if (type === 'whatsapp') {
             this.printService.shareViaWhatsApp(order);
@@ -1451,8 +1427,8 @@ export class BoothComponent implements OnInit, OnDestroy {
         return true;
     }
 
-    private buildOrderNotes(type: string): string {
-        let notes = `تم البيع عبر واجهة البوث (${type})`;
+    private buildOrderNotes(): string {
+        let notes = `تم البيع عبر واجهة البوث`;
         const cashier = this.cashierDisplayName();
         if (cashier) notes += ` · الكاشير: ${cashier}`;
         if (this.useSplitPayment()) {

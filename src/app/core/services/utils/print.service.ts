@@ -52,7 +52,16 @@ export class PrintService {
     const finalUrl = url || '';
     const rawText = template.text(order, finalUrl);
     const encodedText = encodeURIComponent(rawText);
-    window.open(`https://wa.me/${order.customerPhone || ''}?text=${encodedText}`, '_blank');
+    
+    let phone = (order.customerPhone || '').trim();
+    // Format Saudi number if it starts with 05
+    if (phone.startsWith('05')) {
+        phone = '966' + phone.substring(1);
+    } else if (phone.startsWith('+')) {
+        phone = phone.substring(1); // wa.me prefers without +
+    }
+    
+    window.open(`https://wa.me/${phone}?text=${encodedText}`, '_blank');
   }
 
   private createTempElement(html: string): HTMLElement {

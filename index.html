@@ -32,7 +32,46 @@
 
 <body
   class="bg-wushai-light text-wushai-forest dark:bg-wushai-espresso dark:text-wushai-sand transition-colors duration-500 h-screen overflow-hidden">
-  <app-root></app-root>
+  <app-root>
+    <style>
+      body { margin: 0; background-color: #1C1612; }
+      .splash-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        width: 100vw;
+        background-color: #1C1612;
+        color: #E2DFD2;
+        font-family: 'Alexandria', sans-serif;
+      }
+      .splash-logo {
+        font-size: 3rem;
+        font-weight: 700;
+        letter-spacing: -0.05em;
+        background: linear-gradient(to right, #E2DFD2, #ffffff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        margin-bottom: 1rem;
+      }
+      .splash-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(226, 223, 210, 0.1);
+        border-radius: 50%;
+        border-top-color: #6B705C;
+        animation: spin 1s ease-in-out infinite;
+      }
+      @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .7; transform: scale(0.98); } }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+    <div class="splash-container">
+      <div class="splash-logo">Washa Control</div>
+      <div class="splash-spinner"></div>
+    </div>
+  </app-root>
 </body>
 
 </html>
