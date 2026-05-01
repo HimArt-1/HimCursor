@@ -18,7 +18,7 @@ export class OfflineService implements OnDestroy {
         window.addEventListener('online', this.onlineHandler);
         window.addEventListener('offline', this.offlineHandler);
         window.addEventListener('beforeinstallprompt', this.installPromptHandler);
-        this.initDB();
+        this.initDB().then(() => this.updateBadge());
     }
 
     private initDB(): Promise<void> {
@@ -77,7 +77,11 @@ export class OfflineService implements OnDestroy {
             const tx = this.db.transaction('sync_queue', 'readwrite');
             const store = tx.objectStore('sync_queue');
             store.add({ ...action, queuedAt: Date.now() });
-            tx.oncomplete = () => resolve();
+            tx.oncomplete = () => {
+                this.updateBadge();
+                this.registerBackgroundSync();
+                resolve();
+            };
             tx.onerror = () => reject(tx.error);
         });
     }
@@ -99,9 +103,39 @@ export class OfflineService implements OnDestroy {
             const tx = this.db.transaction('sync_queue', 'readwrite');
             const store = tx.objectStore('sync_queue');
             store.delete(id);
-            tx.oncomplete = () => resolve();
+            tx.oncomplete = () => {
+                this.updateBadge();
+                resolve();
+            };
             tx.onerror = () => reject(tx.error);
         });
+    }
+
+    private async updateBadge() {
+        if ('setAppBadge' in navigator) {
+            try {
+                const queue = await this.getQueue();
+                if (queue.length > 0) {
+                    await (navigator as any).setAppBadge(queue.length);
+                } else {
+                    await (navigator as any).clearAppBadge();
+                }
+            } catch (error) {
+                console.error('Error setting app badge:', error);
+            }
+        }
+    }
+
+    private async registerBackgroundSync() {
+        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+            try {
+                const swRegistration = await navigator.serviceWorker.ready;
+                await (swRegistration as any).sync.register('washa-sync');
+                console.log('Background Sync registered: washa-sync');
+            } catch (err) {
+                console.error('Background Sync registration failed:', err);
+            }
+        }
     }
 
     private handleInstallPrompt(e: Event) {

@@ -848,6 +848,10 @@ export class BoothComponent implements OnInit, OnDestroy {
     @ViewChild('skuInput') skuInput!: ElementRef<HTMLInputElement>;
 
     searchQuery = '';
+    
+    // Barcode Scanner State
+    private barcodeBuffer = '';
+    private barcodeTimeout: any = null;
     activeCategory = signal<string>('الكل');
     viewMode = signal<'grid' | 'list'>('grid');
     cart = signal<BoothCartLine[]>([]);
@@ -1026,6 +1030,35 @@ export class BoothComponent implements OnInit, OnDestroy {
             ev.preventDefault();
             this.focusSearch();
             return;
+        }
+
+        // Barcode Scanner Logic (Laser Scanner acts as keyboard)
+        // If an input is focused, let it handle its own input unless it's a fast sequence
+        if (ev.key === 'Enter' && this.barcodeBuffer.length > 3) {
+            ev.preventDefault();
+            this.handleScannedBarcode(this.barcodeBuffer);
+            this.barcodeBuffer = '';
+            if (this.barcodeTimeout) clearTimeout(this.barcodeTimeout);
+            return;
+        }
+
+        if (ev.key.length === 1 && !ev.ctrlKey && !ev.metaKey && !ev.altKey) {
+            this.barcodeBuffer += ev.key;
+            if (this.barcodeTimeout) clearTimeout(this.barcodeTimeout);
+            this.barcodeTimeout = setTimeout(() => {
+                // If it takes more than 50ms per character, it's probably human typing, reset buffer
+                this.barcodeBuffer = '';
+            }, 50);
+        }
+    }
+
+    private handleScannedBarcode(code: string) {
+        const product = this.allProducts().find(p => p.sku === code || p.id === code || p.name.includes(code));
+        if (product) {
+            this.addToCart(product);
+            this.inventoryService['toastService'].show(`تم إضافة: ${product.name}`, 'success');
+        } else {
+            this.inventoryService['toastService'].show(`لم يتم العثور على المنتج بالكود: ${code}`, 'error');
         }
     }
 

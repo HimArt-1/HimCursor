@@ -44,6 +44,13 @@
     ],
     "shortcuts": [
         {
+            "name": "بوث المبيعات",
+            "short_name": "فاتورة جديدة",
+            "description": "إصدار فاتورة جديدة من البوث",
+            "url": "/booth",
+            "icons": [{"src": "src/assets/icons/icon-96.png", "sizes": "96x96"}]
+        },
+        {
             "name": "إدارة المهام",
             "short_name": "المهام",
             "description": "فتح لوحة إدارة المهام اليومية",
@@ -51,17 +58,10 @@
             "icons": [{"src": "src/assets/icons/icon-96.png", "sizes": "96x96"}]
         },
         {
-            "name": "التقارير الذكية",
-            "short_name": "التقارير",
+            "name": "لوحة الذكاء المالي",
+            "short_name": "المالية",
             "description": "عرض أحدث التقارير المالية والإدارية",
-            "url": "/reports",
-            "icons": [{"src": "src/assets/icons/icon-96.png", "sizes": "96x96"}]
-        },
-        {
-            "name": "الخطة الاستراتيجية",
-            "short_name": "الاستراتيجية",
-            "description": "مراجعة استراتيجية الأعمال",
-            "url": "/strategy",
+            "url": "/finance",
             "icons": [{"src": "src/assets/icons/icon-96.png", "sizes": "96x96"}]
         }
     ],
