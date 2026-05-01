@@ -4,6 +4,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { DataService } from '../../core/services/state/data.service';
+import { AppLockService } from '../../core/services/infra/app-lock.service';
 import { Icons } from '../../shared/ui/icons';
 
 @Component({
@@ -100,6 +101,32 @@ import { Icons } from '../../shared/ui/icons';
                         </div>
                      </section>
 
+                     <!-- Security -->
+                     <section>
+                        <h3 class="text-lg font-bold text-wushai-deep dark:text-wushai-sand mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">الأمان وحماية الجلسة</h3>
+                        <div (click)="toggleBiometric()" class="flex items-center justify-between p-5 bg-gray-50 dark:bg-wushai-deep rounded-xl border border-gray-100 dark:border-gray-700 hover:border-wushai-sand cursor-pointer transition-colors">
+                           <div class="flex items-center gap-4">
+                              <div class="p-3 bg-gray-200 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12C2 6.48 6.48 2 12 2s10 4.48 10 10-4.48 10-10 10S2 17.52 2 12zm10 6c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm-2-6c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2z"></path></svg>
+                              </div>
+                              <div>
+                                 <p class="font-bold text-gray-800 dark:text-white">الدخول السريع (البصمة / الوجه)</p>
+                                 <p class="text-xs text-gray-500 dark:text-gray-400">قفل التطبيق وفتحه سريعاً لتأمين شاشة البيع (FaceID / TouchID).</p>
+                              </div>
+                           </div>
+                           <div class="w-12 h-6 rounded-full relative transition-colors" [ngClass]="appLock.isBiometricEnabled() ? 'bg-wushai-olive' : 'bg-gray-300'">
+                              <div class="w-5 h-5 bg-white rounded-full shadow absolute top-0.5 transition-all" [ngClass]="appLock.isBiometricEnabled() ? 'left-[26px]' : 'left-0.5'"></div>
+                           </div>
+                        </div>
+                        @if(appLock.isBiometricEnabled()) {
+                           <div class="mt-4 flex justify-end">
+                               <button (click)="lockNow($event)" class="text-sm font-bold text-wushai-olive hover:text-wushai-dark bg-wushai-olive/10 px-4 py-2 rounded-lg">
+                                   قفل التطبيق الآن
+                               </button>
+                           </div>
+                        }
+                     </section>
+
                      <!-- Notifications -->
                      <section>
                         <h3 class="text-lg font-bold text-wushai-deep dark:text-wushai-sand mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">الإشعارات</h3>
@@ -191,6 +218,7 @@ import { Icons } from '../../shared/ui/icons';
 export class SettingsComponent {
    private sanitizer = inject(DomSanitizer);
    private dataService = inject(DataService);
+   appLock = inject(AppLockService);
 
    activeTab = signal<'Profile' | 'General' | 'Rules'>('Profile');
    isDarkMode = this.dataService.darkMode;
@@ -211,6 +239,22 @@ export class SettingsComponent {
       if (this.currentUser()) {
          this.dataService.updateUserProfile(this.currentUser()!.id, { avatarColor: this.selectedColor() });
       }
+   }
+
+   async toggleBiometric() {
+       if (this.appLock.isBiometricEnabled()) {
+           this.appLock.disableBiometric();
+       } else {
+           const success = await this.appLock.setupBiometric();
+           if (success) {
+               alert('تم تفعيل الدخول بالبصمة بنجاح');
+           }
+       }
+   }
+
+   lockNow(e: Event) {
+       e.stopPropagation();
+       this.appLock.lock();
    }
 
    // --- Import/Export ---

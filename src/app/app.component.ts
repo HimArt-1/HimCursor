@@ -9,6 +9,7 @@ import { NotificationPanelComponent } from './shared/widgets/notification-panel.
 import { AiAssistantComponent } from './shared/widgets/ai-assistant.component';
 import { SystemAlertComponent } from './shared/widgets/system-alert.component';
 import { ChatWidgetComponent } from './features/social/chat-widget.component';
+import { LockScreenComponent } from './shared/components/lock-screen.component';
 import { DataService } from './core/services/state/data.service';
 import { PresenceService } from './core/services/state/presence.service';
 import { AuthService } from './core/services/domain/auth.service';
@@ -18,7 +19,7 @@ import { Icons } from './shared/ui/icons';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, SidebarComponent, ToastComponent, CommandPaletteComponent, NotificationPanelComponent, AiAssistantComponent, SystemAlertComponent, ChatWidgetComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, SidebarComponent, ToastComponent, CommandPaletteComponent, NotificationPanelComponent, AiAssistantComponent, SystemAlertComponent, ChatWidgetComponent, LockScreenComponent],
   // Using @defer in template for ChatWidget to improve initial load
   template: `
     <div class="h-screen w-full flex bg-wushai-light dark:bg-wushai-espresso transition-colors duration-300 overflow-hidden">
@@ -112,6 +113,8 @@ import { Icons } from './shared/ui/icons';
           <app-chat-widget></app-chat-widget>
         }
       }
+
+      <app-lock-screen></app-lock-screen>
     </div>
   `
 })
