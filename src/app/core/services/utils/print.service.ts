@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Product, Order, InventoryService } from '../domain/inventory.service';
+import { Order, OrderItem, InventoryService } from '../domain/inventory.service';
 import { QrService } from './qr.service';
 import { SupabaseService } from '../infra/supabase.service';
 
@@ -62,6 +62,15 @@ export class PrintService {
     }
     
     window.open(`https://wa.me/${phone}?text=${encodedText}`, '_blank');
+  }
+
+  private resolveInvoiceProduct(item: OrderItem): { name: string; sku: string } {
+    const product = this.inventoryService.products().find(p => p.id === item.productId);
+    const name = (product?.name || item.productName || '').trim();
+    return {
+      name: name || 'منتج غير معروف',
+      sku: product?.sku || ''
+    };
   }
 
   private createTempElement(html: string): HTMLElement {
@@ -132,14 +141,14 @@ export class PrintService {
   }
   generateThermalHtml(order: Order): string {
     const itemsHtml = order.items.map(item => {
-      const productName = item.productName || 'منتج غير معروف';
+      const productInfo = this.resolveInvoiceProduct(item);
       const quantity = Number(item.quantity || 0);
       const unitPrice = Number(item.unitPrice || 0);
       const lineTotal = Number(item.total || (unitPrice * quantity));
       return `
       <div style="display: flex; justify-content: space-between; align-items: flex-start; font-size: 14px; margin-bottom: 4px;">
-        <span style="flex-grow: 1; padding-left: 10px;">${productName}
-            <span style="font-size: 11px; color: #666;">x${quantity} · ${unitPrice.toFixed(2)} ر.س</span>
+        <span style="flex-grow: 1; padding-left: 10px;">${productInfo.name}
+            <span style="font-size: 11px; color: #666;">${productInfo.sku ? `#${productInfo.sku} · ` : ''}x${quantity} · ${unitPrice.toFixed(2)} ر.س</span>
         </span>
         <span style="white-space: nowrap;">${lineTotal.toFixed(2)}</span>
       </div>
@@ -213,7 +222,7 @@ export class PrintService {
 
   generatePdfHtml(order: Order): string {
     const itemsHtml = order.items.map((item, index) => {
-      const productName = item.productName || 'منتج غير معروف';
+      const productInfo = this.resolveInvoiceProduct(item);
       const quantity = Number(item.quantity || 0);
       const unitPrice = Number(item.unitPrice || 0);
       const lineTotal = Number(item.total || (unitPrice * quantity));
@@ -221,8 +230,8 @@ export class PrintService {
       <tr style="border-bottom: 1px solid #f0f0f0;">
         <td style="padding: 15px; text-align: center; color: #a0aec0; font-size: 13px;">${index + 1}</td>
         <td style="padding: 15px; text-align: right; max-width: 250px;">
-          <div style="font-weight: 700; color: #2d3748; white-space: pre-wrap; word-wrap: break-word;">${productName}</div>
-          <div style="font-size: 11px; color: #a0aec0;">${(item.productId || '').slice(0, 8)}</div>
+          <div style="font-weight: 700; color: #2d3748; white-space: pre-wrap; word-wrap: break-word;">${productInfo.name}</div>
+          <div style="font-size: 11px; color: #a0aec0;">${productInfo.sku ? `SKU: ${productInfo.sku}` : ''}</div>
         </td>
         <td style="padding: 15px; text-align: center; color: #4a5568;">${quantity}</td>
         <td style="padding: 15px; text-align: center; color: #4a5568;">${unitPrice.toFixed(2)} <small>ر.س</small></td>
