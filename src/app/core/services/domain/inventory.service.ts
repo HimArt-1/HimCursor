@@ -2,6 +2,7 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { SupabaseService } from '../infra/supabase.service';
 import { AuthService } from './auth.service';
 import { ToastService } from '../state/toast.service';
+import { OfflineService } from '../infra/offline.service';
 
 export const FASHION_CATEGORIES = ['تيشيرت', 'هودي', 'بلوفر'] as const;
 export const PRODUCT_CATEGORIES = [...FASHION_CATEGORIES, 'عام'] as const;
@@ -88,6 +89,7 @@ export class InventoryService {
     private supabaseService = inject(SupabaseService);
     private authService = inject(AuthService);
     private toastService = inject(ToastService);
+    private offlineService = inject(OfflineService);
 
     readonly products = signal<Product[]>([]);
     readonly orders = signal<Order[]>([]);
@@ -96,6 +98,7 @@ export class InventoryService {
 
     constructor() {
       this.init();
+      window.addEventListener('washa_online', () => this.syncOfflineQueue());
     }
 
     private async init() {
@@ -168,6 +171,47 @@ export class InventoryService {
           }
         })
         .subscribe();
+    }
+
+    private async syncOfflineQueue() {
+        const queue = await this.offlineService.getQueue();
+        if (queue.length === 0) return;
+
+        this.toastService.show(`جاري مزامنة ${queue.length} عملية متأخرة...`, 'info');
+        let successCount = 0;
+
+        for (const action of queue) {
+            try {
+                if (action.type === 'CREATE_ORDER') {
+                    const { orderData, itemsData } = action.payload;
+                    const { data: insertedOrder, error: orderError } = await this.supabaseService.client
+                        .from('pos_orders')
+                        .insert([orderData])
+                        .select()
+                        .single();
+                    
+                    if (!orderError && insertedOrder) {
+                        const itemsToInsert = itemsData.map((i: any) => ({ ...i, order_id: insertedOrder.id }));
+                        await this.supabaseService.client.from('pos_order_items').insert(itemsToInsert);
+                    }
+                } else if (action.type === 'ADJUST_STOCK') {
+                    const { productId, delta, reason } = action.payload;
+                    // We only need to fetch the real current stock online, then update
+                    const { data: p } = await this.supabaseService.client.from('products').select('current_stock').eq('id', productId).single();
+                    if (p) {
+                        const newStock = Math.max(0, p.current_stock + delta);
+                        await this.supabaseService.client.from('products').update({ current_stock: newStock }).eq('id', productId);
+                    }
+                }
+                await this.offlineService.clearQueueItem(action.id);
+                successCount++;
+            } catch (error) {
+                console.error('Failed to sync offline action:', action, error);
+            }
+        }
+        if (successCount > 0) {
+            this.toastService.show(`تمت المزامنة بنجاح (${successCount})`, 'success');
+        }
     }
 
     // ===== EXISTING COMPUTED =====
@@ -328,6 +372,20 @@ export class InventoryService {
 
         const newStock = Math.max(0, product.stock + delta);
         
+        if (!this.offlineService.isOnline()) {
+             // Offline Mode
+             this.products.update(list => list.map(p => p.id === productId ? { ...p, stock: newStock } : p));
+             this.offlineService.queueAction({
+                 type: 'ADJUST_STOCK',
+                 payload: { productId, delta, reason }
+             });
+             this.logMovement(productId, product.name, delta > 0 ? 'in' : 'out', Math.abs(delta), reason);
+             if (newStock <= product.minStock) {
+                 this.toastService.show(`⚠️ المنتج "${product.name}" وصل لحد المخزون الأدنى`, 'info');
+             }
+             return;
+        }
+
         const { error } = await this.supabaseService.client
             .from('products')
             .update({ current_stock: newStock })
@@ -354,21 +412,55 @@ export class InventoryService {
         const isRestock = order.type === 'restock';
         const paymentMethod = order.paymentMethod?.trim() || 'cash';
 
+        const orderDataToSave = {
+            order_number: orderNumber,
+            customer_name: order.customerName,
+            customer_phone: order.customerPhone,
+            subtotal: order.subtotal,
+            tax_amount: order.tax,
+            total_amount: order.total,
+            payment_method: paymentMethod,
+            status: 'completed',
+            payment_status: order.paymentStatus || 'paid',
+            notes: isRestock ? 'عملية توريد للمستودع' : order.notes,
+            created_at: new Date().toISOString()
+        };
+
+        const itemsToInsert = (order.items || []).map(item => ({
+            product_id: item.productId,
+            product_name: item.productName,
+            quantity: item.quantity,
+            unit_price: item.unitPrice,
+            total_price: item.total
+        }));
+
+        if (!this.offlineService.isOnline()) {
+            // OFFLINE MODE: Queue it!
+            const pseudoId = `offline_${Date.now()}`;
+            const offlineOrderData = { ...orderDataToSave, id: pseudoId };
+            const offlineItemsData = itemsToInsert.map(i => ({ ...i, order_id: pseudoId }));
+            
+            await this.offlineService.queueAction({
+                type: 'CREATE_ORDER',
+                payload: { orderData: orderDataToSave, itemsData: itemsToInsert }
+            });
+
+            const newOrder = this.mapOrder(offlineOrderData, offlineItemsData);
+            this.orders.update(list => [newOrder, ...list]);
+
+            const multiplier = isRestock ? 1 : -1;
+            order.items?.forEach(item => {
+                this.adjustStock(item.productId, item.quantity * multiplier, `${isRestock ? 'توريد' : 'طلب'} محلي ${orderNumber}`);
+            });
+
+            this.toastService.show('تم تسجيل الطلب محلياً. ستتم المزامنة عند عودة الاتصال.', 'warning');
+            return newOrder;
+        }
+
         // 1. Core Order
         const { data: orderData, error: orderError } = await this.supabaseService.client
             .from('pos_orders')
-            .insert([{
-                order_number: orderNumber,
-                customer_name: order.customerName,
-                customer_phone: order.customerPhone,
-                subtotal: order.subtotal,
-                tax_amount: order.tax,
-                total_amount: order.total,
-                payment_method: paymentMethod,
-                status: 'completed',
-                payment_status: order.paymentStatus || 'paid',
-                notes: isRestock ? 'عملية توريد للمستودع' : order.notes
-            }])
+            .insert([orderDataToSave])
             .select()
             .single();
 
@@ -378,18 +470,10 @@ export class InventoryService {
         }
 
         // 2. Order Items
-        const itemsToInsert = (order.items || []).map(item => ({
-            order_id: orderData.id,
-            product_id: item.productId,
-            product_name: item.productName,
-            quantity: item.quantity,
-            unit_price: item.unitPrice,
-            total_price: item.total
-        }));
-
+        const finalItemsToInsert = itemsToInsert.map(i => ({ ...i, order_id: orderData.id }));
         const { error: itemsError } = await this.supabaseService.client
             .from('pos_order_items')
-            .insert(itemsToInsert);
+            .insert(finalItemsToInsert);
 
         if (itemsError) {
             console.error('Error inserting items:', itemsError);
@@ -397,10 +481,8 @@ export class InventoryService {
 
         const newOrder = this.mapOrder(orderData, order.items || []);
         
-        // 3. Adjust Stock based on type
-        // if sale: subtract, if restock: add
+        // 3. Adjust Stock
         const multiplier = isRestock ? 1 : -1;
-        
         order.items?.forEach(item => {
             this.adjustStock(item.productId, item.quantity * multiplier, `${isRestock ? 'توريد' : 'طلب'} رقم ${orderNumber}`);
         });
@@ -465,14 +547,34 @@ export class InventoryService {
     // ===== HELPERS =====
 
     private async fetchProducts() {
+        if (!this.offlineService.isOnline()) {
+            const cached = await this.offlineService.getCachedData('products');
+            if (cached) {
+                this.products.set(cached.map((d: any) => this.mapProduct(d)));
+                this.toastService.show('يعمل بدون إنترنت - مخزون محلي', 'warning');
+            }
+            return;
+        }
+
         const { data } = await this.supabaseService.client
             .from('products')
             .select('*')
             .order('created_at', { ascending: false });
-        if (data) this.products.set(data.map(d => this.mapProduct(d)));
+        if (data) {
+            this.products.set(data.map(d => this.mapProduct(d)));
+            await this.offlineService.cacheData('products', data);
+        }
     }
 
     private async fetchOrders() {
+        if (!this.offlineService.isOnline()) {
+            const cached = await this.offlineService.getCachedData('orders');
+            if (cached) {
+                this.orders.set(cached.map((d: any) => this.mapOrder(d, d.pos_order_items)));
+            }
+            return;
+        }
+
         const { data, error } = await this.supabaseService.client
             .from('pos_orders')
             .select('*, pos_order_items(*)')
@@ -482,16 +584,29 @@ export class InventoryService {
             console.error('Fetch orders error:', error);
             return;
         }
-        if (data) this.orders.set(data.map(d => this.mapOrder(d, d.pos_order_items)));
+        if (data) {
+            this.orders.set(data.map(d => this.mapOrder(d, d.pos_order_items)));
+            await this.offlineService.cacheData('orders', data);
+        }
     }
 
     private async fetchSettings() {
+        if (!this.offlineService.isOnline()) {
+            const cached = await this.offlineService.getCachedData('settings');
+            if (cached) {
+                const branding = cached.find((d: any) => d.key === 'branding');
+                if (branding) this.settings.set(branding.value);
+            }
+            return;
+        }
+
         const { data } = await this.supabaseService.client
             .from('app_settings')
             .select('*');
         if (data) {
             const branding = data.find(d => d.key === 'branding');
             if (branding) this.settings.set(branding.value);
+            await this.offlineService.cacheData('settings', data);
         }
     }
 
