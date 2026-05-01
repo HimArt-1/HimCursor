@@ -33,8 +33,8 @@ module.exports = {
                 }
             },
             fontFamily: {
-                sans: ['Cairo', 'Tajawal', 'sans-serif'],
-                display: ['Cairo', 'sans-serif'],
+                sans: ['Alexandria', 'sans-serif'],
+                display: ['Alexandria', 'sans-serif'],
                 heritage: ['Amiri', 'serif'],
             },
             boxShadow: {

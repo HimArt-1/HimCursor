@@ -1,12 +1,13 @@
 {
     "name": "Washa Control",
     "short_name": "Washa Control",
-    "description": "لوحة تحكم وإدارة المشاريع والمهام",
+    "description": "لوحة تحكم وإدارة المشاريع والمهام للمنصة الفاخرة",
     "start_url": "/",
     "display": "standalone",
-    "orientation": "any",
-    "background_color": "#1a1625",
-    "theme_color": "#4B5842",
+    "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+    "orientation": "portrait-primary",
+    "background_color": "#1C1612",
+    "theme_color": "#1C1612",
     "dir": "rtl",
     "lang": "ar",
     "icons": [
@@ -41,10 +42,29 @@
             "purpose": "any maskable"
         }
     ],
-    "categories": [
-        "productivity",
-        "business"
+    "shortcuts": [
+        {
+            "name": "إدارة المهام",
+            "short_name": "المهام",
+            "description": "فتح لوحة إدارة المهام اليومية",
+            "url": "/tasks",
+            "icons": [{"src": "src/assets/icons/icon-96.png", "sizes": "96x96"}]
+        },
+        {
+            "name": "التقارير الذكية",
+            "short_name": "التقارير",
+            "description": "عرض أحدث التقارير المالية والإدارية",
+            "url": "/reports",
+            "icons": [{"src": "src/assets/icons/icon-96.png", "sizes": "96x96"}]
+        },
+        {
+            "name": "الخطة الاستراتيجية",
+            "short_name": "الاستراتيجية",
+            "description": "مراجعة استراتيجية الأعمال",
+            "url": "/strategy",
+            "icons": [{"src": "src/assets/icons/icon-96.png", "sizes": "96x96"}]
+        }
     ],
-    "screenshots": [],
+    "categories": ["productivity", "business", "finance"],
     "prefer_related_applications": false
 }

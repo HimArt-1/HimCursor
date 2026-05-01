@@ -31,13 +31,13 @@ type LoginState = 'idle' | 'authenticating' | 'success';
          @if (loginState() === 'idle') {
             <!-- Logo & Branding -->
             <div class="text-center mb-10 animate-fade-in-down select-none">
-                <h1 class="text-5xl font-bold tracking-tighter mb-2 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Washa Control</h1>
-                <p class="text-wushai-sand/60 text-sm uppercase tracking-[0.3em] font-mono">User Access Portal</p>
+                <h1 class="text-5xl font-bold tracking-tighter mb-2 bg-gradient-to-r from-wushai-sand to-white bg-clip-text text-transparent">Washa Control</h1>
+                <p class="text-wushai-sand/60 text-xs uppercase tracking-[0.4em] font-mono">Secure Access Portal</p>
             </div>
 
-            <div class="bg-gray-800/60 backdrop-blur-xl border border-gray-700 rounded-3xl p-8 shadow-2xl animate-fade-in text-center relative overflow-hidden">
+            <div class="glass-card rounded-3xl p-8 animate-fade-in text-center relative overflow-hidden group">
                 <!-- Glass reflection -->
-                <div class="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
+                <div class="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/10 to-transparent pointer-events-none transition-opacity duration-700 group-hover:opacity-50"></div>
 
                 <div class="flex flex-col items-center mb-8 relative z-10">
                     <div class="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-bold text-white shadow-2xl border-4 border-wushai-black mb-4 ring-2 ring-gray-700">
@@ -51,14 +51,14 @@ type LoginState = 'idle' | 'authenticating' | 'success';
                     <div>
                         <label class="block text-xs text-gray-400 mb-1">Email</label>
                         <input type="email" [value]="email()" (input)="email.set($any($event.target).value)"
-                               class="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white">
+                               class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-wushai-olive/50 focus:border-wushai-olive transition-all duration-300 placeholder-white/30" placeholder="admin@wushai.com">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-400 mb-1">Password</label>
                         <input type="password" [value]="password()" (input)="password.set($any($event.target).value)"
-                               class="w-full bg-gray-900/60 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white">
+                               class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-wushai-olive/50 focus:border-wushai-olive transition-all duration-300 placeholder-white/30" placeholder="••••••••">
                     </div>
-                    <button (click)="attemptLogin()" class="w-full bg-wushai-olive text-white rounded-lg py-2 text-sm font-bold">
+                    <button (click)="attemptLogin()" class="w-full bg-wushai-olive text-white rounded-xl py-3 text-sm font-bold shadow-[0_4px_20px_rgba(107,112,92,0.3)] hover:shadow-[0_8px_32px_rgba(107,112,92,0.5)] hover:-translate-y-1 active:scale-95 transition-all duration-300">
                         دخول
                     </button>
                 </div>
@@ -68,7 +68,9 @@ type LoginState = 'idle' | 'authenticating' | 'success';
                 </button>
                 
                 @if (error()) {
-                    <p class="absolute bottom-4 left-0 right-0 text-center text-red-500 text-xs font-bold animate-shake tracking-widest uppercase">بيانات الدخول غير صحيحة</p>
+                    <div class="absolute bottom-4 left-4 right-4 bg-red-500/10 border border-red-500/20 rounded-lg p-2 animate-shake">
+                        <p class="text-center text-red-400 text-xs font-bold tracking-wider uppercase">بيانات الدخول غير صحيحة</p>
+                    </div>
                 }
             </div>
          }

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { DataService } from '../../core/services/state/data.service';
 import { ToastService } from '../../core/services/state/toast.service';
 import { InvoiceService } from '../../core/services/domain/invoice.service';
+import { OfflineService } from '../../core/services/infra/offline.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Icons } from '../ui/icons';
 
@@ -30,7 +31,7 @@ interface CommandItem {
     @if (isOpen()) {
       <div class="fixed inset-0 z-[999] flex items-start justify-center pt-[15vh] bg-black/40 backdrop-blur-sm animate-fade-in"
            (click)="close()">
-        <div class="w-full max-w-2xl bg-white dark:bg-wushai-black dark:border-wushai-olive border border-wushai-sand rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[60vh] animate-scale-in"
+        <div class="w-full max-w-2xl glass-card rounded-2xl overflow-hidden flex flex-col max-h-[60vh] animate-scale-in"
              (click)="$event.stopPropagation()">
            
            <!-- Search Input -->
@@ -40,7 +41,7 @@ interface CommandItem {
                      [value]="query()"
                      (input)="query.set(cmdInput.value); selectedIndex.set(0)"
                      placeholder="اكتب أمراً أو ابحث… / Type a command…"
-                     class="flex-1 bg-transparent border-none outline-none text-lg text-wushai-dark dark:text-white placeholder-gray-400"
+                     class="flex-1 bg-transparent border-none outline-none text-xl text-wushai-dark dark:text-white placeholder-gray-400/50 focus:ring-0"
                      autofocus>
               <div class="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">ESC</div>
            </div>
@@ -54,9 +55,9 @@ interface CommandItem {
                        @for (cmd of group.commands; track cmd.id) {
                           <button (click)="execute(cmd)"
                                   (mouseenter)="setHoverIndex(cmd)"
-                                  class="w-full text-left px-3 py-3 rounded-lg flex items-center gap-3 transition-colors relative"
+                                  class="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all duration-300 relative group"
                                   [ngClass]="{
-                                    'bg-wushai-light dark:bg-wushai-deep': isSelected(cmd),
+                                    'bg-black/5 dark:bg-white/10 shadow-sm translate-x-1': isSelected(cmd),
                                     'text-wushai-dark dark:text-white': true
                                   }">
                              @if(isSelected(cmd)) {
@@ -82,7 +83,7 @@ interface CommandItem {
            </div>
 
            <!-- Footer -->
-           <div class="p-2 border-t border-wushai-sand dark:border-wushai-olive bg-gray-50 dark:bg-wushai-deep/30 flex justify-between items-center text-xs text-gray-500">
+           <div class="p-3 border-t border-wushai-sand/20 dark:border-white/5 bg-gray-50/50 dark:bg-black/20 flex justify-between items-center text-xs text-gray-500">
               <div class="flex gap-4 flex-wrap">
                  <span><span class="font-bold">⌘K</span> فتح / إغلاق</span>
                  <span><span class="font-bold">↑↓</span> تنقل</span>
@@ -108,6 +109,8 @@ export class CommandPaletteComponent {
   private toastService = inject(ToastService);
   private invoiceService = inject(InvoiceService);
   private sanitizer = inject(DomSanitizer);
+
+  private offlineService = inject(OfflineService);
 
   isOpen = signal(false);
   query = signal('');
@@ -210,8 +213,24 @@ export class CommandPaletteComponent {
 
   filteredCommands = computed(() => {
     const q = this.query().toLowerCase().trim();
-    if (!q) return this.allCommands;
-    return this.allCommands.filter(c => {
+    
+    // Add dynamic install command if available
+    let currentCommands = [...this.allCommands];
+    if (this.offlineService.canInstall()) {
+      currentCommands.push({
+        id: 'sys-install',
+        title: 'تثبيت التطبيق (PWA)',
+        description: 'تثبيت لوحة تحكم Washa على جهازك',
+        icon: 'Download',
+        group: 'System',
+        action: () => {
+           this.offlineService.promptInstallation();
+        }
+      });
+    }
+
+    if (!q) return currentCommands;
+    return currentCommands.filter(c => {
       const keywordHit = (c.keywords || []).some(k => k.toLowerCase().includes(q));
       return (
         c.title.toLowerCase().includes(q) ||
