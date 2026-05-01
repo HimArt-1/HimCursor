@@ -349,10 +349,11 @@ export class InventoryService {
 
     // ===== ORDERS =====
 
-    async createOrder(order: Partial<Order> & { type?: 'sale' | 'restock' }): Promise<Order | null> {
+    async createOrder(order: Partial<Order> & { type?: 'sale' | 'restock'; paymentMethod?: string }): Promise<Order | null> {
         const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
         const isRestock = order.type === 'restock';
-        
+        const paymentMethod = order.paymentMethod?.trim() || 'cash';
+
         // 1. Core Order
         const { data: orderData, error: orderError } = await this.supabaseService.client
             .from('pos_orders')
@@ -363,7 +364,7 @@ export class InventoryService {
                 subtotal: order.subtotal,
                 tax_amount: order.tax,
                 total_amount: order.total,
-                payment_method: 'cash',
+                payment_method: paymentMethod,
                 status: 'completed',
                 payment_status: order.paymentStatus || 'paid',
                 notes: isRestock ? 'عملية توريد للمستودع' : order.notes
