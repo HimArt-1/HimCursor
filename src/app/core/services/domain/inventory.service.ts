@@ -453,7 +453,7 @@ export class InventoryService {
                 this.adjustStock(item.productId, item.quantity * multiplier, `${isRestock ? 'توريد' : 'طلب'} محلي ${orderNumber}`);
             });
 
-            this.toastService.show('تم تسجيل الطلب محلياً. ستتم المزامنة عند عودة الاتصال.', 'warning');
+            this.toastService.show('تم تسجيل الطلب محلياً. ستتم المزامنة عند عودة الاتصال.', 'info');
             return newOrder;
         }
 
@@ -551,7 +551,7 @@ export class InventoryService {
             const cached = await this.offlineService.getCachedData('products');
             if (cached) {
                 this.products.set(cached.map((d: any) => this.mapProduct(d)));
-                this.toastService.show('يعمل بدون إنترنت - مخزون محلي', 'warning');
+                this.toastService.show('يعمل بدون إنترنت - مخزون محلي', 'info');
             }
             return;
         }

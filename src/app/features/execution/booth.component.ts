@@ -1053,7 +1053,7 @@ export class BoothComponent implements OnInit, OnDestroy {
     }
 
     private handleScannedBarcode(code: string) {
-        const product = this.allProducts().find(p => p.sku === code || p.id === code || p.name.includes(code));
+        const product = this.inventoryService.products().find(p => p.sku === code || p.id === code || p.name.includes(code));
         if (product) {
             this.addToCart(product);
             this.inventoryService['toastService'].show(`تم إضافة: ${product.name}`, 'success');

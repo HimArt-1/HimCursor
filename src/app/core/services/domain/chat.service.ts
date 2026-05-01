@@ -404,12 +404,14 @@ export class ChatService {
 
         // Flush offline queue
         if (this.offlineService.isOnline()) {
-            const queue = this.offlineService.flushQueue();
-            for (const action of queue) {
-                if (action.type === 'chat_message') {
-                    this.sendMessage(action.payload.content, action.payload.messageType);
+            this.offlineService.getQueue().then(queue => {
+                for (const action of queue) {
+                    if (action.type === 'chat_message') {
+                        this.sendMessage(action.payload.content, action.payload.messageType);
+                        this.offlineService.clearQueueItem(action.id);
+                    }
                 }
-            }
+            });
         }
     }
 
