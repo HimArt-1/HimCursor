@@ -479,7 +479,7 @@ export class InventoryService {
             console.error('Error inserting items:', itemsError);
         }
 
-        const newOrder = this.mapOrder(orderData, order.items || []);
+        const newOrder = this.mapOrder(orderData, itemsToInsert);
         
         // 3. Adjust Stock
         const multiplier = isRestock ? 1 : -1;
@@ -640,13 +640,17 @@ export class InventoryService {
             paymentStatus: d.payment_status || d.metadata?.payment_status || 'paid',
             notes: d.notes || d.metadata?.notes || '',
             createdAt: d.created_at,
-            items: items.map(i => ({
-                productId: i.product_id,
-                productName: i.product_name,
-                quantity: i.quantity,
-                unitPrice: Number(i.unit_price),
-                total: Number(i.total_price)
-            }))
+            items: items.map(i => {
+                const unitPrice = Number(i.unit_price ?? i.unitPrice ?? 0);
+                const quantity = Number(i.quantity ?? 0);
+                return {
+                    productId: i.product_id ?? i.productId,
+                    productName: i.product_name ?? i.productName ?? 'منتج غير معروف',
+                    quantity,
+                    unitPrice,
+                    total: Number(i.total_price ?? i.total ?? (unitPrice * quantity))
+                };
+            })
         };
     }
 

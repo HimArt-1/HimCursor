@@ -131,14 +131,20 @@ export class PrintService {
     };
   }
   generateThermalHtml(order: Order): string {
-    const itemsHtml = order.items.map(item => `
+    const itemsHtml = order.items.map(item => {
+      const productName = item.productName || 'منتج غير معروف';
+      const quantity = Number(item.quantity || 0);
+      const unitPrice = Number(item.unitPrice || 0);
+      const lineTotal = Number(item.total || (unitPrice * quantity));
+      return `
       <div style="display: flex; justify-content: space-between; align-items: flex-start; font-size: 14px; margin-bottom: 4px;">
-        <span style="flex-grow: 1; padding-left: 10px;">${item.productName} 
-            <span style="font-size: 11px; color: #666;">x${item.quantity}</span>
+        <span style="flex-grow: 1; padding-left: 10px;">${productName}
+            <span style="font-size: 11px; color: #666;">x${quantity} · ${unitPrice.toFixed(2)} ر.س</span>
         </span>
-        <span style="white-space: nowrap;">${item.total.toFixed(2)}</span>
+        <span style="white-space: nowrap;">${lineTotal.toFixed(2)}</span>
       </div>
-    `).join('');
+    `;
+    }).join('');
 
     const branding = this.getBranding();
     const barcode = this.getBarcodeImage(order);
@@ -206,18 +212,24 @@ export class PrintService {
   }
 
   generatePdfHtml(order: Order): string {
-    const itemsHtml = order.items.map((item, index) => `
+    const itemsHtml = order.items.map((item, index) => {
+      const productName = item.productName || 'منتج غير معروف';
+      const quantity = Number(item.quantity || 0);
+      const unitPrice = Number(item.unitPrice || 0);
+      const lineTotal = Number(item.total || (unitPrice * quantity));
+      return `
       <tr style="border-bottom: 1px solid #f0f0f0;">
         <td style="padding: 15px; text-align: center; color: #a0aec0; font-size: 13px;">${index + 1}</td>
         <td style="padding: 15px; text-align: right; max-width: 250px;">
-          <div style="font-weight: 700; color: #2d3748; white-space: pre-wrap; word-wrap: break-word;">${item.productName}</div>
+          <div style="font-weight: 700; color: #2d3748; white-space: pre-wrap; word-wrap: break-word;">${productName}</div>
           <div style="font-size: 11px; color: #a0aec0;">${(item.productId || '').slice(0, 8)}</div>
         </td>
-        <td style="padding: 15px; text-align: center; color: #4a5568;">${item.quantity}</td>
-        <td style="padding: 15px; text-align: center; color: #4a5568;">${item.unitPrice.toFixed(2)} <small>ر.س</small></td>
-        <td style="padding: 15px; text-align: center; font-weight: 700; color: #7A4E2D;">${item.total.toFixed(2)} <small>ر.س</small></td>
+        <td style="padding: 15px; text-align: center; color: #4a5568;">${quantity}</td>
+        <td style="padding: 15px; text-align: center; color: #4a5568;">${unitPrice.toFixed(2)} <small>ر.س</small></td>
+        <td style="padding: 15px; text-align: center; font-weight: 700; color: #7A4E2D;">${lineTotal.toFixed(2)} <small>ر.س</small></td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
 
     const barcode = this.getBarcodeImage(order);
     const qrSectionHtml = barcode ? `
